@@ -18,6 +18,7 @@ interface Employee {
   emp_correo: string;
   emp_puesto: string;
   emp_salario: number;
+  emp_password?: string;
 }
 
 interface Payment {
@@ -68,10 +69,10 @@ const EmployeeManagement = () => {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
   const handleAddEmployee = () => {
-    if (!newEmployee.emp_nombre || !newEmployee.emp_apellido || !newEmployee.emp_puesto) {
+    if (!newEmployee.emp_nombre || !newEmployee.emp_apellido || !newEmployee.emp_puesto || !newEmployee.emp_password) {
       toast({
         title: "Error",
-        description: "Por favor completa todos los campos obligatorios",
+        description: "Por favor completa todos los campos obligatorios incluyendo la contraseña",
         variant: "destructive"
       });
       return;
@@ -222,6 +223,16 @@ const EmployeeManagement = () => {
                     type="number"
                     value={newEmployee.emp_salario || ""}
                     onChange={(e) => setNewEmployee({...newEmployee, emp_salario: parseFloat(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password">Contraseña *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Contraseña para acceso al sistema"
+                    value={newEmployee.emp_password || ""}
+                    onChange={(e) => setNewEmployee({...newEmployee, emp_password: e.target.value})}
                   />
                 </div>
               </div>
@@ -443,6 +454,16 @@ const EmployeeManagement = () => {
                   type="number"
                   value={editingEmployee.emp_salario}
                   onChange={(e) => setEditingEmployee({...editingEmployee, emp_salario: parseFloat(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-password">Nueva Contraseña (opcional)</Label>
+                <Input
+                  id="edit-password"
+                  type="password"
+                  placeholder="Dejar vacío para mantener la actual"
+                  value={editingEmployee.emp_password || ""}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, emp_password: e.target.value})}
                 />
               </div>
             </div>

@@ -1,9 +1,10 @@
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, Package, Scissors, DollarSign, Truck, Gift } from "lucide-react";
+import { Users, Calendar, Package, Scissors, DollarSign, Truck, Gift, LogOut } from "lucide-react";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import ClientManagement from "@/components/ClientManagement";
 import InventoryManagement from "@/components/InventoryManagement";
@@ -11,9 +12,27 @@ import ServiceManagement from "@/components/ServiceManagement";
 import FinancialManagement from "@/components/FinancialManagement";
 import SupplierManagement from "@/components/SupplierManagement";
 import PromotionManagement from "@/components/PromotionManagement";
+import LoginPage from "@/components/LoginPage";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const handleLogin = (userType: 'admin' | 'employee' | 'client', userData: any) => {
+    setIsAuthenticated(true);
+    setCurrentUser({ ...userData, userType });
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setActiveTab("dashboard");
+  };
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
@@ -29,8 +48,16 @@ const Index = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="secondary" className="bg-pink-100 text-pink-700">
-                Administrador
+                {currentUser?.userType === 'admin' ? 'Administrador' : 
+                 currentUser?.userType === 'employee' ? 'Empleado' : 'Cliente'}
               </Badge>
+              <span className="text-sm text-gray-600">
+                Bienvenido, {currentUser?.email}
+              </span>
+              <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="h-4 w-4 mr-2" />
+                Cerrar Sesión
+              </Button>
             </div>
           </div>
         </div>
