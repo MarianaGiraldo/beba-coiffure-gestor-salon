@@ -10,7 +10,7 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	// Initialize controllers
 	authController := &controllers.AuthController{}
-	employeeController := &controllers.EmployeeController{}
+	employeeController := &controllers.SPEmployeeController{}
 
 	// Public routes
 	api := r.Group("/api")
@@ -35,7 +35,7 @@ func SetupRoutes(r *gin.Engine) {
 		employees.Use(middleware.AdminOnlyMiddleware())
 		{
 			employees.GET("/", employeeController.GetEmployees)
-			employees.GET("/:id", employeeController.GetEmployee)
+			// employees.GET("/:id", employeeController.GetEmployee)
 			employees.POST("/", employeeController.CreateEmployee)
 			employees.PUT("/:id", employeeController.UpdateEmployee)
 			employees.DELETE("/:id", employeeController.DeleteEmployee)
@@ -45,8 +45,8 @@ func SetupRoutes(r *gin.Engine) {
 		payments := protected.Group("/payments")
 		payments.Use(middleware.AdminOnlyMiddleware())
 		{
-			payments.GET("/", employeeController.GetPayments)
-			payments.POST("/", employeeController.CreatePayment)
+			// payments.GET("/", employeeController.GetPayments)
+			// payments.POST("/", employeeController.CreatePayment)
 		}
 
 		// Add more route groups here for other modules:
