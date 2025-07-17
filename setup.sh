@@ -54,6 +54,104 @@ install_docker_ubuntu() {
     log "Docker installed successfully. Please log out and log back in for group changes to take effect."
 }
 
+# Function to install Docker on Rocky Linux 9
+install_docker_rocky() {
+    log "Installing Docker on Rocky Linux 9..."
+    
+    # Remove any existing Docker installations
+    sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
+    
+    # Install required packages
+    sudo dnf install -y dnf-plugins-core
+    
+    # Add Docker repository
+    sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    
+    # Install Docker Engine
+    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+    
+    # Start and enable Docker service
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    
+    # Add user to docker group
+    sudo usermod -aG docker $USER
+    
+    # Install Docker Compose manually for Rocky Linux 9
+    log "Installing Docker Compose..."
+    DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
+    sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    
+    # Create symlink for docker compose command
+    sudo ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+    
+    log "Docker and Docker Compose installed successfully. Please log out and log back in for group changes to take effect."
+}
+
+# Function to detect Linux distribution
+detect_distro() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        DISTRO=$ID
+        VERSION=$VERSION_ID
+    elif [ -f /etc/redhat-release ]; then
+        DISTRO="rhel"
+        VERSION=$(cat /etc/redhat-release | sed 's/.*release \([0-9]\).*/\1/')
+    else
+        DISTRO="unknown"
+        VERSION="unknown"
+    fi
+    
+    log "Detected distribution: $DISTRO $VERSION"
+}
+
+# Function to fix Docker permissions
+fix_docker_permissions() {
+    log "Checking Docker permissions..."
+    
+    # Check if user is in docker group
+    if ! groups "$USER" | grep -q '\bdocker\b'; then
+        log "Adding user $USER to docker group..."
+        sudo usermod -aG docker "$USER"
+        
+        # Create docker group if it doesn't exist
+        if ! getent group docker > /dev/null 2>&1; then
+            sudo groupadd docker
+            sudo usermod -aG docker "$USER"
+        fi
+        
+        warn "User added to docker group. You need to log out and log back in, or run:"
+        warn "  newgrp docker"
+        warn "Or restart your session for the changes to take effect."
+        
+        # Test if we can access docker now
+        if ! docker ps >/dev/null 2>&1; then
+            warn "Docker permission still not working. Trying newgrp docker..."
+            exec sg docker -c "$0 $*"
+        fi
+    else
+        log "User $USER is already in docker group"
+    fi
+    
+    # Check if Docker daemon is running
+    if ! docker info >/dev/null 2>&1; then
+        log "Starting Docker daemon..."
+        sudo systemctl start docker
+        sudo systemctl enable docker
+        
+        # Wait a moment for Docker to start
+        sleep 5
+        
+        if ! docker info >/dev/null 2>&1; then
+            error "Failed to start Docker daemon. Please check Docker installation."
+            exit 1
+        fi
+    fi
+    
+    log "Docker permissions are properly configured"
+}
+
 # Function to check system requirements
 check_requirements() {
     log "Checking system requirements..."
@@ -65,7 +163,28 @@ check_requirements() {
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-                install_docker_ubuntu
+                # Detect Linux distribution
+                detect_distro
+                
+                case "$DISTRO" in
+                    "ubuntu"|"debian")
+                        install_docker_ubuntu
+                        ;;
+                    "rocky"|"rhel"|"centos"|"almalinux")
+                        install_docker_rocky
+                        ;;
+                    "fedora")
+                        install_docker_rocky  # Use same method as Rocky Linux
+                        ;;
+                    *)
+                        error "Unsupported Linux distribution: $DISTRO"
+                        error "Please install Docker manually: https://docs.docker.com/get-docker/"
+                        exit 1
+                        ;;
+                esac
+                
+                # Fix permissions after installation
+                fix_docker_permissions
             else
                 error "Please install Docker manually for your OS: https://docs.docker.com/get-docker/"
                 exit 1
@@ -76,14 +195,49 @@ check_requirements() {
         fi
     else
         log "Docker is installed: $(docker --version)"
+        # Fix permissions if needed
+        fix_docker_permissions
     fi
     
-    # Check Docker Compose
-    if ! command_exists "docker compose"; then
-        error "Docker Compose is not available. Please install Docker Compose."
-        exit 1
+    # Check Docker Compose (with fallback methods for Rocky Linux)
+    if ! command_exists "docker compose" && ! command_exists "docker-compose"; then
+        warn "Docker Compose is not available."
+        
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            detect_distro
+            
+            if [[ "$DISTRO" == "rocky" || "$DISTRO" == "rhel" || "$DISTRO" == "centos" || "$DISTRO" == "almalinux" ]]; then
+                log "Installing Docker Compose for Rocky Linux/RHEL..."
+                DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
+                sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+                sudo ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+                log "Docker Compose installed successfully"
+            else
+                error "Docker Compose is not available. Please install Docker Compose."
+                exit 1
+            fi
+        else
+            error "Docker Compose is not available. Please install Docker Compose."
+            exit 1
+        fi
     else
-        log "Docker Compose is available: $(docker compose version)"
+        if command_exists "docker compose"; then
+            log "Docker Compose is available: $(docker compose version)"
+        elif command_exists "docker-compose"; then
+            log "Docker Compose is available: $(docker-compose --version)"
+            # Create alias for consistency
+            alias docker_compose="docker-compose"
+        fi
+    fi
+    
+    # Test Docker permissions one more time
+    if ! docker ps >/dev/null 2>&1; then
+        error "Docker permission test failed. Please ensure:"
+        error "1. Docker daemon is running: sudo systemctl start docker"
+        error "2. Your user is in docker group: sudo usermod -aG docker \$USER"
+        error "3. Log out and log back in, or run: newgrp docker"
+        exit 1
     fi
     
     # Check available disk space (at least 5GB)
@@ -144,15 +298,41 @@ EOL
     chmod +x setup.sh
 }
 
+# Function to execute docker compose commands with fallback
+docker_compose_cmd() {
+    local compose_file=""
+    local cmd_args="$@"
+    
+    # Check if we're using development environment
+    if echo "$cmd_args" | grep -q "docker-compose.dev.yml"; then
+        compose_file="-f docker-compose.dev.yml"
+        cmd_args=$(echo "$cmd_args" | sed 's/-f docker-compose\.dev\.yml//g')
+    fi
+    
+    # Try docker compose first (newer syntax)
+    if command_exists "docker compose"; then
+        docker compose $compose_file $cmd_args
+    elif command_exists "docker-compose"; then
+        if [ -n "$compose_file" ]; then
+            docker-compose $compose_file $cmd_args
+        else
+            docker-compose $cmd_args
+        fi
+    else
+        error "Neither 'docker compose' nor 'docker-compose' is available"
+        exit 1
+    fi
+}
+
 # Function to build and start services
 start_services() {
     local environment=${1:-"development"}
     
     if [ "$environment" = "development" ]; then
         log "Starting development environment..."
-        docker compose -f docker-compose.dev.yml down --remove-orphans
-        docker compose -f docker-compose.dev.yml build --no-cache
-        docker compose -f docker-compose.dev.yml up -d
+        docker_compose_cmd -f docker-compose.dev.yml down --remove-orphans
+        docker_compose_cmd -f docker-compose.dev.yml build --no-cache
+        docker_compose_cmd -f docker-compose.dev.yml up -d
         
         log "Development services starting..."
         log "Frontend (React): http://localhost:5174"
@@ -161,9 +341,9 @@ start_services() {
         
     else
         log "Starting production environment..."
-        docker compose down --remove-orphans
-        docker compose build --no-cache
-        docker compose up -d
+        docker_compose_cmd down --remove-orphans
+        docker_compose_cmd build --no-cache
+        docker_compose_cmd up -d
         
         log "Production services starting..."
         log "Frontend (React): http://localhost:5173"
@@ -180,15 +360,15 @@ show_logs() {
     
     if [ "$environment" = "development" ]; then
         if [ -n "$service" ]; then
-            docker compose -f docker-compose.dev.yml logs -f "$service"
+            docker_compose_cmd -f docker-compose.dev.yml logs -f "$service"
         else
-            docker compose -f docker-compose.dev.yml logs -f
+            docker_compose_cmd -f docker-compose.dev.yml logs -f
         fi
     else
         if [ -n "$service" ]; then
-            docker compose logs -f "$service"
+            docker_compose_cmd logs -f "$service"
         else
-            docker compose logs -f
+            docker_compose_cmd logs -f
         fi
     fi
 }
@@ -199,10 +379,10 @@ stop_services() {
     
     if [ "$environment" = "development" ]; then
         log "Stopping development environment..."
-        docker compose -f docker-compose.dev.yml down
+        docker_compose_cmd -f docker-compose.dev.yml down
     else
         log "Stopping production environment..."
-        docker compose down
+        docker_compose_cmd down
     fi
 }
 
@@ -219,9 +399,30 @@ show_status() {
     local environment=${1:-"development"}
     
     if [ "$environment" = "development" ]; then
-        docker compose -f docker-compose.dev.yml ps
+        docker_compose_cmd -f docker-compose.dev.yml ps
     else
-        docker compose ps
+        docker_compose_cmd ps
+    fi
+}
+
+# Function to check database initialization status
+check_database_status() {
+    local environment=${1:-"development"}
+    
+    log "Checking database initialization status..."
+    
+    if [ "$environment" = "development" ]; then
+        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
+            log "Database initialization log retrieved successfully"
+        else
+            warn "Database may not be initialized yet"
+        fi
+    else
+        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
+            log "Database initialization log retrieved successfully"
+        else
+            warn "Database may not be initialized yet"
+        fi
     fi
 }
 
@@ -234,12 +435,28 @@ run_migrations() {
     sleep 30
     
     # Check if running in development or production
-    if docker compose -f docker-compose.dev.yml ps mysql >/dev/null 2>&1; then
+    if docker_compose_cmd -f docker-compose.dev.yml ps mysql >/dev/null 2>&1; then
         # Development environment
-        docker compose -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT 'Database is ready';"
+        log "Checking if database is initialized..."
+        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
+            log "Database already initialized, skipping migrations"
+        else
+            log "Database initialization in progress..."
+            # Wait a bit more for initialization scripts to complete
+            sleep 20
+        fi
+        docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT 'Database is ready';"
     else
         # Production environment
-        docker compose exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT 'Database is ready';"
+        log "Checking if database is initialized..."
+        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
+            log "Database already initialized, skipping migrations"
+        else
+            log "Database initialization in progress..."
+            # Wait a bit more for initialization scripts to complete
+            sleep 20
+        fi
+        docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT 'Database is ready';"
     fi
     
     log "Database migrations completed"
@@ -251,12 +468,12 @@ backup_database() {
     
     log "Creating database backup: $backup_file"
     
-    if docker compose ps mysql >/dev/null 2>&1; then
+    if docker_compose_cmd ps mysql >/dev/null 2>&1; then
         # Production environment
-        docker compose exec mysql mysqldump -u salon_user -psalon_password_456 mydb > "$backup_file"
+        docker_compose_cmd exec mysql mysqldump -u salon_user -psalon_password_456 mydb > "$backup_file"
     else
         # Development environment
-        docker compose -f docker-compose.dev.yml exec mysql mysqldump -u salon_user -psalon_password_456 mydb > "$backup_file"
+        docker_compose_cmd -f docker-compose.dev.yml exec mysql mysqldump -u salon_user -psalon_password_456 mydb > "$backup_file"
     fi
     
     log "Database backup completed: $backup_file"
@@ -278,12 +495,12 @@ restore_database() {
     
     log "Restoring database from: $backup_file"
     
-    if docker compose ps mysql >/dev/null 2>&1; then
+    if docker_compose_cmd ps mysql >/dev/null 2>&1; then
         # Production environment
-        docker compose exec -i mysql mysql -u salon_user -psalon_password_456 mydb < "$backup_file"
+        docker_compose_cmd exec -i mysql mysql -u salon_user -psalon_password_456 mydb < "$backup_file"
     else
         # Development environment
-        docker compose -f docker-compose.dev.yml exec -i mysql mysql -u salon_user -psalon_password_456 mydb < "$backup_file"
+        docker_compose_cmd -f docker-compose.dev.yml exec -i mysql mysql -u salon_user -psalon_password_456 mydb < "$backup_file"
     fi
     
     log "Database restore completed"
@@ -335,6 +552,10 @@ case "${1:-setup}" in
     "migrate")
         run_migrations
         ;;
+    "db-status")
+        environment=${2:-"development"}
+        check_database_status "$environment"
+        ;;
     "backup")
         backup_database
         ;;
@@ -343,6 +564,11 @@ case "${1:-setup}" in
         ;;
     "help"|"--help"|"-h")
         echo "Beba Coiffure Salon Management System - Setup Script"
+        echo ""
+        echo "Supported Operating Systems:"
+        echo "  - Ubuntu/Debian (apt-based)"
+        echo "  - Rocky Linux 9/RHEL/CentOS/AlmaLinux (dnf-based)"
+        echo "  - Fedora (dnf-based)"
         echo ""
         echo "Usage: $0 [COMMAND] [OPTIONS]"
         echo ""
@@ -355,6 +581,7 @@ case "${1:-setup}" in
         echo "  status [env]      Show status of all services"
         echo "  cleanup           Clean up Docker resources"
         echo "  migrate           Run database migrations"
+        echo "  db-status [env]   Check database initialization status"
         echo "  backup            Create database backup"
         echo "  restore [file]    Restore database from backup file"
         echo "  help              Show this help message"
@@ -365,6 +592,12 @@ case "${1:-setup}" in
         echo "  $0 logs backend-dev         # Show backend logs"
         echo "  $0 backup                   # Create database backup"
         echo "  $0 restore backup.sql       # Restore from backup"
+        echo ""
+        echo "For Rocky Linux 9, the script will automatically:"
+        echo "  - Install Docker from official repository"
+        echo "  - Install Docker Compose from GitHub releases"
+        echo "  - Configure Docker service"
+        echo "  - Add user to docker group"
         ;;
     *)
         error "Unknown command: $1"

@@ -1,5 +1,4 @@
 # Development environment for local testing
-version: '3.8'
 
 services:
   # MySQL Database
@@ -17,7 +16,7 @@ services:
     volumes:
       - mysql_dev_data:/var/lib/mysql
       - ./src/sql:/docker-entrypoint-initdb.d:ro
-      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      # - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
     networks:
       - salon_dev_network
     healthcheck:

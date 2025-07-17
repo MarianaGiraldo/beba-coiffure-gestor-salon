@@ -1,4 +1,4 @@
-USE mydb;
+USE salondb;
 INSERT INTO EMPLEADO (emp_nombre, emp_apellido, emp_telefono, emp_correo, emp_puesto, emp_salario) VALUES
 ('Feliciana', 'Cantón', '+57 4843321819', 'andresciro@gmail.com', 'Estilista', 1050021.51),
 ('Joan', 'Vazquez', '+57 4740838637', 'cuervojose@gmail.com', 'Gerente', 1489783.71),
@@ -291,46 +291,8 @@ INSERT INTO HISTORIAL_CITA (his_observaciones, cit_id) VALUES
 ('Vero accusamus soluta consequuntur aliquam nemo.', 3);
 
 
-/* 
-Consultas
-*/
 
--- Nombre de empleados con sus citas programadas (Empleado):
 
-SELECT emp_nombre, emp_apellido, cit_id, cit_fecha, cit_hora FROM (empleado JOIN cita ON empleado.emp_id=cita.emp_id);
-
--- Nombres de productos usados con su servicio tal que se hayan usado más de 500ml del producto (Administrador):
-
-SELECT prod_nombre, pru_cantidad_usada FROM producto JOIN producto_usado ON producto.prod_id=producto_usado.prod_id WHERE pru_cantidad_usada>=500;
-
--- Nombres de servicios con sus promociones tal que la promoción sea mayor al 20% (Administrador):
-
-SELECT ser_nombre, pro_nombre, pro_descuento_porcentaje FROM servicio JOIN promocion ON promocion.ser_id=servicio.ser_id WHERE pro_descuento_porcentaje>20;
-
--- Cliente con sus facturas de al menos 250000 pesos (Cliente):
-
-SELECT cli_nombre, fac_id, fac_total FROM cliente JOIN factura_servicio ON factura_servicio.cli_id=cliente.cli_id WHERE fac_total>=250000; 
-
--- Cálculo del gasto mensual con la sumatoria de los pagos a empleados y compra de productos (Administrador):
-
-SELECT (SELECT sum(emp_salario) FROM empleado)+(SELECT sum(cop_total_compra) FROM compra_producto) AS gasto_total;
-
--- Clientes con sus citas programadas (Cliente):
-
-SELECT cli_nombre, cit_id, cit_fecha FROM cliente NATURAL JOIN cita; 
-
--- Empleados con sus horarios (Empleado):
-
-SELECT emp_nombre, emp_apellido, hor_dia_semana, hor_hora_entrada, hor_hora_salida FROM empleado NATURAL JOIN horario_empleado WHERE emp_id=1;
-
--- Empleado con sus servicios programados (Cliente):
-
-SELECT emp_nombre, emp_apellido, cit_id, cit_fecha, ser_id, ser_nombre FROM empleado NATURAL JOIN cita NATURAL JOIN servicio;
-
--- Producto con su proveedor (Administrador):
-
-SELECT prod_nombre, prov_nombre FROM proveedor NATURAL JOIN detalle_compra NATURAL JOIN compra_producto NATURAL JOIN producto;
-
--- Usuarios del sistema con sus nombres (Cliente, Empleado, Administrador):
-
-SELECT usu_nombre_usuario FROM usuario_sistema;
+-- Log table creation completion
+INSERT INTO salondb.db_initialization_log (script_name, status) 
+VALUES ('06_insert_mock_data.sql', 'SUCCESS');

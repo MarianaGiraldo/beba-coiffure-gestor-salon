@@ -25,9 +25,16 @@ A comprehensive salon management system built with React frontend, Go (Gin) back
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- Git
-- At least 4GB RAM and 5GB disk space
+- **Operating System Support:**
+  - Ubuntu/Debian (apt-based distributions)
+  - Rocky Linux 9/RHEL/CentOS/AlmaLinux (dnf-based distributions)
+  - Fedora (dnf-based distributions)
+- **Docker and Docker Compose** (automatically installed by setup script)
+- **Git**
+- **System Requirements:**
+  - At least 4GB RAM
+  - At least 5GB disk space
+  - Internet connection for downloading Docker images
 
 ### Installation
 
@@ -42,10 +49,74 @@ A comprehensive salon management system built with React frontend, Go (Gin) back
    ./setup.sh setup
    ```
 
+   The setup script will:
+   - Detect your Linux distribution automatically
+   - Install Docker and Docker Compose if needed
+   - Create necessary environment files
+   - Build and start all services
+   - Initialize the database with schema, stored procedures, views, and triggers
+   - Set up proper user permissions and roles
+
+### Database Initialization
+
+The database is automatically initialized when the MySQL container starts for the **first time only**. The initialization process includes:
+
+1. **Schema Creation** (`01_create_tables.sql`) - Creates all database tables
+2. **Views & Permissions** (`02_views_users_permissions_indices.sql`) - Creates views, users, and indices
+3. **Triggers & Foreign Keys** (`03_triggers_foreign_keys.sql`) - Sets up data integrity constraints
+4. **CRUD Procedures** (`04_stored_procedures_crud.sql`) - Creates stored procedures for CRUD operations
+5. **View Procedures** (`05_stored_procedures_views.sql`) - Creates procedures for dashboard metrics
+6. **Completion Marker** (`99_initialization_complete.sql`) - Marks initialization as complete
+
+To check the database initialization status:
+```bash
+./setup.sh db-status [development|production]
+```
+
 3. **Access the application:**
    - Frontend: http://localhost:5174
    - Backend API: http://localhost:8081
    - Database: localhost:3307
+
+### Rocky Linux 9 Installation
+
+For Rocky Linux 9 systems, the setup script will automatically:
+
+1. **Install Docker Engine** from the official Docker repository
+2. **Install Docker Compose** from GitHub releases (latest version)
+3. **Configure Docker service** to start automatically
+4. **Add your user to the docker group** for non-root access
+
+After installation, you may need to log out and log back in for the docker group membership to take effect.
+
+**Manual Rocky Linux 9 Setup (if needed):**
+
+```bash
+# Remove any existing Docker installations
+sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
+
+# Install required packages
+sudo dnf install -y dnf-plugins-core
+
+# Add Docker repository
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+# Install Docker Engine
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
+
+# Start and enable Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
+sudo curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+sudo ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+```
 
 ## 🛠️ Development
 
@@ -356,6 +427,7 @@ The `setup.sh` script provides comprehensive management:
 
 # Database operations
 ./setup.sh migrate
+./setup.sh db-status [development|production]
 ./setup.sh backup
 ./setup.sh restore backup.sql
 

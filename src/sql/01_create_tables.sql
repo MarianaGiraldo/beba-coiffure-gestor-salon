@@ -1,20 +1,29 @@
 -- -----------------------------------------------------
--- Schema mydb
+-- Schema salondb
 -- -----------------------------------------------------
-DROP SCHEMA IF EXISTS `mydb` ;
+-- DROP SCHEMA IF EXISTS salondb ;  -- Commented out to preserve initialization tracking
+
+
+-- Create a marker table to track initialization
+CREATE TABLE IF NOT EXISTS salondb.`db_initialization_log` (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    script_name VARCHAR(100) NOT NULL,
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('SUCCESS', 'FAILED') DEFAULT 'SUCCESS'
+);
 
 -- -----------------------------------------------------
--- Schema mydb
+-- Schema salondb
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8 ;
-USE `mydb` ;
+CREATE SCHEMA IF NOT EXISTS salondb DEFAULT CHARACTER SET utf8 ;
+USE salondb ;
 
 -- -----------------------------------------------------
--- Table `mydb`.`EMPLEADO`
+-- Table salondb.`EMPLEADO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`EMPLEADO` ;
+DROP TABLE IF EXISTS salondb.`EMPLEADO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`EMPLEADO` (
+CREATE TABLE IF NOT EXISTS salondb.`EMPLEADO` (
   `emp_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que identifica a cada empleado',
   `emp_nombre` VARCHAR(50) NOT NULL COMMENT 'Nombres del empleado de la empresa',
   `emp_apellido` VARCHAR(50) NOT NULL COMMENT 'Apellidos del empleado de la empresa',
@@ -26,11 +35,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`EMPLEADO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`CLIENTE`
+-- Table salondb.`CLIENTE`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`CLIENTE` ;
+DROP TABLE IF EXISTS salondb.`CLIENTE` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`CLIENTE` (
+CREATE TABLE IF NOT EXISTS salondb.`CLIENTE` (
   `cli_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único del cliente',
   `cli_nombre` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Nombre del cliente',
   `cli_apellido` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Apellido del cliente',
@@ -40,11 +49,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`CLIENTE` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`USUARIO_SISTEMA`
+-- Table salondb.`USUARIO_SISTEMA`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`USUARIO_SISTEMA` ;
+DROP TABLE IF EXISTS salondb.`USUARIO_SISTEMA` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`USUARIO_SISTEMA` (
+CREATE TABLE IF NOT EXISTS salondb.`USUARIO_SISTEMA` (
   `usu_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Identificador del usuario del sistema',
   `usu_nombre_usuario` VARCHAR(50) NOT NULL COMMENT 'Nombre del usuario del sistema',
   `usu_contraseña` VARCHAR(100) NOT NULL COMMENT 'Contraseña del usuario del sistema',
@@ -55,11 +64,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`USUARIO_SISTEMA` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`HORARIO_EMPLEADO`
+-- Table salondb.`HORARIO_EMPLEADO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`HORARIO_EMPLEADO` ;
+DROP TABLE IF EXISTS salondb.`HORARIO_EMPLEADO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`HORARIO_EMPLEADO` (
+CREATE TABLE IF NOT EXISTS salondb.`HORARIO_EMPLEADO` (
   `hor_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Identificador único del horario del empleado',
   `hor_dia_semana` VARCHAR(20) NOT NULL COMMENT 'Dato que indica qué días de la semana trabaja el empleado',
   `hor_hora_entrada` TIME NOT NULL COMMENT 'Dato que indica la hora de entrada del trabajador',
@@ -69,17 +78,26 @@ CREATE TABLE IF NOT EXISTS `mydb`.`HORARIO_EMPLEADO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`SERVICIO`
+-- Table salondb.`SERVICIO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`SERVICIO` ;
+DROP TABLE IF EXISTS salondb.`SERVICIO` ;
+
+CREATE TABLE IF NOT EXISTS salondb.`SERVICIO` (
+  `ser_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único del servicio',
+  `ser_nombre` VARCHAR(100) NOT NULL COMMENT 'Nombre del servicio',
+  `ser_descripcion` TEXT NULL COMMENT 'Descripción del servicio',
+  `ser_categoria` VARCHAR(50) NOT NULL COMMENT 'Categoría del servicio (ej: Corte, Peinado, Coloración, Tratamiento)',
+  `ser_precio_unitario` DECIMAL(10,2) NOT NULL COMMENT 'Precio unitario del servicio',
+  `ser_duracion_estimada` INT NULL COMMENT 'Duración estimada del servicio en minutos'
+);
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`PRODUCTO`
+-- Table salondb.`PRODUCTO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`PRODUCTO` ;
+DROP TABLE IF EXISTS salondb.`PRODUCTO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`PRODUCTO` (
+CREATE TABLE IF NOT EXISTS salondb.`PRODUCTO` (
   `prod_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único del producto',
   `prod_nombre` VARCHAR(100) NOT NULL COMMENT 'Nombre del producto',
   `prod_descripción` TEXT NULL COMMENT 'Descripción del producto',
@@ -89,11 +107,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`PRODUCTO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`PRODUCTO_USADO`
+-- Table salondb.`PRODUCTO_USADO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`PRODUCTO_USADO` ;
+DROP TABLE IF EXISTS salondb.`PRODUCTO_USADO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`PRODUCTO_USADO` (
+CREATE TABLE IF NOT EXISTS salondb.`PRODUCTO_USADO` (
   `ser_id` INT PRIMARY KEY NOT NULL COMMENT 'Códgo que sirve como identificador único del servicio realizado en el que se utilizó el producto',
   `prod_id` INT NOT NULL COMMENT 'Código que sirve como identificador único del producto utilizado',
   `pru_cantidad_usada` TINYINT(3) NOT NULL COMMENT 'Cantidad utilizada del producto durante el servicio',
@@ -102,11 +120,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`PRODUCTO_USADO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`FACTURA_SERVICIO`
+-- Table salondb.`FACTURA_SERVICIO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`FACTURA_SERVICIO` ;
+DROP TABLE IF EXISTS salondb.`FACTURA_SERVICIO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`FACTURA_SERVICIO` (
+CREATE TABLE IF NOT EXISTS salondb.`FACTURA_SERVICIO` (
   `fac_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único de la factura con los servicios realizados a un cliente',
   `fac_total` DECIMAL(10,2) NOT NULL COMMENT 'Total gastado por el cliente durante su estancia en el salón de belleza',
   `fac_fecha` DATE NOT NULL COMMENT 'Fecha en la que se imprimió la factura',
@@ -116,22 +134,22 @@ CREATE TABLE IF NOT EXISTS `mydb`.`FACTURA_SERVICIO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`DETALLE_FACTURA_SERVICIO`
+-- Table salondb.`DETALLE_FACTURA_SERVICIO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`DETALLE_FACTURA_SERVICIO` ;
+DROP TABLE IF EXISTS salondb.`DETALLE_FACTURA_SERVICIO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`DETALLE_FACTURA_SERVICIO` (
+CREATE TABLE IF NOT EXISTS salondb.`DETALLE_FACTURA_SERVICIO` (
   `fac_id` INT PRIMARY KEY NOT NULL COMMENT 'Identificador único de la factura',
   `ser_id` INT NOT NULL COMMENT 'Identificador único del servicio'
   );
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`PROVEEDOR`
+-- Table salondb.`PROVEEDOR`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`PROVEEDOR` ;
+DROP TABLE IF EXISTS salondb.`PROVEEDOR` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`PROVEEDOR` (
+CREATE TABLE IF NOT EXISTS salondb.`PROVEEDOR` (
   `prov_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único para el proveedor',
   `prov_nombre` VARCHAR(100) NOT NULL COMMENT 'Nombre del proveedor',
   `prov_telefono` VARCHAR(20) NOT NULL COMMENT 'Número del teléfono del proveedor',
@@ -141,11 +159,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`PROVEEDOR` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`GASTO_MENSUAL`
+-- Table salondb.`GASTO_MENSUAL`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`GASTO_MENSUAL` ;
+DROP TABLE IF EXISTS salondb.`GASTO_MENSUAL` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`GASTO_MENSUAL` (
+CREATE TABLE IF NOT EXISTS salondb.`GASTO_MENSUAL` (
   `gas_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Identificador único del gasto total de la empresa',
   `gas_descripción` TEXT NULL DEFAULT NULL COMMENT 'Texto que describe las transacciones que hacen parte del gasto',
   `gas_fecha` DATE NOT NULL COMMENT 'Describe la fecha en la que se realizó cada gasto',
@@ -155,11 +173,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`GASTO_MENSUAL` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`PAGO`
+-- Table salondb.`PAGO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`PAGO` ;
+DROP TABLE IF EXISTS salondb.`PAGO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`PAGO` (
+CREATE TABLE IF NOT EXISTS salondb.`PAGO` (
   `pag_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que identifica a cada pago como único dentro de la empresa',
   `pag_fecha` DATE NOT NULL COMMENT 'Fecha en la que se realizó el pago',
   `pag_monto` DECIMAL(10,2) NOT NULL COMMENT 'Monto total del pago realizado',
@@ -170,11 +188,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`PAGO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`COMPRA_PRODUCTO`
+-- Table salondb.`COMPRA_PRODUCTO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`COMPRA_PRODUCTO` ;
+DROP TABLE IF EXISTS salondb.`COMPRA_PRODUCTO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`COMPRA_PRODUCTO` (
+CREATE TABLE IF NOT EXISTS salondb.`COMPRA_PRODUCTO` (
   `com_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único de cada compra de productos realizada',
   `cop_fecha_compra` DATE NOT NULL COMMENT 'Fecha en la que se realizó la compra',
   `cop_total_compra` DECIMAL(10,2) NOT NULL COMMENT 'Monto total de la compra realizada',
@@ -185,11 +203,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`COMPRA_PRODUCTO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`DETALLE_COMPRA`
+-- Table salondb.`DETALLE_COMPRA`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`DETALLE_COMPRA` ;
+DROP TABLE IF EXISTS salondb.`DETALLE_COMPRA` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`DETALLE_COMPRA` (
+CREATE TABLE IF NOT EXISTS salondb.`DETALLE_COMPRA` (
   `com_id` INT PRIMARY KEY NOT NULL COMMENT 'Identificador único de la compra',
   `prod_id` INT NOT NULL COMMENT 'Identificador único de producto comprado',
   `dec_cantidad` INT NOT NULL COMMENT 'Cantidad de producto comprado',
@@ -198,11 +216,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`DETALLE_COMPRA` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`INVENTARIO`
+-- Table salondb.`INVENTARIO`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`INVENTARIO` ;
+DROP TABLE IF EXISTS salondb.`INVENTARIO` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`INVENTARIO` (
+CREATE TABLE IF NOT EXISTS salondb.`INVENTARIO` (
   `inv_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único del inventario',
   `inv_fecha_actualización` DATE NOT NULL COMMENT 'Fecha de actualización del inventario',
   `prod_id` INT NOT NULL COMMENT 'Identificador único del producto',
@@ -212,11 +230,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`INVENTARIO` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`PROMOCION`
+-- Table salondb.`PROMOCION`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`PROMOCION` ;
+DROP TABLE IF EXISTS salondb.`PROMOCION` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`PROMOCION` (
+CREATE TABLE IF NOT EXISTS salondb.`PROMOCION` (
   `pro_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único de la promoción',
   `pro_nombre` VARCHAR(100) NOT NULL COMMENT 'Nombre de la promoción',
   `pro_descripción` TEXT NULL DEFAULT NULL COMMENT 'Descripción y detalles de la promoción',
@@ -229,11 +247,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`PROMOCION` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`CITA`
+-- Table salondb.`CITA`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`CITA` ;
+DROP TABLE IF EXISTS salondb.`CITA` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`CITA` (
+CREATE TABLE IF NOT EXISTS salondb.`CITA` (
   `cit_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único de la cita programada',
   `cit_fecha` DATE NOT NULL COMMENT 'Fecha de la cita programada',
   `cit_hora` TIME NOT NULL COMMENT 'Hora de la cita programada',
@@ -244,13 +262,16 @@ CREATE TABLE IF NOT EXISTS `mydb`.`CITA` (
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`HISTORIAL_CITA`
+-- Table salondb.`HISTORIAL_CITA`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `mydb`.`HISTORIAL_CITA` ;
+DROP TABLE IF EXISTS salondb.`HISTORIAL_CITA` ;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`HISTORIAL_CITA` (
+CREATE TABLE IF NOT EXISTS salondb.`HISTORIAL_CITA` (
   `his_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único para el historial de servicios recibidos por un cliente',
   `his_observaciones` TEXT NULL DEFAULT NULL COMMENT 'Observaciones sobre el historial del cliente',
   `cit_id` INT NOT NULL COMMENT 'Identificador único de alguna de las citas tomadas por el cliente'
   );
 
+-- Table creation completed successfully
+INSERT INTO salondb.db_initialization_log (script_name, status) 
+VALUES ('01_create_tables.sql', 'SUCCESS');

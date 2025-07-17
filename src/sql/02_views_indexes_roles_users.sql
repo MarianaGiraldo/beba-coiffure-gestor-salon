@@ -54,17 +54,37 @@ CREATE INDEX idx_inv_cantidad ON INVENTARIO (inv_cantidad_actual);
 CREATE INDEX idx_prod_precio ON PRODUCTO (prod_precio_unitario);
 
 -- Creación de usuarios y asignación de permisos
-CREATE USER 'admin'@'localhost' IDENTIFIED BY 'securePass123';
-GRANT ALL PRIVILEGES ON mydb.* TO 'admin'@'localhost';
+CREATE ROLE IF NOT EXISTS 'rol_admin';
+CREATE ROLE IF NOT EXISTS 'rol_empleado';
+CREATE ROLE IF NOT EXISTS 'rol_cliente';
 
-CREATE USER 'empleado'@'localhost' IDENTIFIED BY 'empPass456';
-GRANT SELECT, INSERT, UPDATE ON mydb.CITA TO 'empleado'@'localhost';
-GRANT SELECT, INSERT ON mydb.FACTURA_SERVICIO TO 'empleado'@'localhost';
-GRANT SELECT ON mydb.vw_citas_proximas TO 'empleado'@'localhost';
-GRANT SELECT ON mydb.vw_citas_hoy TO 'empleado'@'localhost';
-GRANT SELECT ON mydb.vw_servicios_totales TO 'empleado'@'localhost';
 
-CREATE USER 'cliente'@'localhost' IDENTIFIED BY 'cliPass789';
-GRANT SELECT, INSERT ON mydb.CITA TO 'cliente'@'localhost';
-GRANT SELECT ON mydb.vw_citas_proximas TO 'cliente'@'localhost';
-GRANT SELECT ON mydb.vw_citas_hoy TO 'cliente'@'localhost';
+
+GRANT ALL PRIVILEGES ON salondb.* TO 'rol_admin';
+
+GRANT SELECT, INSERT, UPDATE ON salondb.CITA TO 'rol_empleado';
+GRANT SELECT, INSERT ON salondb.FACTURA_SERVICIO TO 'rol_empleado';
+GRANT SELECT ON salondb.vw_citas_hoy TO 'rol_empleado';
+GRANT SELECT ON salondb.vw_servicios_totales TO 'rol_empleado';
+GRANT SELECT ON salondb.vw_precio_promedio_servicios TO 'rol_empleado';
+
+GRANT SELECT, INSERT ON salondb.CITA TO 'rol_cliente';
+GRANT SELECT ON salondb.vw_citas_hoy TO 'rol_cliente';
+GRANT SELECT ON salondb.vw_servicios_totales TO 'rol_cliente';
+
+
+CREATE USER IF NOT EXISTS 'admin01'@'localhost' IDENTIFIED BY 'admin123';
+GRANT 'rol_admin' TO 'admin01'@'localhost';
+SET DEFAULT ROLE 'rol_admin' TO 'admin01'@'localhost';
+
+CREATE USER IF NOT EXISTS 'empleado01'@'localhost' IDENTIFIED BY 'empPass456';
+GRANT 'rol_empleado' TO 'empleado01'@'localhost';
+SET DEFAULT ROLE 'rol_empleado' TO 'empleado01'@'localhost';
+
+CREATE USER IF NOT EXISTS 'cliente01'@'localhost' IDENTIFIED BY 'cliPass789';
+GRANT 'rol_cliente' TO 'cliente01'@'localhost';
+SET DEFAULT ROLE 'rol_cliente' TO 'cliente01'@'localhost';
+
+-- Log views and permissions completion
+INSERT INTO salondb.db_initialization_log (script_name, status) 
+VALUES ('02_views_indexes_roles_users.sql', 'SUCCESS');

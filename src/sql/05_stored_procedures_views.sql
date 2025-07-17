@@ -63,3 +63,7 @@ END;
 //
 
 DELIMITER ;
+
+-- Log view stored procedures completion
+INSERT INTO salondb.db_initialization_log (script_name, status) 
+VALUES ('05_stored_procedures_views.sql', 'SUCCESS');

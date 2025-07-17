@@ -310,3 +310,59 @@ BEGIN
   UPDATE HISTORIAL_CITA SET cit_id = NEW.cit_id WHERE cit_id = OLD.cit_id;
 END;
 //
+
+-- Trigger empleado->usuario_sistema
+
+DELIMITER //
+
+CREATE TRIGGER trg_insert_usuario_empleado
+AFTER INSERT ON EMPLEADO
+FOR EACH ROW
+BEGIN
+  INSERT INTO USUARIO_SISTEMA (
+    usu_nombre_usuario,
+    usu_contraseña,
+    usu_rol,
+    emp_id,
+    cli_id
+  )
+  VALUES (
+    CONCAT(LOWER(LEFT(NEW.emp_nombre, 1)), LOWER(NEW.emp_apellido)),
+    SHA2('default123', 256), 
+    'empleado',
+    NEW.emp_id,
+    NULL
+  );
+END;
+//
+
+DELIMITER ;
+
+-- Trigger cliente->usuario_sistema
+
+CREATE TRIGGER trg_insert_usuario_cliente
+AFTER INSERT ON CLIENTE
+FOR EACH ROW
+BEGIN
+  INSERT INTO USUARIO_SISTEMA (
+    usu_nombre_usuario,
+    usu_contraseña,
+    usu_rol,
+    emp_id,
+    cli_id
+  )
+  VALUES (
+    CONCAT(LOWER(LEFT(NEW.cli_nombre, 1)), LOWER(NEW.cli_apellido)),
+    SHA2('default123', 256), 
+    'cliente',
+    NULL,
+    NEW.cli_id
+  );
+END;
+//
+
+DELIMITER ;
+
+-- Log triggers completion
+INSERT INTO salondb.db_initialization_log (script_name, status) 
+VALUES ('03_triggers_foreign_keys.sql', 'SUCCESS');
