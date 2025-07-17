@@ -8,7 +8,7 @@ import (
 type UsuarioSistema struct {
 	UsuID            uint   `json:"usu_id" gorm:"primaryKey;autoIncrement;column:usu_id"`
 	UsuNombreUsuario string `json:"usu_nombre_usuario" gorm:"not null;column:usu_nombre_usuario"`
-	UsuContraseña    string `json:"-" gorm:"not null;column:usu_contraseña"`
+	UsuContrasena    string `json:"-" gorm:"not null;column:usu_contrasena"`
 	UsuRol           string `json:"usu_rol" gorm:"not null;column:usu_rol"`
 	EmpID            *uint  `json:"emp_id,omitempty" gorm:"column:emp_id"`
 	CliID            *uint  `json:"cli_id,omitempty" gorm:"column:cli_id"`
@@ -53,7 +53,7 @@ func (Client) TableName() string {
 type Service struct {
 	SerID               uint    `json:"ser_id" gorm:"primaryKey;autoIncrement;column:ser_id"`
 	SerNombre           string  `json:"ser_nombre" gorm:"not null;column:ser_nombre"`
-	SerDescripcion      string  `json:"ser_descripcion" gorm:"column:ser_descripción"`
+	SerDescripcion      string  `json:"ser_descripcion" gorm:"column:ser_descripcion"`
 	SerPrecioUnitario   float64 `json:"ser_precio_unitario" gorm:"not null;column:ser_precio_unitario"`
 	SerCategoria        string  `json:"ser_categoria" gorm:"not null;column:ser_categoria"`
 	SerDuracionEstimada int     `json:"ser_duracion_estimada" gorm:"default:60;column:ser_duracion_estimada"`
@@ -67,7 +67,7 @@ func (Service) TableName() string {
 type Product struct {
 	ProdID                 uint    `json:"prod_id" gorm:"primaryKey;autoIncrement;column:prod_id"`
 	ProdNombre             string  `json:"prod_nombre" gorm:"not null;column:prod_nombre"`
-	ProdDescripcion        string  `json:"prod_descripcion" gorm:"column:prod_descripción"`
+	ProdDescripcion        string  `json:"prod_descripcion" gorm:"column:prod_descripcion"`
 	ProdCantidadDisponible int     `json:"prod_cantidad_disponible" gorm:"not null;column:prod_cantidad_disponible"`
 	ProdPrecioUnitario     float64 `json:"prod_precio_unitario" gorm:"not null;column:prod_precio_unitario"`
 }
@@ -79,7 +79,7 @@ func (Product) TableName() string {
 // Inventory represents the inventory table (matches database schema exactly)
 type Inventory struct {
 	InvID                 uint      `json:"inv_id" gorm:"primaryKey;autoIncrement;column:inv_id"`
-	InvFechaActualizacion time.Time `json:"inv_fecha_actualizacion" gorm:"not null;column:inv_fecha_actualización"`
+	InvFechaActualizacion time.Time `json:"inv_fecha_actualizacion" gorm:"not null;column:inv_fecha_actualizacion"`
 	ProdID                uint      `json:"prod_id" gorm:"not null;column:prod_id"`
 	InvCantidadActual     int       `json:"inv_cantidad_actual" gorm:"not null;column:inv_cantidad_actual"`
 	InvObservaciones      string    `json:"inv_observaciones" gorm:"column:inv_observaciones"`
@@ -96,7 +96,7 @@ type Supplier struct {
 	ProvNombre    string `json:"prov_nombre" gorm:"not null;column:prov_nombre"`
 	ProvTelefono  string `json:"prov_telefono" gorm:"not null;column:prov_telefono"`
 	ProvCorreo    string `json:"prov_correo" gorm:"not null;column:prov_correo"`
-	ProvDireccion string `json:"prov_direccion" gorm:"not null;column:prov_dirección"`
+	ProvDireccion string `json:"prov_direccion" gorm:"not null;column:prov_direccion"`
 }
 
 func (Supplier) TableName() string {
@@ -108,7 +108,7 @@ type Purchase struct {
 	ComID          uint      `json:"com_id" gorm:"primaryKey;autoIncrement;column:com_id"`
 	CopFechaCompra time.Time `json:"cop_fecha_compra" gorm:"not null;column:cop_fecha_compra"`
 	CopTotalCompra float64   `json:"cop_total_compra" gorm:"not null;column:cop_total_compra"`
-	CopMetodoPago  string    `json:"cop_metodo_pago" gorm:"not null;column:cop_método_pago"`
+	CopMetodoPago  string    `json:"cop_metodo_pago" gorm:"not null;column:cop_metodo_pago"`
 	ProvID         uint      `json:"prov_id" gorm:"not null;column:prov_id"`
 	GasID          uint      `json:"gas_id" gorm:"not null;column:gas_id"`
 }
@@ -122,7 +122,7 @@ type Payment struct {
 	PagID     uint      `json:"pag_id" gorm:"primaryKey;autoIncrement;column:pag_id"`
 	PagFecha  time.Time `json:"pag_fecha" gorm:"not null;column:pag_fecha"`
 	PagMonto  float64   `json:"pag_monto" gorm:"not null;column:pag_monto"`
-	PagMetodo string    `json:"pag_metodo" gorm:"not null;column:pag_método"`
+	PagMetodo string    `json:"pag_metodo" gorm:"not null;column:pag_metodo"`
 	GasID     uint      `json:"gas_id" gorm:"not null;column:gas_id"`
 	EmpID     uint      `json:"emp_id" gorm:"not null;column:emp_id"`
 }
@@ -135,7 +135,7 @@ func (Payment) TableName() string {
 type Promotion struct {
 	ProID                  uint      `json:"pro_id" gorm:"primaryKey;autoIncrement;column:pro_id"`
 	ProNombre              string    `json:"pro_nombre" gorm:"not null;column:pro_nombre"`
-	ProDescripcion         string    `json:"pro_descripcion" gorm:"column:pro_descripción"`
+	ProDescripcion         string    `json:"pro_descripcion" gorm:"column:pro_descripcion"`
 	ProFechaInicio         time.Time `json:"pro_fecha_inicio" gorm:"not null;column:pro_fecha_inicio"`
 	ProFechaFin            time.Time `json:"pro_fecha_fin" gorm:"not null;column:pro_fecha_fin"`
 	ProDescuentoPorcentaje float64   `json:"pro_descuento_porcentaje" gorm:"column:pro_descuento_porcentaje"`

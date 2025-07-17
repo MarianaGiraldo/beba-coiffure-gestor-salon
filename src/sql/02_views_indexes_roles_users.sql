@@ -1,3 +1,5 @@
+use salondb;
+
 -- Creación de vistas (paneles de métricas)
 CREATE VIEW vw_empleados_activos AS
   SELECT COUNT(*) AS total_activos
@@ -85,6 +87,6 @@ CREATE USER IF NOT EXISTS 'cliente01'@'localhost' IDENTIFIED BY 'cliPass789';
 GRANT 'rol_cliente' TO 'cliente01'@'localhost';
 SET DEFAULT ROLE 'rol_cliente' TO 'cliente01'@'localhost';
 
--- Log views and permissions completion
-INSERT INTO salondb.db_initialization_log (script_name, status) 
+-- Log views and permissions completion (using INSERT IGNORE to prevent duplicates)
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('02_views_indexes_roles_users.sql', 'SUCCESS');

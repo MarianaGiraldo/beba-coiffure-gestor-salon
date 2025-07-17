@@ -2,7 +2,7 @@
 -- This script is executed last to mark the database as fully initialized
 
 -- Final initialization check and summary
-INSERT INTO salondb.db_initialization_log (script_name, status) 
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('99_initialization_complete.sql', 'SUCCESS');
 
 -- Optional: Display initialization summary (for debugging)

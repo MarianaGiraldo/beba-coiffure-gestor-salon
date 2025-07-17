@@ -31,7 +31,7 @@ INSERT INTO CLIENTE (cli_nombre, cli_apellido, cli_telefono, cli_correo) VALUES
 ('Nacho', 'Quevedo', '+57 4724823662', 'tabad@gmail.com'),
 ('Humberto', 'Ropero', '+57 4739577738', 'genovevablazquez@gmail.com'),
 ('Aránzazu', 'Naranjo', '+57 4733433200', 'dbeltran@gmail.com');
-INSERT INTO PROVEEDOR (prov_nombre, prov_telefono, prov_correo, prov_dirección) VALUES
+INSERT INTO PROVEEDOR (prov_nombre, prov_telefono, prov_correo, prov_direccion) VALUES
 ('Zamora Inc', '+57 4720062312', 'gilanselma@gmail.com', 'Paseo Carmen Reina 1, Murcia, 08621'),
 ('Zamora and Sons', '+57 4639845461', 'santiago79@gmail.com', 'C. de René Tamarit 1, Ávila, 65918'),
 ('Gras and Sons', '+57 4729740148', 'escobarursula@gmail.com', 'Rambla de Cintia Hernandez 668, Valladolid, 18501'),
@@ -47,7 +47,7 @@ INSERT INTO PROVEEDOR (prov_nombre, prov_telefono, prov_correo, prov_dirección)
 ('Sainz, Gil and Rodríguez', '+57 4743407451', 'xcarpio@gmail.com', 'Glorieta Odalys Gabaldón 6, Pontevedra, 54494'),
 ('Bustos, Cerdá and Reina', '+57 4714223253', 'jtovar@gmail.com', 'Pasadizo de Maribel Lobo 87, Palencia, 17518'),
 ('Gibert-Román', '+57 4737454589', 'clarisatoro@gmail.com', 'Rambla Valero Sastre 7, Tarragona, 42415');
-INSERT INTO SERVICIO (ser_nombre, ser_descripción, ser_precio_unitario, ser_categoria) VALUES
+INSERT INTO SERVICIO (ser_nombre, ser_descripcion, ser_precio_unitario, ser_categoria) VALUES
 ('Natus servicio', 'Omnis ab quibusdam quo. Quod dolor rem possimus.', 200931.51, 'Hogar'),
 ('Pariatur servicio', 'Praesentium quisquam cumque non quibusdam beatae reprehenderit. Autem ad est perspiciatis vero.', 232432.95, 'Hogar'),
 ('Magni servicio', 'Sed delectus distinctio reiciendis excepturi sunt praesentium.', 293278.94, 'Otro'),
@@ -63,7 +63,7 @@ INSERT INTO SERVICIO (ser_nombre, ser_descripción, ser_precio_unitario, ser_cat
 ('Repudiandae servicio', 'Sapiente voluptate repellendus nostrum odit ad. Adipisci earum quis ullam expedita.', 102376.76, 'Mantenimiento'),
 ('Odit servicio', 'Fuga quam quod necessitatibus. Sunt culpa quidem amet. Earum optio laborum ipsam.', 225455.08, 'Hogar'),
 ('Deserunt servicio', 'Eveniet ab quia cupiditate fugit. Magnam rerum rem asperiores similique.', 202282.75, 'Belleza');
-INSERT INTO PRODUCTO (prod_nombre, prod_descripción, prod_cantidad_disponible, prod_precio_unitario) VALUES
+INSERT INTO PRODUCTO (prod_nombre, prod_descripcion, prod_cantidad_disponible, prod_precio_unitario) VALUES
 ('Nesciunt producto', 'Illo vitae cupiditate veniam. Rerum ullam at sapiente doloribus nihil minima.', 18, 39165.07),
 ('Autem producto', 'Eos aut eveniet eos ipsum quaerat cumque. Expedita aliquam sit explicabo voluptatum earum.', 6, 28490.41),
 ('Aliquid producto', 'Doloremque officia facere veniam. Non perspiciatis veniam.', 9, 49580.93),
@@ -79,7 +79,7 @@ INSERT INTO PRODUCTO (prod_nombre, prod_descripción, prod_cantidad_disponible, 
 ('Quasi producto', 'Error aperiam veniam sunt tenetur numquam. Nam aliquid exercitationem officia fugit minima.', 15, 15714.86),
 ('Quidem producto', 'Eaque perferendis nobis. Deleniti quis quam nam.', 5, 19865.1),
 ('Totam producto', 'Ea maiores libero atque voluptatem. Quis eum dicta est aliquid sint qui. Ea vel neque.', 18, 31559.09);
-INSERT INTO GASTO_MENSUAL (gas_descripción, gas_fecha, gas_monto, gas_tipo) VALUES
+INSERT INTO GASTO_MENSUAL (gas_descripcion, gas_fecha, gas_monto, gas_tipo) VALUES
 ('Assumenda optio officiis amet numquam.', '2025-02-01', 772312.43, 'Indirecto'),
 ('Maxime ipsum ab exercitationem blanditiis.', '2024-11-05', 908040.6, 'Indirecto'),
 ('Consequatur quo quidem consequatur voluptatibus.', '2024-10-30', 425796.8, 'Variable'),
@@ -95,7 +95,7 @@ INSERT INTO GASTO_MENSUAL (gas_descripción, gas_fecha, gas_monto, gas_tipo) VAL
 ('Rem quae omnis dolore dolorum totam eum.', '2024-09-10', 791738.86, 'Directo'),
 ('Itaque fuga eos quos qui doloribus fuga.', '2024-06-25', 200396.96, 'Indirecto'),
 ('Molestiae odio possimus ab ex.', '2024-07-09', 242341.98, 'Fijo');
-INSERT INTO PAGO (pag_fecha, pag_monto, pag_método, gas_id, emp_id) VALUES
+INSERT INTO PAGO (pag_fecha, pag_monto, pag_metodo, gas_id, emp_id) VALUES
 ('2025-06-16', 973293.69, 'Transferencia', 9, 15),
 ('2025-06-16', 151090.28, 'Tarjeta', 14, 11),
 ('2025-06-16', 532279.74, 'Transferencia', 3, 6),
@@ -143,7 +143,7 @@ INSERT INTO CITA (cit_fecha, cit_hora, emp_id, ser_id, cli_id) VALUES
 ('2025-06-16', '11:37:08', 1, 2, 15),
 ('2025-06-16', '11:32:14', 13, 14, 4),
 ('2025-06-16', '13:11:14', 3, 7, 8);
-INSERT INTO USUARIO_SISTEMA (usu_nombre_usuario, usu_contraseña, usu_rol, emp_id, cli_id) VALUES
+INSERT INTO USUARIO_SISTEMA (usu_nombre_usuario, usu_contrasena, usu_rol, emp_id, cli_id) VALUES
 ('jsantamaria', '+8_!Hy)mFd', 'empleado', NULL, 15.0),
 ('figueroavanesa', '&o_7vZeKfO', 'cliente', 7.0, NULL),
 ('leonardolosada', '269BS%t_*r', 'empleado', NULL, NULL),
@@ -193,7 +193,7 @@ INSERT INTO PRODUCTO_USADO (ser_id, prod_id, pru_cantidad_usada, pru_botellas_us
 (15, 2, 100, 3);
 
 DELETE FROM PRODUCTO_USADO;
-INSERT INTO PROMOCION (pro_nombre, pro_descripción, pro_fecha_inicio, pro_fecha_fin, pro_descuento_porcentaje, ser_id, pro_usos) VALUES
+INSERT INTO PROMOCION (pro_nombre, pro_descripcion, pro_fecha_inicio, pro_fecha_fin, pro_descuento_porcentaje, ser_id, pro_usos) VALUES
 ('Promo 1', 'Itaque sit ratione numquam minima in impedit.', '2025-06-16', '2025-06-16', 27.6, 9, 1),
 ('Promo 2', 'Ratione sint sunt soluta. Fugit laborum non alias eius.', '2025-06-16', '2025-06-16', 25.86, 10, 9),
 ('Promo 3', 'Quia ullam tempore. Excepturi recusandae est.', '2025-06-16', '2025-06-16', 8.7, 3, 1),
@@ -209,7 +209,7 @@ INSERT INTO PROMOCION (pro_nombre, pro_descripción, pro_fecha_inicio, pro_fecha
 ('Promo 13', 'Sint nesciunt velit.', '2025-06-16', '2025-06-16', 11.67, 13, 2),
 ('Promo 14', 'Sit corrupti voluptatibus.', '2025-06-16', '2025-06-16', 14.56, 1, 8),
 ('Promo 15', 'Occaecati debitis odio a earum quis. Nemo culpa quos quod.', '2025-06-16', '2025-06-16', 10.56, 14, 8);
-INSERT INTO COMPRA_PRODUCTO (cop_fecha_compra, cop_total_compra, cop_método_pago, prov_id, gas_id) VALUES
+INSERT INTO COMPRA_PRODUCTO (cop_fecha_compra, cop_total_compra, cop_metodo_pago, prov_id, gas_id) VALUES
 ('2025-06-16', 191890.7, 'Efectivo', 4, 1),
 ('2025-06-16', 291210.62, 'Tarjeta', 6, 5),
 ('2025-06-16', 356592.94, 'Tarjeta', 6, 11),
@@ -241,7 +241,7 @@ INSERT INTO DETALLE_COMPRA (com_id, prod_id, dec_cantidad, dec_precio_unitario) 
 (13.0, 10.0, 6.0, 12801.62),
 (14.0, 13.0, 4.0, 30183.87),
 (15.0, 4.0, 4.0, 14420.62);
-INSERT INTO INVENTARIO (inv_fecha_actualización, prod_id, inv_cantidad_actual, inv_observaciones) VALUES
+INSERT INTO INVENTARIO (inv_fecha_actualizacion, prod_id, inv_cantidad_actual, inv_observaciones) VALUES
 ('2025-06-16', 1, 2, 'Fugit nihil cumque reprehenderit.'),
 ('2025-06-16', 2, 8, 'Dolorem quas consectetur.'),
 ('2025-06-16', 3, 16, 'Fugiat odit quo.'),
@@ -294,5 +294,5 @@ INSERT INTO HISTORIAL_CITA (his_observaciones, cit_id) VALUES
 
 
 -- Log table creation completion
-INSERT INTO salondb.db_initialization_log (script_name, status) 
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('06_insert_mock_data.sql', 'SUCCESS');

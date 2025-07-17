@@ -16,7 +16,7 @@ END;
 //
 
 
---Select empleado
+-- Select empleado
 CREATE PROCEDURE sp_get_empleados()
 BEGIN
   SELECT * FROM EMPLEADO;
@@ -64,7 +64,7 @@ BEGIN
 END;
 //
 
---Actualizar Cliente
+-- Actualizar Cliente
 CREATE PROCEDURE sp_update_cliente(
   IN p_id INT, IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_telefono VARCHAR(20), IN p_correo VARCHAR(100)
 )
@@ -75,7 +75,7 @@ BEGIN
 END;
 //
 
---Borrar Cliente
+-- Borrar Cliente
 CREATE PROCEDURE sp_delete_cliente(IN p_id INT)
 BEGIN
   DELETE FROM CLIENTE WHERE cli_id = p_id;
@@ -89,33 +89,33 @@ CREATE PROCEDURE sp_insert_producto(
   IN p_nombre VARCHAR(100), IN p_descripcion TEXT, IN p_cantidad TINYINT, IN p_precio DECIMAL(10,2)
 )
 BEGIN
-  INSERT INTO PRODUCTO(prod_nombre, prod_descripción, prod_cantidad_disponible, prod_precio_unitario)
+  INSERT INTO PRODUCTO(prod_nombre, prod_descripcion, prod_cantidad_disponible, prod_precio_unitario)
   VALUES (p_nombre, p_descripcion, p_cantidad, p_precio);
 END;
 //
 
 
---Select Producto
+-- Select Producto
 CREATE PROCEDURE sp_get_productos()
 BEGIN
   SELECT * FROM PRODUCTO;
 END;
 //
 
---Actualizar Producto
+-- Actualizar Producto
 CREATE PROCEDURE sp_update_producto(
   IN p_id INT, IN p_nombre VARCHAR(100), IN p_descripcion TEXT, IN p_cantidad TINYINT, IN p_precio DECIMAL(10,2)
 )
 BEGIN
   UPDATE PRODUCTO
-  SET prod_nombre = p_nombre, prod_descripción = p_descripcion, prod_cantidad_disponible = p_cantidad,
+  SET prod_nombre = p_nombre, prod_descripcion = p_descripcion, prod_cantidad_disponible = p_cantidad,
       prod_precio_unitario = p_precio
   WHERE prod_id = p_id;
 END;
 //
 
 
---Borrar Producto
+-- Borrar Producto
 CREATE PROCEDURE sp_delete_producto(IN p_id INT)
 BEGIN
   DELETE FROM PRODUCTO WHERE prod_id = p_id;
@@ -124,7 +124,7 @@ END;
 
 DELIMITER ;
 
---Buscar cliente por ID:
+-- Buscar cliente por ID:
 
 DELIMITER //
 
@@ -134,10 +134,10 @@ BEGIN
   FROM CLIENTE 
   WHERE cli_id = p_cli_id;
 END;
-
+//
 DELIMITER ;
 
---Buscar empleado por ID:
+-- Buscar empleado por ID:
 
 DELIMITER //
 
@@ -158,7 +158,7 @@ CREATE PROCEDURE BuscarUsuario(IN p_usuario VARCHAR(100))
 BEGIN
   SELECT * 
   FROM USUARIO_SISTEMA
-  WHERE usu_nombre_usuario = p_usuario
+  WHERE usu_nombre_usuario = p_usuario;
 END;
 //
 
@@ -273,7 +273,7 @@ CREATE PROCEDURE CrearInventario(
 )
 BEGIN
   INSERT INTO INVENTARIO (
-    inv_fecha_actualización,
+    inv_fecha_actualizacion,
     prod_id,
     inv_cantidad_actual,
     inv_observaciones
@@ -303,7 +303,7 @@ END;
 
 DELIMITER ;
 
---Actualizar Inventario
+-- Actualizar Inventario
 
 DELIMITER //
 
@@ -316,7 +316,7 @@ CREATE PROCEDURE ActualizarInventario(
 BEGIN
   UPDATE INVENTARIO
   SET
-    inv_fecha_actualización = p_fecha,
+    inv_fecha_actualizacion = p_fecha,
     inv_cantidad_actual = p_cantidad,
     inv_observaciones = p_observaciones
   WHERE inv_id = p_inv_id;
@@ -340,7 +340,7 @@ END;
 
 DELIMITER ;
 
---Insertar Producto
+-- Insertar Producto
 
 DELIMITER //
 
@@ -368,7 +368,7 @@ END;
 
 DELIMITER ;
 
---Actualizar Producto
+-- Actualizar Producto
 
 DELIMITER //
 
@@ -619,6 +619,6 @@ END;
 DELIMITER ;
 
 -- Log CRUD stored procedures completion
-INSERT INTO salondb.db_initialization_log (script_name, status) 
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('04_stored_procedures_crud.sql', 'SUCCESS');
 

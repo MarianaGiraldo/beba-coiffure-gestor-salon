@@ -321,7 +321,7 @@ FOR EACH ROW
 BEGIN
   INSERT INTO USUARIO_SISTEMA (
     usu_nombre_usuario,
-    usu_contraseña,
+    usu_contrasena,
     usu_rol,
     emp_id,
     cli_id
@@ -340,13 +340,15 @@ DELIMITER ;
 
 -- Trigger cliente->usuario_sistema
 
+DELIMITER //
+
 CREATE TRIGGER trg_insert_usuario_cliente
 AFTER INSERT ON CLIENTE
 FOR EACH ROW
 BEGIN
   INSERT INTO USUARIO_SISTEMA (
     usu_nombre_usuario,
-    usu_contraseña,
+    usu_contrasena,
     usu_rol,
     emp_id,
     cli_id
@@ -364,5 +366,5 @@ END;
 DELIMITER ;
 
 -- Log triggers completion
-INSERT INTO salondb.db_initialization_log (script_name, status) 
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('03_triggers_foreign_keys.sql', 'SUCCESS');

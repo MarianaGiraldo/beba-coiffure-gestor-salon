@@ -20,7 +20,7 @@ services:
     networks:
       - salon_dev_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_123"]
       timeout: 20s
       retries: 10
 

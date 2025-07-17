@@ -3,20 +3,30 @@
 -- -----------------------------------------------------
 -- DROP SCHEMA IF EXISTS salondb ;  -- Commented out to preserve initialization tracking
 
+-- Create the schema first
+CREATE SCHEMA IF NOT EXISTS salondb DEFAULT CHARACTER SET utf8 ;
+USE salondb ;
 
 -- Create a marker table to track initialization
 CREATE TABLE IF NOT EXISTS salondb.`db_initialization_log` (
     id INT PRIMARY KEY AUTO_INCREMENT,
     script_name VARCHAR(100) NOT NULL,
     executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('SUCCESS', 'FAILED') DEFAULT 'SUCCESS'
+    status ENUM('SUCCESS', 'FAILED') DEFAULT 'SUCCESS',
+    UNIQUE KEY unique_script (script_name)
 );
 
--- -----------------------------------------------------
--- Schema salondb
--- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS salondb DEFAULT CHARACTER SET utf8 ;
-USE salondb ;
+-- Check if this script has already been executed
+-- If it has, skip the rest
+SET @script_executed = (SELECT COUNT(*) FROM db_initialization_log WHERE script_name = '01_create_tables.sql');
+
+-- Only proceed if script hasn't been executed
+-- Note: MySQL doesn't support conditional DDL directly, so we use a different approach
+-- The docker-entrypoint-initdb.d only runs on empty databases anyway
+
+-- Log the start of this script
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
+VALUES ('01_create_tables.sql', 'SUCCESS');
 
 -- -----------------------------------------------------
 -- Table salondb.`EMPLEADO`
@@ -56,7 +66,7 @@ DROP TABLE IF EXISTS salondb.`USUARIO_SISTEMA` ;
 CREATE TABLE IF NOT EXISTS salondb.`USUARIO_SISTEMA` (
   `usu_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Identificador del usuario del sistema',
   `usu_nombre_usuario` VARCHAR(50) NOT NULL COMMENT 'Nombre del usuario del sistema',
-  `usu_contraseña` VARCHAR(100) NOT NULL COMMENT 'Contraseña del usuario del sistema',
+  `usu_contrasena` VARCHAR(100) NOT NULL COMMENT 'Contraseña del usuario del sistema',
   `usu_rol` VARCHAR(20) NOT NULL COMMENT 'Rol del usuario del sistema',
   `emp_id` INT NULL COMMENT 'Código que identifica al usuario del sistema como empleado de la empresa',
   `cli_id` INT NULL
@@ -100,7 +110,7 @@ DROP TABLE IF EXISTS salondb.`PRODUCTO` ;
 CREATE TABLE IF NOT EXISTS salondb.`PRODUCTO` (
   `prod_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único del producto',
   `prod_nombre` VARCHAR(100) NOT NULL COMMENT 'Nombre del producto',
-  `prod_descripción` TEXT NULL COMMENT 'Descripción del producto',
+  `prod_descripcion` TEXT NULL COMMENT 'Descripción del producto',
   `prod_cantidad_disponible` TINYINT(3) NOT NULL COMMENT 'Cantidad disponible del producto',
   `prod_precio_unitario` DECIMAL(10,2) NOT NULL COMMENT 'Precio unitario del producto'
 );
@@ -114,8 +124,8 @@ DROP TABLE IF EXISTS salondb.`PRODUCTO_USADO` ;
 CREATE TABLE IF NOT EXISTS salondb.`PRODUCTO_USADO` (
   `ser_id` INT PRIMARY KEY NOT NULL COMMENT 'Códgo que sirve como identificador único del servicio realizado en el que se utilizó el producto',
   `prod_id` INT NOT NULL COMMENT 'Código que sirve como identificador único del producto utilizado',
-  `pru_cantidad_usada` TINYINT(3) NOT NULL COMMENT 'Cantidad utilizada del producto durante el servicio',
-  `pru_botellas_usadas` TINYINT(3) NOT NULL
+  `pru_cantidad_usada` SMALLINT UNSIGNED NOT NULL COMMENT 'Cantidad utilizada del producto durante el servicio',
+  `pru_botellas_usadas` SMALLINT UNSIGNED NOT NULL
   );
 
 
@@ -154,7 +164,7 @@ CREATE TABLE IF NOT EXISTS salondb.`PROVEEDOR` (
   `prov_nombre` VARCHAR(100) NOT NULL COMMENT 'Nombre del proveedor',
   `prov_telefono` VARCHAR(20) NOT NULL COMMENT 'Número del teléfono del proveedor',
   `prov_correo` VARCHAR(100) NOT NULL COMMENT 'Dirección de correo del proveedor',
-  `prov_dirección` VARCHAR(150) NOT NULL COMMENT 'Dirección que indica la ubicación del proveedor'
+  `prov_direccion` VARCHAR(150) NOT NULL COMMENT 'Dirección que indica la ubicación del proveedor'
   );
 
 
@@ -165,7 +175,7 @@ DROP TABLE IF EXISTS salondb.`GASTO_MENSUAL` ;
 
 CREATE TABLE IF NOT EXISTS salondb.`GASTO_MENSUAL` (
   `gas_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Identificador único del gasto total de la empresa',
-  `gas_descripción` TEXT NULL DEFAULT NULL COMMENT 'Texto que describe las transacciones que hacen parte del gasto',
+  `gas_descripcion` TEXT NULL DEFAULT NULL COMMENT 'Texto que describe las transacciones que hacen parte del gasto',
   `gas_fecha` DATE NOT NULL COMMENT 'Describe la fecha en la que se realizó cada gasto',
   `gas_monto` DECIMAL(10,2) NOT NULL COMMENT 'Cantidad de dinero total perteneciente al gasto realizado',
   `gas_tipo` VARCHAR(50) NOT NULL COMMENT 'Describe el tipo de gasto realizado en la empresa (Fijo, variable, directo, indirecto, etc)'
@@ -181,7 +191,7 @@ CREATE TABLE IF NOT EXISTS salondb.`PAGO` (
   `pag_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que identifica a cada pago como único dentro de la empresa',
   `pag_fecha` DATE NOT NULL COMMENT 'Fecha en la que se realizó el pago',
   `pag_monto` DECIMAL(10,2) NOT NULL COMMENT 'Monto total del pago realizado',
-  `pag_método` VARCHAR(50) NOT NULL COMMENT 'Método de pago utilizado en la transacción',
+  `pag_metodo` VARCHAR(50) NOT NULL COMMENT 'Método de pago utilizado en la transacción',
   `gas_id` INT NOT NULL COMMENT 'Código que sirve como identificador único de los gastos de la empresa',
   `emp_id` INT NOT NULL COMMENT 'Código que identifica a cada empleado como único dentro de la empresa'
   );
@@ -196,7 +206,7 @@ CREATE TABLE IF NOT EXISTS salondb.`COMPRA_PRODUCTO` (
   `com_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único de cada compra de productos realizada',
   `cop_fecha_compra` DATE NOT NULL COMMENT 'Fecha en la que se realizó la compra',
   `cop_total_compra` DECIMAL(10,2) NOT NULL COMMENT 'Monto total de la compra realizada',
-  `cop_método_pago` VARCHAR(50) NOT NULL COMMENT 'Método de pago utilizado para realizar la compra',
+  `cop_metodo_pago` VARCHAR(50) NOT NULL COMMENT 'Método de pago utilizado para realizar la compra',
   `prov_id` INT NOT NULL COMMENT 'Identificador único del proveedor',
   `gas_id` INT NOT NULL COMMENT 'Identificador único del gasto'
   );
@@ -222,7 +232,7 @@ DROP TABLE IF EXISTS salondb.`INVENTARIO` ;
 
 CREATE TABLE IF NOT EXISTS salondb.`INVENTARIO` (
   `inv_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único del inventario',
-  `inv_fecha_actualización` DATE NOT NULL COMMENT 'Fecha de actualización del inventario',
+  `inv_fecha_actualizacion` DATE NOT NULL COMMENT 'Fecha de actualización del inventario',
   `prod_id` INT NOT NULL COMMENT 'Identificador único del producto',
   `inv_cantidad_actual` INT NOT NULL COMMENT 'Cantidad actual del producto en el inventario',
   `inv_observaciones` TEXT NULL DEFAULT NULL COMMENT 'Observaciones sobre la presencia del producto en el inventario'
@@ -237,7 +247,7 @@ DROP TABLE IF EXISTS salondb.`PROMOCION` ;
 CREATE TABLE IF NOT EXISTS salondb.`PROMOCION` (
   `pro_id` INT PRIMARY KEY NOT NULL AUTO_INCREMENT COMMENT 'Código que sirve como identificador único de la promoción',
   `pro_nombre` VARCHAR(100) NOT NULL COMMENT 'Nombre de la promoción',
-  `pro_descripción` TEXT NULL DEFAULT NULL COMMENT 'Descripción y detalles de la promoción',
+  `pro_descripcion` TEXT NULL DEFAULT NULL COMMENT 'Descripción y detalles de la promoción',
   `pro_fecha_inicio` DATE NOT NULL COMMENT 'Fecha de inicio de la promoción',
   `pro_fecha_fin` DATE NOT NULL COMMENT 'Fecha de finalización de la promoción',
   `pro_descuento_porcentaje` DECIMAL(5,2) NULL DEFAULT NULL COMMENT 'Porcentaje de descuento que un servicio posee gracias a la promoción',
@@ -273,5 +283,6 @@ CREATE TABLE IF NOT EXISTS salondb.`HISTORIAL_CITA` (
   );
 
 -- Table creation completed successfully
-INSERT INTO salondb.db_initialization_log (script_name, status) 
+-- Log completion (using INSERT IGNORE to prevent duplicates)
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('01_create_tables.sql', 'SUCCESS');
