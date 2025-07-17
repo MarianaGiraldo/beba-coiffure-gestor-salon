@@ -267,7 +267,7 @@ DB_PORT=3306
 DB_USER=salon_user
 DB_PASSWORD=salon_password_456
 DB_ROOT_PASSWORD=root_password_123
-DB_NAME=mydb
+DB_NAME=salondb
 
 # Server Configuration
 SERVER_HOST=0.0.0.0
@@ -412,13 +412,13 @@ check_database_status() {
     log "Checking database initialization status..."
     
     if [ "$environment" = "development" ]; then
-        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
+        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
             log "Database initialization log retrieved successfully"
         else
             warn "Database may not be initialized yet"
         fi
     else
-        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
+        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
             log "Database initialization log retrieved successfully"
         else
             warn "Database may not be initialized yet"
@@ -438,25 +438,25 @@ run_migrations() {
     if docker_compose_cmd -f docker-compose.dev.yml ps mysql >/dev/null 2>&1; then
         # Development environment
         log "Checking if database is initialized..."
-        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
+        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
             log "Database already initialized, skipping migrations"
         else
             log "Database initialization in progress..."
             # Wait a bit more for initialization scripts to complete
             sleep 20
         fi
-        docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT 'Database is ready';"
+        docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT 'Database is ready';"
     else
         # Production environment
         log "Checking if database is initialized..."
-        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
+        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
             log "Database already initialized, skipping migrations"
         else
             log "Database initialization in progress..."
             # Wait a bit more for initialization scripts to complete
             sleep 20
         fi
-        docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 mydb -e "SELECT 'Database is ready';"
+        docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT 'Database is ready';"
     fi
     
     log "Database migrations completed"
@@ -470,10 +470,10 @@ backup_database() {
     
     if docker_compose_cmd ps mysql >/dev/null 2>&1; then
         # Production environment
-        docker_compose_cmd exec mysql mysqldump -u salon_user -psalon_password_456 mydb > "$backup_file"
+        docker_compose_cmd exec mysql mysqldump -u salon_user -psalon_password_456 salondb > "$backup_file"
     else
         # Development environment
-        docker_compose_cmd -f docker-compose.dev.yml exec mysql mysqldump -u salon_user -psalon_password_456 mydb > "$backup_file"
+        docker_compose_cmd -f docker-compose.dev.yml exec mysql mysqldump -u salon_user -psalon_password_456 salondb > "$backup_file"
     fi
     
     log "Database backup completed: $backup_file"
@@ -497,10 +497,10 @@ restore_database() {
     
     if docker_compose_cmd ps mysql >/dev/null 2>&1; then
         # Production environment
-        docker_compose_cmd exec -i mysql mysql -u salon_user -psalon_password_456 mydb < "$backup_file"
+        docker_compose_cmd exec -i mysql mysql -u salon_user -psalon_password_456 salondb < "$backup_file"
     else
         # Development environment
-        docker_compose_cmd -f docker-compose.dev.yml exec -i mysql mysql -u salon_user -psalon_password_456 mydb < "$backup_file"
+        docker_compose_cmd -f docker-compose.dev.yml exec -i mysql mysql -u salon_user -psalon_password_456 salondb < "$backup_file"
     fi
     
     log "Database restore completed"

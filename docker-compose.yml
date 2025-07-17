@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_password_123
-      MYSQL_DATABASE: mydb
+      MYSQL_DATABASE: salondb
       MYSQL_USER: salon_user
       MYSQL_PASSWORD: salon_password_456
     ports:
@@ -38,7 +38,7 @@ services:
       DB_PORT: 3306
       DB_USER: salon_user
       DB_PASSWORD: salon_password_456
-      DB_NAME: mydb
+      DB_NAME: salondb
       
       # Server Configuration
       SERVER_HOST: 0.0.0.0

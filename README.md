@@ -305,7 +305,7 @@ DB_HOST=mysql
 DB_PORT=3306
 DB_USER=salon_user
 DB_PASSWORD=your_secure_password
-DB_NAME=mydb
+DB_NAME=salondb
 
 # Server Configuration
 SERVER_PORT=8080
