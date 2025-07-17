@@ -311,12 +311,12 @@ docker_compose_cmd() {
     
     # Try docker compose first (newer syntax)
     if command_exists "docker compose"; then
-        docker compose $compose_file $cmd_args
+        sg docker -c "docker compose $compose_file $cmd_args"
     elif command_exists "docker-compose"; then
         if [ -n "$compose_file" ]; then
-            docker-compose $compose_file $cmd_args
+            sg docker -c "docker-compose $compose_file $cmd_args"
         else
-            docker-compose $cmd_args
+            sg docker -c "docker-compose $cmd_args"
         fi
     else
         error "Neither 'docker compose' nor 'docker-compose' is available"
@@ -411,55 +411,205 @@ check_database_status() {
     
     log "Checking database initialization status..."
     
+    # Database connection parameters based on environment
+    local db_port="3307"
+    local compose_file="-f docker-compose.dev.yml"
+    
+    if [ "$environment" = "production" ]; then
+        db_port="3306"
+        compose_file=""
+    fi
+    
+    # Check if MySQL container is running and healthy
+    local container_status=""
+    local container_health=""
+    
+    # Get container status and health information
     if [ "$environment" = "development" ]; then
-        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
-            log "Database initialization log retrieved successfully"
+        container_status=$(docker_compose_cmd $compose_file ps mysql --format table 2>/dev/null | tail -n +2)
+    else
+        container_status=$(docker_compose_cmd $compose_file ps mysql --format table 2>/dev/null | tail -n +2)
+    fi
+    
+    if [ -z "$container_status" ]; then
+        warn "❌ MySQL container is not running"
+        return 1
+    fi
+    
+    # Check if container is running (Up state)
+    if ! echo "$container_status" | grep -q "Up"; then
+        warn "❌ MySQL container is not in Up state"
+        log "Container status: $container_status"
+        return 1
+    fi
+    
+    # Check health status specifically
+    if echo "$container_status" | grep -q "(healthy)"; then
+        log "✅ MySQL container is healthy"
+    elif echo "$container_status" | grep -q "(unhealthy)"; then
+        warn "⚠️  MySQL container is unhealthy"
+        return 1
+    elif echo "$container_status" | grep -q "(starting)"; then
+        warn "⏳ MySQL container is still starting up"
+        return 1
+    else
+        # Container is Up but no health info, let's test connection directly
+        log "📋 MySQL container is Up, checking connection..."
+        if docker_compose_cmd $compose_file exec mysql mysqladmin ping -h localhost >/dev/null 2>&1; then
+            log "✅ MySQL is responding to ping"
         else
-            warn "Database may not be initialized yet"
+            warn "❌ MySQL is not responding to ping"
+            return 1
+        fi
+    fi
+    
+    # Wait for MySQL to be fully ready
+    log "Waiting for MySQL to be ready..."
+    
+    # Since container is healthy, just wait a moment for full initialization
+    sleep 5
+    
+    # Test connection once to make sure it's working
+    if sg docker -c "docker-compose $compose_file exec -T mysql mysql -u salon_user -psalon_password_456 -e 'SELECT 1;'" >/dev/null 2>&1; then
+        log "✅ MySQL connection established (salon_user)"
+    elif sg docker -c "docker-compose $compose_file exec -T mysql mysql -u root -proot_password_123 -e 'SELECT 1;'" >/dev/null 2>&1; then
+        log "✅ MySQL connection established (root)"
+    else
+        warn "⚠️  MySQL connection test failed, but container is healthy - proceeding anyway"
+    fi
+    
+    # Check if salondb database exists
+    if sg docker -c "docker-compose $compose_file exec -T mysql mysql -u salon_user -psalon_password_456 -e 'USE salondb; SELECT 1;'" >/dev/null 2>&1; then
+        log "✅ salondb database is accessible"
+    elif sg docker -c "docker-compose $compose_file exec -T mysql mysql -u root -proot_password_123 -e 'USE salondb; SELECT 1;'" >/dev/null 2>&1; then
+        log "✅ salondb database exists (accessible with root)"
+    else
+        warn "❌ salondb database does not exist or is not accessible"
+        return 1
+    fi
+    
+    # Check if initialization log table exists
+    if sg docker -c "docker-compose $compose_file exec -T mysql mysql -u salon_user -psalon_password_456 salondb -e 'DESCRIBE db_initialization_log;'" >/dev/null 2>&1; then
+        log "✅ Initialization log table exists"
+        
+        # Show initialization status
+        log "📋 Database initialization history:"
+        sg docker -c "docker-compose $compose_file exec -T mysql mysql -u salon_user -psalon_password_456 salondb -e '
+            SELECT 
+                CONCAT(\"  \", script_name) as \"Script\",
+                executed_at as \"Executed At\",
+                status as \"Status\"
+            FROM db_initialization_log 
+            ORDER BY executed_at;'" 2>/dev/null || warn "Could not retrieve initialization log"
+        
+        # Check if initialization is complete
+        local complete_count=$(sg docker -c "docker-compose $compose_file exec -T mysql mysql -u salon_user -psalon_password_456 salondb -se '
+            SELECT COUNT(*) FROM db_initialization_log 
+            WHERE script_name = \"99_initialization_complete.sql\";'" 2>/dev/null || echo "0")
+        
+        if [ "$complete_count" -eq 1 ]; then
+            log "🎉 Database initialization is COMPLETE"
+            
+            # Validate key tables exist
+            local table_count=$(sg docker -c "docker-compose $compose_file exec -T mysql mysql -u salon_user -psalon_password_456 salondb -se '
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_SCHEMA = \"salondb\" 
+                AND TABLE_NAME IN (\"EMPLEADO\", \"CLIENTE\", \"SERVICIO\", \"PRODUCTO\");'" 2>/dev/null || echo "0")
+            
+            if [ "$table_count" -eq 4 ]; then
+                log "✅ Core tables validated successfully"
+                return 0
+            else
+                warn "⚠️  Some core tables are missing ($table_count/4 found)"
+                return 1
+            fi
+        else
+            warn "⚠️  Database initialization is INCOMPLETE"
+            return 1
         fi
     else
-        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT script_name, executed_at, status FROM db_initialization_log ORDER BY executed_at;" 2>/dev/null; then
-            log "Database initialization log retrieved successfully"
-        else
-            warn "Database may not be initialized yet"
-        fi
+        warn "❌ Initialization log table does not exist - database may not be initialized"
+        return 1
     fi
 }
 
 # Function to run database migrations
 run_migrations() {
-    log "Running database migrations..."
+    local environment=${1:-"development"}
     
-    # Wait for MySQL to be ready
-    log "Waiting for MySQL to be ready..."
-    sleep 30
+    log "Checking database initialization..."
     
-    # Check if running in development or production
-    if docker_compose_cmd -f docker-compose.dev.yml ps mysql >/dev/null 2>&1; then
-        # Development environment
-        log "Checking if database is initialized..."
-        if docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
-            log "Database already initialized, skipping migrations"
-        else
-            log "Database initialization in progress..."
-            # Wait a bit more for initialization scripts to complete
-            sleep 20
-        fi
-        docker_compose_cmd -f docker-compose.dev.yml exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT 'Database is ready';"
-    else
-        # Production environment
-        log "Checking if database is initialized..."
-        if docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT COUNT(*) FROM db_ready_marker;" 2>/dev/null; then
-            log "Database already initialized, skipping migrations"
-        else
-            log "Database initialization in progress..."
-            # Wait a bit more for initialization scripts to complete
-            sleep 20
-        fi
-        docker_compose_cmd exec mysql mysql -u salon_user -psalon_password_456 salondb -e "SELECT 'Database is ready';"
+    # Database connection parameters based on environment
+    local compose_file="-f docker-compose.dev.yml"
+    if [ "$environment" = "production" ]; then
+        compose_file=""
     fi
     
-    log "Database migrations completed"
+    # Wait for MySQL to be ready (with health check)
+    log "Waiting for MySQL to be healthy..."
+    local max_attempts=60  # 2 minutes
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        # Check if container is running and healthy
+        local container_status=$(docker_compose_cmd $compose_file ps mysql --format table 2>/dev/null | tail -n +2)
+        
+        if [ -n "$container_status" ] && echo "$container_status" | grep -q "Up"; then
+            if echo "$container_status" | grep -q "(healthy)"; then
+                log "✅ MySQL is healthy"
+                break
+            elif echo "$container_status" | grep -q "(starting)"; then
+                log "   MySQL is starting up..."
+            elif echo "$container_status" | grep -q "(unhealthy)"; then
+                warn "   MySQL is unhealthy, continuing to wait..."
+            else
+                # Test direct connection if no health status
+                if docker_compose_cmd $compose_file exec mysql mysqladmin ping -h localhost >/dev/null 2>&1; then
+                    log "✅ MySQL is responding"
+                    break
+                fi
+            fi
+        fi
+        
+        if [ $attempt -eq $max_attempts ]; then
+            error "MySQL failed to become healthy after $max_attempts attempts"
+            log "Last status: $container_status"
+            return 1
+        fi
+        
+        log "   Attempt $attempt/$max_attempts - waiting for MySQL to be healthy..."
+        sleep 2
+        ((attempt++))
+    done
+    
+    # Additional wait for MySQL to be fully ready for connections
+    log "Waiting for MySQL to accept connections..."
+    sleep 10
+    
+    # Check database initialization status
+    if check_database_status "$environment"; then
+        log "✅ Database is already properly initialized"
+        return 0
+    else
+        log "⏳ Database initialization may still be in progress..."
+        
+        # Wait a bit more for initialization scripts to complete
+        # The Docker MySQL image runs initialization scripts automatically
+        # when the data directory is empty, so we just need to wait
+        log "Waiting for MySQL initialization scripts to complete..."
+        sleep 30
+        
+        # Check again
+        if check_database_status "$environment"; then
+            log "✅ Database initialization completed successfully"
+            return 0
+        else
+            warn "⚠️  Database initialization may have issues"
+            warn "💡 This might be normal for the first run. SQL scripts run automatically when MySQL data directory is empty."
+            warn "💡 Check logs with: ./setup.sh logs mysql"
+            return 1
+        fi
+    fi
 }
 
 # Function to backup database
@@ -513,8 +663,7 @@ case "${1:-setup}" in
         check_requirements
         setup_environment
         start_services "development"
-        sleep 10
-        run_migrations
+        run_migrations "development"
         log "Setup completed successfully!"
         log ""
         log "Access the application at:"
@@ -523,6 +672,7 @@ case "${1:-setup}" in
         log "  - Database: localhost:3307"
         log ""
         log "Use './setup.sh logs' to view application logs"
+        log "Use './setup.sh db-status' to check database initialization"
         ;;
     "start")
         environment=${2:-"development"}
@@ -550,11 +700,34 @@ case "${1:-setup}" in
         cleanup
         ;;
     "migrate")
-        run_migrations
+        environment=${2:-"development"}
+        run_migrations "$environment"
         ;;
     "db-status")
         environment=${2:-"development"}
         check_database_status "$environment"
+        ;;
+    "db-debug")
+        environment=${2:-"development"}
+        log "🔍 Debug information for MySQL container:"
+        
+        compose_file="-f docker-compose.dev.yml"
+        if [ "$environment" = "production" ]; then
+            compose_file=""
+        fi
+        
+        log "Container status:"
+        docker_compose_cmd $compose_file ps mysql || true
+        
+        log "Container logs (last 20 lines):"
+        docker_compose_cmd $compose_file logs --tail=20 mysql || true
+        
+        log "Health check details:"
+        if [ "$environment" = "development" ]; then
+            sg docker -c "docker inspect salon_mysql_dev --format='{{json .State.Health}}'" 2>/dev/null || echo "Health info not available"
+        else
+            sg docker -c "docker inspect salon_mysql --format='{{json .State.Health}}'" 2>/dev/null || echo "Health info not available"
+        fi
         ;;
     "backup")
         backup_database
@@ -582,6 +755,7 @@ case "${1:-setup}" in
         echo "  cleanup           Clean up Docker resources"
         echo "  migrate           Run database migrations"
         echo "  db-status [env]   Check database initialization status"
+        echo "  db-debug [env]    Show detailed MySQL container debug info"
         echo "  backup            Create database backup"
         echo "  restore [file]    Restore database from backup file"
         echo "  help              Show this help message"
