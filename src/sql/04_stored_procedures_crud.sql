@@ -618,6 +618,103 @@ END;
 
 DELIMITER ;
 
+-- Insertar Promocion
+DELIMITER $$
+
+CREATE PROCEDURE sp_crear_promocion (
+    IN p_nombre VARCHAR(100),
+    IN p_descripcion TEXT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE,
+    IN p_descuento DECIMAL(5,2),
+    IN p_ser_id INT,
+    IN p_usos INT
+)
+BEGIN
+    INSERT INTO PROMOCION (
+        pro_nombre,
+        pro_descripcion,
+        pro_fecha_inicio,
+        pro_fecha_fin,
+        pro_descuento_porcentaje,
+        ser_id,
+        pro_usos
+    )
+    VALUES (
+        p_nombre,
+        p_descripcion,
+        p_fecha_inicio,
+        p_fecha_fin,
+        p_descuento,
+        p_ser_id,
+        p_usos
+    );
+END $$
+
+DELIMITER ;
+
+-- Leer promociones
+DELIMITER $$
+
+CREATE PROCEDURE sp_listar_promociones ()
+BEGIN
+    SELECT * FROM PROMOCION;
+END $$
+
+DELIMITER ;
+
+-- Leer promocion por ID
+DELIMITER $$
+
+CREATE PROCEDURE sp_obtener_promocion_por_id (
+    IN p_pro_id INT
+)
+BEGIN
+    SELECT * FROM PROMOCION WHERE pro_id = p_pro_id;
+END $$
+
+DELIMITER ;
+
+--Actualizar promocion
+DELIMITER $$
+
+CREATE PROCEDURE sp_actualizar_promocion (
+    IN p_pro_id INT,
+    IN p_nombre VARCHAR(100),
+    IN p_descripcion TEXT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE,
+    IN p_descuento DECIMAL(5,2),
+    IN p_ser_id INT,
+    IN p_usos INT
+)
+BEGIN
+    UPDATE PROMOCION
+    SET
+        pro_nombre = p_nombre,
+        pro_descripcion = p_descripcion,
+        pro_fecha_inicio = p_fecha_inicio,
+        pro_fecha_fin = p_fecha_fin,
+        pro_descuento_porcentaje = p_descuento,
+        ser_id = p_ser_id,
+        pro_usos = p_usos
+    WHERE pro_id = p_pro_id;
+END $$
+
+DELIMITER ;
+
+-- Eliminar promocion
+DELIMITER $$
+
+CREATE PROCEDURE sp_eliminar_promocion (
+    IN p_pro_id INT
+)
+BEGIN
+    DELETE FROM PROMOCION WHERE pro_id = p_pro_id;
+END $$
+
+DELIMITER ;
+
 -- Log CRUD stored procedures completion
 INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('04_stored_procedures_crud.sql', 'SUCCESS');
