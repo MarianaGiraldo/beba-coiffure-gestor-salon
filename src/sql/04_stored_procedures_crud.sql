@@ -864,6 +864,138 @@ END $$
 
 DELIMITER ;
 
+-- Crear una nueva cita
+DELIMITER $$
+CREATE PROCEDURE sp_insertar_cita (
+    IN p_fecha DATE,
+    IN p_hora TIME,
+    IN p_emp_id INT,
+    IN p_ser_id INT,
+    IN p_cli_id INT
+)
+BEGIN
+    INSERT INTO CITA (cit_fecha, cit_hora, emp_id, ser_id, cli_id)
+    VALUES (p_fecha, p_hora, p_emp_id, p_ser_id, p_cli_id);
+END$$
+DELIMITER ;
+
+-- Obtener todas las citas
+DELIMITER $$
+CREATE PROCEDURE sp_listar_citas()
+BEGIN
+    SELECT * FROM CITA;
+END$$
+DELIMITER ;
+
+-- Obtener una cita por ID
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_cita_por_id (
+    IN p_cit_id INT
+)
+BEGIN
+    SELECT * FROM CITA WHERE cit_id = p_cit_id;
+END$$
+DELIMITER ;
+
+-- Actualizar una cita existente
+DELIMITER $$
+CREATE PROCEDURE sp_actualizar_cita (
+    IN p_cit_id INT,
+    IN p_fecha DATE,
+    IN p_hora TIME,
+    IN p_emp_id INT,
+    IN p_ser_id INT,
+    IN p_cli_id INT
+)
+BEGIN
+    UPDATE CITA
+    SET cit_fecha = p_fecha,
+        cit_hora = p_hora,
+        emp_id = p_emp_id,
+        ser_id = p_ser_id,
+        cli_id = p_cli_id
+    WHERE cit_id = p_cit_id;
+END$$
+DELIMITER ;
+
+-- Eliminar una cita por ID
+DELIMITER $$
+CREATE PROCEDURE sp_eliminar_cita (
+    IN p_cit_id INT
+)
+BEGIN
+    DELETE FROM CITA WHERE cit_id = p_cit_id;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE sp_insertar_servicio (
+    IN p_nombre VARCHAR(100),
+    IN p_descripcion TEXT,
+    IN p_categoria VARCHAR(50),
+    IN p_precio_unitario DECIMAL(10,2),
+    IN p_duracion_estimada INT
+)
+BEGIN
+    INSERT INTO SERVICIO (
+        ser_nombre, ser_descripcion, ser_categoria, ser_precio_unitario, ser_duracion_estimada
+    )
+    VALUES (
+        p_nombre, p_descripcion, p_categoria, p_precio_unitario, p_duracion_estimada
+    );
+END$$
+DELIMITER ;
+
+-- Obtener todos los servicios
+DELIMITER $$
+CREATE PROCEDURE sp_listar_servicios()
+BEGIN
+    SELECT * FROM SERVICIO;
+END$$
+DELIMITER ;
+
+-- Obtener un servicio por ID
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_servicio_por_id (
+    IN p_ser_id INT
+)
+BEGIN
+    SELECT * FROM SERVICIO WHERE ser_id = p_ser_id;
+END$$
+DELIMITER ;
+
+-- Actualizar un servicio existente
+DELIMITER $$
+CREATE PROCEDURE sp_actualizar_servicio (
+    IN p_ser_id INT,
+    IN p_nombre VARCHAR(100),
+    IN p_descripcion TEXT,
+    IN p_categoria VARCHAR(50),
+    IN p_precio_unitario DECIMAL(10,2),
+    IN p_duracion_estimada INT
+)
+BEGIN
+    UPDATE SERVICIO
+    SET
+        ser_nombre = p_nombre,
+        ser_descripcion = p_descripcion,
+        ser_categoria = p_categoria,
+        ser_precio_unitario = p_precio_unitario,
+        ser_duracion_estimada = p_duracion_estimada
+    WHERE ser_id = p_ser_id;
+END$$
+DELIMITER ;
+
+-- Eliminar un servicio por ID
+DELIMITER $$
+CREATE PROCEDURE sp_eliminar_servicio (
+    IN p_ser_id INT
+)
+BEGIN
+    DELETE FROM SERVICIO WHERE ser_id = p_ser_id;
+END$$
+DELIMITER ;
+
 -- Log CRUD stored procedures completion
 INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('04_stored_procedures_crud.sql', 'SUCCESS');
