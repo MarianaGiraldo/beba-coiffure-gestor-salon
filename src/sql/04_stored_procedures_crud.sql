@@ -153,10 +153,10 @@ BEGIN
   INSERT INTO PRODUCTO(prod_nombre, prod_descripcion, prod_cantidad_disponible, prod_precio_unitario)
   VALUES (p_nombre, p_descripcion, p_cantidad, p_precio);
 
-  SET @p_prod_id1 = (SELECT prod_id FROM PRODUCTO WHERE prod_nombre=p_nombre);
+  SET @last_id = LAST_INSERT_ID();
   
   INSERT INTO INVENTARIO(inv_fecha_actualizacion, prod_id, inv_cantidad_actual, inv_observaciones)
-  VALUES (CURDATE(), p_id, p_cantidad, NULL);
+  VALUES (CURDATE(), @last_id, p_cantidad, NULL);
 END;
 //
 
