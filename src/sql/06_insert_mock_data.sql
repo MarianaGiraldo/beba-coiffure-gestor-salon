@@ -125,21 +125,21 @@ CALL sp_insertar_factura(215890.93, '2025-06-16', '01:00:34', 7);
 CALL sp_insertar_factura(265490.85, '2025-06-16', '08:09:16', 12);
 
 
-CALL sp_insertar_cita('2025-06-16', '22:16:06', 1, 11, 11);
-CALL sp_insertar_cita('2025-06-16', '06:47:00', 11, 2, 1);
-CALL sp_insertar_cita('2025-06-16', '11:02:19', 7, 12, 6);
-CALL sp_insertar_cita('2025-06-16', '13:00:33', 13, 14, 2);
-CALL sp_insertar_cita('2025-06-16', '11:13:32', 4, 4, 4);
-CALL sp_insertar_cita('2025-06-16', '13:14:02', 9, 8, 3);
-CALL sp_insertar_cita('2025-06-16', '12:47:26', 7, 3, 5);
-CALL sp_insertar_cita('2025-06-16', '09:40:12', 8, 4, 14);
-CALL sp_insertar_cita('2025-06-16', '08:32:12', 15, 2, 8);
-CALL sp_insertar_cita('2025-06-16', '02:36:59', 13, 14, 14);
-CALL sp_insertar_cita('2025-06-16', '00:49:19', 9, 2, 1);
-CALL sp_insertar_cita('2025-06-16', '02:37:36', 11, 9, 14);
-CALL sp_insertar_cita('2025-06-16', '11:37:08', 1, 2, 15);
-CALL sp_insertar_cita('2025-06-16', '11:32:14', 13, 14, 4);
-CALL sp_insertar_cita('2025-06-16', '13:11:14', 3, 7, 8);
+CALL sp_insertar_cita('2025-06-16', '22:16:06', 1, 3, 11);
+CALL sp_insertar_cita('2025-07-16', '06:47:00', 11, 2, 1);
+CALL sp_insertar_cita('2025-03-16', '11:02:19', 7, 5, 6);
+CALL sp_insertar_cita('2025-06-16', '13:00:33', 13, 6, 2);
+CALL sp_insertar_cita('2025-06-14', '11:13:32', 4, 2, 4);
+CALL sp_insertar_cita('2025-06-13', '13:14:02', 9, 1, 3);
+CALL sp_insertar_cita('2025-06-10', '12:47:26', 7, 7, 5);
+CALL sp_insertar_cita('2025-06-20', '09:40:12', 8, 3, 14);
+CALL sp_insertar_cita('2025-06-12', '08:32:12', 15, 4, 8);
+CALL sp_insertar_cita('2025-06-04', '02:36:59', 13, 1, 14);
+CALL sp_insertar_cita('2025-06-05', '00:49:19', 9, 2, 1);
+CALL sp_insertar_cita('2025-05-25', '02:37:36', 11, 8, 14);
+CALL sp_insertar_cita('2025-05-18', '11:37:08', 1, 4, 15);
+CALL sp_insertar_cita('2025-06-01', '11:32:14', 13, 5, 4);
+CALL sp_insertar_cita('2025-06-07', '13:11:14', 3, 9, 8);
 
 -- Temporarily disable the trigger that causes dynamic SQL issues
 DROP TRIGGER IF EXISTS trg_after_insert_usuario_sistema;
