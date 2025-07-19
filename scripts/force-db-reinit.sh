@@ -36,12 +36,12 @@ docker_compose_cmd() {
     
     # Try docker compose first (newer syntax)
     if command -v "docker compose" >/dev/null 2>&1; then
-        sg docker -c "docker compose $compose_file $cmd_args"
+        docker compose $compose_file $cmd_args
     elif command -v "docker-compose" >/dev/null 2>&1; then
         if [ -n "$compose_file" ]; then
-            sg docker -c "docker-compose $compose_file $cmd_args"
+            docker-compose $compose_file $cmd_args
         else
-            sg docker -c "docker-compose $cmd_args"
+            docker-compose $cmd_args
         fi
     else
         error "Neither 'docker compose' nor 'docker-compose' is available"
@@ -77,13 +77,13 @@ force_reinit() {
     
     # Remove the MySQL data volume
     log "Removing MySQL data volume..."
-    sg docker -c "docker volume rm beba-coiffure-gestor-salon_mysql_dev_data" 2>/dev/null || {
+    docker volume rm beba-coiffure-gestor-salon_mysql_dev_data 2>/dev/null || {
         warn "Volume may not exist or already removed"
     }
     
     # Remove any orphaned volumes
     log "Cleaning up orphaned volumes..."
-    sg docker -c "docker volume prune -f" >/dev/null 2>&1 || true
+    docker volume prune -f >/dev/null 2>&1 || true
     
     # Start containers again (this will trigger re-initialization)
     log "Starting containers with fresh database..."

@@ -675,7 +675,7 @@ END $$
 
 DELIMITER ;
 
---Actualizar promocion
+-- Actualizar promocion
 DELIMITER $$
 
 CREATE PROCEDURE sp_actualizar_promocion (
