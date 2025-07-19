@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, Calendar, Clock } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, EyeOff, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Client {
@@ -17,6 +17,7 @@ interface Client {
   cli_apellido: string;
   cli_telefono: string;
   cli_correo: string;
+  cli_password?: string;
 }
 
 interface Appointment {
@@ -31,23 +32,10 @@ interface Appointment {
 
 const ClientManagement = () => {
   const { toast } = useToast();
-  const [clients, setClients] = useState<Client[]>([
-    {
-      cli_id: 1,
-      cli_nombre: "Ana",
-      cli_apellido: "Martínez",
-      cli_telefono: "3009876543",
-      cli_correo: "ana@email.com"
-    },
-    {
-      cli_id: 2,
-      cli_nombre: "Sofía",
-      cli_apellido: "López",
-      cli_telefono: "3005432109",
-      cli_correo: "sofia@email.com"
-    }
-  ]);
-
+  // API URL is configured through Docker environment variables
+  // Fallback for local development outside Docker
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const [clients, setClients] = useState<Client[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([
     {
       cit_id: 1,
@@ -74,6 +62,9 @@ const ClientManagement = () => {
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isAddingAppointment, setIsAddingAppointment] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Mock data for employees and services
   const employees = [
@@ -87,31 +78,220 @@ const ClientManagement = () => {
     { ser_id: 3, ser_nombre: "Manicure", ser_precio_unitario: 20000 }
   ];
 
-  const handleAddClient = () => {
-    if (!newClient.cli_nombre || !newClient.cli_apellido) {
+  // Load clients when component mounts
+  useEffect(() => {
+    testClientEndpoint(); // Test connectivity first
+    fetchClients();
+  }, []);
+
+  // Test function to check API connectivity
+  const testClientEndpoint = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/clients/test`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Client test endpoint response:', data);
+      }
+    } catch (error) {
+      console.error('Client test endpoint error:', error);
+    }
+  };
+
+  // Get authentication token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('authToken') || null;
+  };
+
+  // API function to fetch clients
+  const fetchClients = async () => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/clients`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data.clients || []);
+      } else {
+        if (response.status === 401) {
+          toast({
+            title: "Error de autenticación",
+            description: "Por favor inicia sesión nuevamente",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "No se pudieron cargar los clientes",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
       toast({
         title: "Error",
-        description: "Por favor completa nombre y apellido",
+        description: "No se pudieron cargar los clientes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // API function to create client
+  const createClient = async (client: Partial<Client>) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/clients`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          cli_nombre: client.cli_nombre,
+          cli_apellido: client.cli_apellido,
+          cli_telefono: client.cli_telefono,
+          cli_correo: client.cli_correo,
+          cli_password: client.cli_password,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchClients(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error creating client');
+      }
+    } catch (error) {
+      console.error('Error creating client:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo crear el cliente",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // API function to update client
+  const updateClient = async (client: Client) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/clients/${client.cli_id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          cli_nombre: client.cli_nombre,
+          cli_apellido: client.cli_apellido,
+          cli_telefono: client.cli_telefono,
+          cli_correo: client.cli_correo,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchClients(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error updating client');
+      }
+    } catch (error) {
+      console.error('Error updating client:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo actualizar el cliente",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // API function to delete client
+  const deleteClient = async (id: number) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/clients/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (response.ok) {
+        await fetchClients(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error deleting client');
+      }
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el cliente",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const handleAddClient = async () => {
+    if (!newClient.cli_nombre || !newClient.cli_apellido || !newClient.cli_correo || !newClient.cli_password) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos obligatorios",
         variant: "destructive"
       });
       return;
     }
 
-    const client: Client = {
-      cli_id: Math.max(...clients.map(c => c.cli_id), 0) + 1,
-      cli_nombre: newClient.cli_nombre || "",
-      cli_apellido: newClient.cli_apellido || "",
-      cli_telefono: newClient.cli_telefono || "",
-      cli_correo: newClient.cli_correo || ""
-    };
-
-    setClients([...clients, client]);
-    setNewClient({});
-    setIsAddingClient(false);
-    toast({
-      title: "Cliente agregado",
-      description: "El cliente ha sido agregado exitosamente"
-    });
+    setSubmitting(true);
+    try {
+      const success = await createClient(newClient);
+      if (success) {
+        setNewClient({});
+        setIsAddingClient(false);
+        toast({
+          title: "Cliente agregado",
+          description: "El cliente ha sido agregado exitosamente"
+        });
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleAddAppointment = () => {
@@ -143,25 +323,43 @@ const ClientManagement = () => {
     });
   };
 
-  const handleUpdateClient = () => {
+  const handleUpdateClient = async () => {
     if (!editingClient) return;
 
-    setClients(clients.map(client => 
-      client.cli_id === editingClient.cli_id ? editingClient : client
-    ));
-    setEditingClient(null);
-    toast({
-      title: "Cliente actualizado",
-      description: "Los datos del cliente han sido actualizados"
-    });
+    if (!editingClient.cli_nombre || !editingClient.cli_apellido || !editingClient.cli_correo) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos obligatorios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const success = await updateClient(editingClient);
+      if (success) {
+        setEditingClient(null);
+        toast({
+          title: "Cliente actualizado",
+          description: "Los datos del cliente han sido actualizados"
+        });
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDeleteClient = (id: number) => {
-    setClients(clients.filter(client => client.cli_id !== id));
-    toast({
-      title: "Cliente eliminado",
-      description: "El cliente ha sido eliminado del sistema"
-    });
+  const handleDeleteClient = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+      const success = await deleteClient(id);
+      if (success) {
+        toast({
+          title: "Cliente eliminado",
+          description: "El cliente ha sido eliminado del sistema"
+        });
+      }
+    }
   };
 
   const updateAppointmentStatus = (citId: number, newStatus: "Programada" | "Completada" | "Cancelada") => {
@@ -257,7 +455,7 @@ const ClientManagement = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="cli-correo">Correo Electrónico</Label>
+                    <Label htmlFor="cli-correo">Correo Electrónico *</Label>
                     <Input
                       id="cli-correo"
                       type="email"
@@ -265,9 +463,35 @@ const ClientManagement = () => {
                       onChange={(e) => setNewClient({...newClient, cli_correo: e.target.value})}
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="cli-password">Contraseña *</Label>
+                    <div className="relative">
+                      <Input
+                        id="cli-password"
+                        type={showPassword ? "text" : "password"}
+                        value={newClient.cli_password || ""}
+                        onChange={(e) => setNewClient({...newClient, cli_password: e.target.value})}
+                      />
+                      <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleAddClient}>Agregar Cliente</Button>
+                  <Button onClick={handleAddClient} disabled={submitting}>
+                    {submitting ? "Agregando..." : "Agregar Cliente"}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -281,45 +505,59 @@ const ClientManagement = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Teléfono</TableHead>
-                    <TableHead>Correo</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {clients.map((client) => (
-                    <TableRow key={client.cli_id}>
-                      <TableCell>
-                        <div className="font-medium">{client.cli_nombre} {client.cli_apellido}</div>
-                      </TableCell>
-                      <TableCell>{client.cli_telefono}</TableCell>
-                      <TableCell>{client.cli_correo}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingClient(client)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteClient(client.cli_id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              {loading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-gray-500">Cargando clientes...</div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Teléfono</TableHead>
+                      <TableHead>Correo</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {clients.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                          No hay clientes registrados
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      clients.map((client) => (
+                        <TableRow key={client.cli_id}>
+                          <TableCell>
+                            <div className="font-medium">{client.cli_nombre} {client.cli_apellido}</div>
+                          </TableCell>
+                          <TableCell>{client.cli_telefono}</TableCell>
+                          <TableCell>{client.cli_correo}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingClient(client)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteClient(client.cli_id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -495,7 +733,7 @@ const ClientManagement = () => {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-cli-nombre">Nombre</Label>
+                  <Label htmlFor="edit-cli-nombre">Nombre *</Label>
                   <Input
                     id="edit-cli-nombre"
                     value={editingClient.cli_nombre}
@@ -503,7 +741,7 @@ const ClientManagement = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-cli-apellido">Apellido</Label>
+                  <Label htmlFor="edit-cli-apellido">Apellido *</Label>
                   <Input
                     id="edit-cli-apellido"
                     value={editingClient.cli_apellido}
@@ -520,7 +758,7 @@ const ClientManagement = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="edit-cli-correo">Correo Electrónico</Label>
+                <Label htmlFor="edit-cli-correo">Correo Electrónico *</Label>
                 <Input
                   id="edit-cli-correo"
                   type="email"
@@ -530,7 +768,9 @@ const ClientManagement = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleUpdateClient}>Actualizar Cliente</Button>
+              <Button onClick={handleUpdateClient} disabled={submitting}>
+                {submitting ? "Actualizando..." : "Actualizar Cliente"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

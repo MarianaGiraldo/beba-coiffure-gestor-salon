@@ -31,7 +31,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
     confirmPassword: ""
   });
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!loginData.email || !loginData.password) {
       toast({
         title: "Error",
@@ -41,20 +41,55 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
       return;
     }
 
-    // Simulación de autenticación - aquí conectarías con tu API MySQL
-    if (loginData.email === "admin@bebacoiffure.com" && loginData.password === "admin123") {
-      onLogin('admin', { email: loginData.email, role: 'admin' });
-      toast({
-        title: "Bienvenido Administrador",
-        description: "Has iniciado sesión exitosamente"
+    setIsLoading(true);
+    try {
+      // Llamar a la API para autenticar el usuario
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: loginData.email,
+          password: loginData.password
+        }),
       });
-    } else {
-      // Aquí verificarías en la base de datos de empleados y clientes
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Almacenar el token en localStorage
+        localStorage.setItem('authToken', data.token);
+
+        // Llamar a onLogin con el tipo de usuario y datos del usuario
+        onLogin(data.userType, data.user);
+
+        toast({
+          title: "Bienvenido",
+          description: "Has iniciado sesión exitosamente"
+        });
+
+        // Limpiar formulario
+        setLoginData({
+          email: "",
+          password: ""
+        });
+      } else {
+        toast({
+          title: "Error de autenticación",
+          description: data.error || "Email o contraseña incorrectos",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error iniciando sesión:", error);
       toast({
-        title: "Error de autenticación",
-        description: "Email o contraseña incorrectos",
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -199,9 +234,13 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                       </Button>
                     </div>
                   </div>
-                  <Button onClick={handleLogin} className="w-full bg-pink-600 hover:bg-pink-700">
+                  <Button 
+                    onClick={handleLogin} 
+                    className="w-full bg-pink-600 hover:bg-pink-700"
+                    disabled={isLoading}
+                  >
                     <LogIn className="h-4 w-4 mr-2" />
-                    Iniciar Sesión
+                    {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
                   </Button>
                 </div>
               </TabsContent>

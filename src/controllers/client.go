@@ -102,6 +102,14 @@ func (cc *ClientController) UpdateClient(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	id := c.Param("id")
+	// Convert string to uint
+	var clientID uint
+	if _, err := fmt.Sscanf(id, "%d", &clientID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid client ID"})
+		return
+	}
+	client.CliID = clientID // Set ID for update
 
 	// Hash password if provided
 	if client.CliPassword != "" {

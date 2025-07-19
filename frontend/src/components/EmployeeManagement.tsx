@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, DollarSign } from "lucide-react";
+import { EyeOff, Eye, Edit, Trash2, DollarSign, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Employee {
@@ -51,6 +51,7 @@ const EmployeeManagement = () => {
   const [isAddingPayment, setIsAddingPayment] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Load employees when component mounts
   useEffect(() => {
@@ -59,7 +60,7 @@ const EmployeeManagement = () => {
 
   // Get authentication token from localStorage
   const getAuthToken = () => {
-    return localStorage.getItem('token');
+    return localStorage.getItem('authToken') || null;
   };
 
   // API function to fetch employees
@@ -70,7 +71,7 @@ const EmployeeManagement = () => {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
+
       // Only add Authorization header if token exists
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -105,8 +106,8 @@ const EmployeeManagement = () => {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
-      if (token) {
+
+      if (token && token !== 'null' && token !== 'undefined') {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
@@ -120,6 +121,7 @@ const EmployeeManagement = () => {
           emp_correo: employee.emp_correo,
           emp_puesto: employee.emp_puesto,
           emp_salario: employee.emp_salario,
+          emp_password: employee.emp_password,
         }),
       });
 
@@ -148,7 +150,7 @@ const EmployeeManagement = () => {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -191,7 +193,7 @@ const EmployeeManagement = () => {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -220,7 +222,7 @@ const EmployeeManagement = () => {
   };
 
   const handleAddEmployee = async () => {
-    if (!newEmployee.emp_nombre || !newEmployee.emp_apellido || !newEmployee.emp_puesto) {
+    if (!newEmployee.emp_nombre || !newEmployee.emp_apellido || !newEmployee.emp_puesto || !newEmployee.emp_correo || !newEmployee.emp_password) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos obligatorios",
@@ -398,6 +400,31 @@ const EmployeeManagement = () => {
                     value={newEmployee.emp_salario || ""}
                     onChange={(e) => setNewEmployee({...newEmployee, emp_salario: parseFloat(e.target.value)})}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="password">Contraseña</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Contraseña del empleado"
+                      value={newEmployee.emp_password || ""}
+                      onChange={(e) => setNewEmployee({...newEmployee, emp_password: e.target.value})}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
               <DialogFooter>

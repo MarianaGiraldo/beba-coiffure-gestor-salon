@@ -22,11 +22,11 @@ func SetupClientRoutes(api *gin.RouterGroup, dbService *services.DatabaseService
 	protectedClients.Use(middleware.AuthMiddleware())
 	{
 		// Admin only routes for client management
-		adminClients := protectedClients.Group("/")
+		adminClients := protectedClients.Group("")
 		adminClients.Use(middleware.AdminOnlyMiddleware())
 		{
-			adminClients.GET("/", clientController.GetClients)         // Get all clients
-			adminClients.POST("/", clientController.CreateClient)      // Create client (admin)
+			adminClients.GET("", clientController.GetClients)         // Get all clients
+			adminClients.POST("", clientController.CreateClient)      // Create client (admin)
 			adminClients.PUT("/:id", clientController.UpdateClient)    // Update client
 			adminClients.DELETE("/:id", clientController.DeleteClient) // Delete client
 		}

@@ -26,13 +26,12 @@ func main() {
 
 	// CORS middleware - temporarily allow all origins for debugging
 	corsConfig := cors.Config{
-		AllowAllOrigins:  true, // Temporary fix for CORS issues
+		AllowOrigins:     []string{"http://localhost:5174"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false, // Set to false when using AllowAllOrigins
+		AllowCredentials: false, // still false, since you're not using cookies
 	}
-
 	r.Use(cors.New(corsConfig))
 
 	// Debug middleware to log requests

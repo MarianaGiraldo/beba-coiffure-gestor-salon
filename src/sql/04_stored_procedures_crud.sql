@@ -35,7 +35,7 @@ BEGIN
     cli_id
   )
   VALUES (
-    CONCAT(LOWER(LEFT(p_nombre, 1)), LOWER(p_apellido)),
+    CONCAT(LOWER(p_correo)),
     p_contrasena,
     'empleado',
     emp_id_new,
@@ -106,7 +106,7 @@ BEGIN
     cli_id
   )
   VALUES (
-    CONCAT(LOWER(LEFT(p_nombre, 1)), LOWER(p_apellido)),
+    CONCAT(LOWER(p_correo)),
     p_contrasena,
     'cliente',
     NULL,

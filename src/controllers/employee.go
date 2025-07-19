@@ -47,9 +47,9 @@ func (ec *SPEmployeeController) CreateEmployee(c *gin.Context) {
 
 	// Validate required fields
 	if employee.EmpNombre == "" || employee.EmpApellido == "" ||
-		employee.EmpCorreo == "" || employee.EmpPuesto == "" {
+		employee.EmpCorreo == "" || employee.EmpPuesto == "" || employee.EmpPassword == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Missing required fields: nombre, apellido, correo, puesto",
+			"error": "Missing required fields: nombre, apellido, correo, puesto, password",
 		})
 		return
 	}
@@ -60,8 +60,15 @@ func (ec *SPEmployeeController) CreateEmployee(c *gin.Context) {
 		})
 		return
 	}
+	usuario, err := ec.dbService.BuscarUsuario(employee.EmpCorreo)
+	if err != nil || usuario.EmpID != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Email already in use",
+		})
+		return
+	}
 
-	err := ec.dbService.InsertEmpleado(employee)
+	err = ec.dbService.InsertEmpleado(employee)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to create employee",
