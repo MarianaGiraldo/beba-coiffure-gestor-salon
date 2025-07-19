@@ -50,21 +50,13 @@ CALL CrearProveedor('Bustos, Cerda and Reina', '+57 4714223253', 'jtovar@gmail.c
 CALL CrearProveedor('Gibert-Roman', '+57 4737454589', 'clarisatoro@gmail.com', 'Rambla Valero Sastre 7, Tarragona, 42415');
 
 
-CALL sp_insertar_servicio('Natus servicio', 'Omnis ab quibusdam quo. Quod dolor rem possimus.', 'Hogar', 200931.51, 10);
-CALL sp_insertar_servicio('Pariatur servicio', 'Praesentium quisquam cumque non quibusdam beatae reprehenderit. Autem ad est perspiciatis vero.', 'Hogar', 232432.95, 10);
-CALL sp_insertar_servicio('Magni servicio', 'Sed delectus distinctio reiciendis excepturi sunt praesentium.', 293278.94, 'Hogar', 10);
-CALL sp_insertar_servicio('Quod servicio', 'Incidunt quia ex praesentium earum dolorum. Quam et quia veritatis. Deleniti qui eius nihil.', 'Hogar', 69700.05, 10);
-CALL sp_insertar_servicio('Perferendis servicio', 'Id asperiores occaecati amet. Repellat veniam assumenda dolorum.', 'Mantenimiento', 257351.17, 10);
-CALL sp_insertar_servicio('Odio servicio', 'Quo sequi excepturi ratione eaque. Eligendi error nesciunt.', 'Mantenimiento', 194338.04, 10);
-CALL sp_insertar_servicio('Totam servicio', 'Vitae commodi vitae ex aut sapiente aut. Accusamus corporis sit voluptas asperiores quos eaque.', 'Mantenimiento', 61456.1, 10);
-CALL sp_insertar_servicio('Minima servicio', 'Ipsam exercitationem nesciunt odit. Porro itaque error voluptatum sequi autem.', 'Mantenimiento', 243267.09, 10);
-CALL sp_insertar_servicio('Explicabo servicio', 'Ducimus repudiandae laboriosam rem. Rem iusto asperiores quidem dolorem perspiciatis.', 'Otro', 263829.43, 15);
-CALL sp_insertar_servicio('Incidunt servicio', 'Molestias voluptate facere id deleniti commodi. At distinctio odit voluptas amet ex voluptates.', 'Otro', 145031.56, 15);
-CALL sp_insertar_servicio('Iste servicio', 'Eaque consectetur in beatae.', 'Otro', 208921.11, 15);
-CALL sp_insertar_servicio('Numquam servicio', 'Eum corporis commodi numquam. Molestias eveniet voluptatum minus iste non aut praesentium.', 'Otro', 90663.52, 15);
-CALL sp_insertar_servicio('Repudiandae servicio', 'Sapiente voluptate repellendus nostrum odit ad. Adipisci earum quis ullam expedita.', 'Otro', 102376.76, 15);
-CALL sp_insertar_servicio('Odit servicio', 'Fuga quam quod necessitatibus. Sunt culpa quidem amet. Earum optio laborum ipsam.', 'Otro', 225455.08, 15);
-CALL sp_insertar_servicio('Deserunt servicio', 'Eveniet ab quia cupiditate fugit. Magnam rerum rem asperiores similique.', 'Otro', 202282.75, 15);
+CALL sp_insertar_servicio('Coloración', 'Tintes, mechas, reflejos, y otros servicios de coloración.', 'Hogar', 200931.51, 10);
+CALL sp_insertar_servicio('Manicura', 'Cuidado y embellecimiento de las uñas de las manos.', 'Hogar', 232432.95, 10);
+CALL sp_insertar_servicio('Corte Cabello', 'Cortes adaptados a diferentes estilos y tipos de cabello.', 293278.94, 'Hogar', 10);
+CALL sp_insertar_servicio('Alisado', 'Permanente o temporal, como el alisado japonés o con keratina.', 'Hogar', 69700.05, 10);
+CALL sp_insertar_servicio('Pedicura', 'Cuidado y embellecimiento de las uñas de los pies.', 'Mantenimiento', 257351.17, 10);
+CALL sp_insertar_servicio('Decoración de uñas', 'Uñas de gel, acrílicas, esmaltado permanente.', 'Mantenimiento', 194338.04, 10);
+CALL sp_insertar_servicio('Depilación de cejas', 'Depilación de cejas con láser o pinzas', 'Mantenimiento', 61456.1, 10);
 
 
 CALL sp_insert_producto('Nesciunt producto', 'Illo vitae cupiditate veniam. Rerum ullam at sapiente doloribus nihil minima.', 18, 39165.07);
