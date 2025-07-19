@@ -474,24 +474,21 @@ DELIMITER //
 
 CREATE PROCEDURE CrearProveedor(
   IN p_nombre VARCHAR(100),
-  IN p_contacto VARCHAR(100),
-  IN p_correo VARCHAR(100),
   IN p_telefono VARCHAR(20),
+  IN p_correo VARCHAR(100),
   IN p_direccion TEXT
 )
 BEGIN
   INSERT INTO PROVEEDOR (
     prov_nombre,
-    prov_contacto,
-    prov_correo,
     prov_telefono,
+    prov_correo,
     prov_direccion
   )
   VALUES (
     p_nombre,
-    p_contacto,
-    p_correo,
     p_telefono,
+    p_correo,
     p_direccion
   );
 END;
@@ -994,6 +991,120 @@ CREATE PROCEDURE sp_eliminar_servicio (
 )
 BEGIN
     DELETE FROM SERVICIO WHERE ser_id = p_ser_id;
+END$$
+DELIMITER ;
+
+-- Insertar una nueva factura
+DELIMITER $$
+CREATE PROCEDURE sp_insertar_factura (
+    IN p_total DECIMAL(10,2),
+    IN p_fecha DATE,
+    IN p_hora TIME,
+    IN p_cli_id INT
+)
+BEGIN
+    INSERT INTO FACTURA_SERVICIO (fac_total, fac_fecha, fac_hora, cli_id)
+    VALUES (p_total, p_fecha, p_hora, p_cli_id);
+END$$
+DELIMITER ;
+
+-- Listar todas las facturas
+DELIMITER $$
+CREATE PROCEDURE sp_listar_facturas()
+BEGIN
+    SELECT * FROM FACTURA_SERVICIO;
+END$$
+DELIMITER ;
+
+-- Buscar factura por ID
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_factura_por_id (
+    IN p_fac_id INT
+)
+BEGIN
+    SELECT * FROM FACTURA_SERVICIO WHERE fac_id = p_fac_id;
+END$$
+DELIMITER ;
+
+-- Actualizar factura existente
+DELIMITER $$
+CREATE PROCEDURE sp_actualizar_factura (
+    IN p_fac_id INT,
+    IN p_total DECIMAL(10,2),
+    IN p_fecha DATE,
+    IN p_hora TIME,
+    IN p_cli_id INT
+)
+BEGIN
+    UPDATE FACTURA_SERVICIO
+    SET fac_total = p_total,
+        fac_fecha = p_fecha,
+        fac_hora = p_hora,
+        cli_id = p_cli_id
+    WHERE fac_id = p_fac_id;
+END$$
+DELIMITER ;
+
+-- Eliminar una factura
+DELIMITER $$
+CREATE PROCEDURE sp_eliminar_factura (
+    IN p_fac_id INT
+)
+BEGIN
+    DELETE FROM FACTURA_SERVICIO WHERE fac_id = p_fac_id;
+END$$
+DELIMITER ;
+
+-- Insertar detalle de factura
+DELIMITER $$
+CREATE PROCEDURE sp_insertar_detalle_factura (
+    IN p_fac_id INT,
+    IN p_ser_id INT
+)
+BEGIN
+    INSERT INTO DETALLE_FACTURA_SERVICIO (fac_id, ser_id)
+    VALUES (p_fac_id, p_ser_id);
+END$$
+DELIMITER ;
+
+-- Listar todos los detalles de factura
+DELIMITER $$
+CREATE PROCEDURE sp_listar_detalles_factura()
+BEGIN
+    SELECT * FROM DETALLE_FACTURA_SERVICIO;
+END$$
+DELIMITER ;
+
+-- Buscar detalle de factura por ID de factura
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_detalle_por_factura (
+    IN p_fac_id INT
+)
+BEGIN
+    SELECT * FROM DETALLE_FACTURA_SERVICIO WHERE fac_id = p_fac_id;
+END$$
+DELIMITER ;
+
+-- Actualizar detalle de factura (solo ser_id según estructura)
+DELIMITER $$
+CREATE PROCEDURE sp_actualizar_detalle_factura (
+    IN p_fac_id INT,
+    IN p_ser_id INT
+)
+BEGIN
+    UPDATE DETALLE_FACTURA_SERVICIO
+    SET ser_id = p_ser_id
+    WHERE fac_id = p_fac_id;
+END$$
+DELIMITER ;
+
+-- Eliminar detalle de factura
+DELIMITER $$
+CREATE PROCEDURE sp_eliminar_detalle_factura (
+    IN p_fac_id INT
+)
+BEGIN
+    DELETE FROM DETALLE_FACTURA_SERVICIO WHERE fac_id = p_fac_id;
 END$$
 DELIMITER ;
 
