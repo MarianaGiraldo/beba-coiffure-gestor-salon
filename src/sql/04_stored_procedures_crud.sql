@@ -778,26 +778,14 @@ DELIMITER //
 
 CREATE PROCEDURE insertar_usuario_sistema(
   IN p_usuario VARCHAR(50),
-  IN p_correo VARCHAR(100),
   IN p_contrasena VARCHAR(100),
+  IN p_rol VARCHAR(20),
   IN p_emp_id INT,
   IN p_cli_id INT
 )
 BEGIN
-  IF p_emp_id IS NOT NULL THEN
-    IF NOT EXISTS (SELECT 1 FROM EMPLEADO WHERE emp_id = p_emp_id) THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Empleado no existe para el usuario del sistema';
-    END IF;
-  END IF;
-
-  IF p_cli_id IS NOT NULL THEN
-    IF NOT EXISTS (SELECT 1 FROM CLIENTE WHERE cli_id = p_cli_id) THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cliente no existe para el usuario del sistema';
-    END IF;
-  END IF;
-
-  INSERT INTO USUARIO_SISTEMA (usuario, correo, contrasena, emp_id, cli_id)
-  VALUES (p_usuario, p_correo, p_contrasena, p_emp_id, p_cli_id);
+  INSERT INTO USUARIO_SISTEMA (usu_nombre_usuario, usu_contrasena, usu_rol, emp_id, cli_id)
+  VALUES (p_usuario, p_contrasena, p_rol, p_emp_id, p_cli_id);
 END //
 
 DELIMITER ;
@@ -880,7 +868,7 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE sp_listar_citas()
 BEGIN
-    SELECT * FROM CITA;
+    SELECT * FROM CITA ORDER BY cit_fecha DESC, cit_hora DESC;
 END$$
 DELIMITER ;
 

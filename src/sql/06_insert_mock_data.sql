@@ -1,84 +1,81 @@
 USE salondb;
-INSERT INTO EMPLEADO (emp_nombre, emp_apellido, emp_telefono, emp_correo, emp_puesto, emp_salario) VALUES
-('Feliciana', 'Canton', '+57 4843321819', 'andresciro@gmail.com', 'Estilista', 1050021.51),
-('Joan', 'Vazquez', '+57 4740838637', 'cuervojose@gmail.com', 'Gerente', 1489783.71),
-('Noe', 'Lobo', '+57 4835116155', 'segoviabrunilda@gmail.com', 'Recepcionista', 2472942.43),
-('Agata', 'Pinedo', '+57 4738495931', 'maria-teresamancebo@gmail.com', 'Estilista', 2180985.02),
-('Leopoldo', 'Santana', '+57 4952553419', 'fernandosevilla@gmail.com', 'Estilista', 1059594.44),
-('Pia', 'Barba', '+57 4740564139', 'gabrielavalera@gmail.com', 'Recepcionista', 1465321.79),
-('Soledad', 'Segarra', '+57 4842388496', 'isidoro28@gmail.com', 'Estilista', 2122490.13),
-('Ciriaco', 'Arevalo', '+57 4622691669', 'carolina01@gmail.com', 'Asistente', 1440881.24),
-('Sonia', 'Lasa', '+57 4851462704', 'martinprudencia@gmail.com', 'Gerente', 2618860.91),
-('María Belen', 'Cuellar', '+57 4708095701', 'jose03@gmail.com', 'Estilista', 2517614.73),
-('Cayetano', 'Boada', '+57 4747182278', 'belen96@gmail.com', 'Recepcionista', 2396278.79),
-('Sabas', 'Perea', '+57 4728713315', 'dionisiagimenez@gmail.com', 'Gerente', 1555742.68),
-('Jenaro', 'Bauza', '+57 4705183473', 'yherrero@gmail.com', 'Recepcionista', 2914426.14),
-('Cleto', 'Rosa', '+57 4746670106', 'ibarragregorio@gmail.com', 'Gerente', 1204420.55),
-('Brunilda', 'Sanabria', '+57 4962473178', 'alcoleaciro@gmail.com', 'Asistente', 1193432.75);
-INSERT INTO CLIENTE (cli_nombre, cli_apellido, cli_telefono, cli_correo) VALUES
-('Alicia', 'Garcia', '+57 4802606474', 'mcortina@gmail.com'),
-('Isaac', 'Barragan', '+57 4738050097', 'verdejocecilio@gmail.com'),
-('Imelda', 'Gutierrez', '+57 4819399091', 'juan-carlos35@gmail.com'),
-('Juan Manuel', 'Priego', '+57 4947510799', 'garcesantonia@gmail.com'),
-('Serafina', 'Hidalgo', '+57 4642784980', 'canizaresjuan-luis@gmail.com'),
-('Tania', 'Campo', '+57 4682449353', 'diglesias@gmail.com'),
-('Fabiana', 'Roda', '+57 4800524278', 'caparroscarlos@gmail.com'),
-('Vera', 'Company', '+57 4700598262', 'panfilo05@gmail.com'),
-('Paulino', 'Ramos', '+57 4623226025', 'juanitocuervo@gmail.com'),
-('Candido', 'Pineiro', '+57 4707337543', 'ferrandosabas@gmail.com'),
-('Pascual', 'Vergara', '+57 4885014294', 'roviraonofre@gmail.com'),
-('Rogelio', 'Falcon', '+57 4906088356', 'estrella51@gmail.com'),
-('Nacho', 'Quevedo', '+57 4724823662', 'tabad@gmail.com'),
-('Humberto', 'Ropero', '+57 4739577738', 'genovevablazquez@gmail.com'),
-('Aranzazu', 'Naranjo', '+57 4733433200', 'dbeltran@gmail.com');
-INSERT INTO PROVEEDOR (prov_nombre, prov_telefono, prov_correo, prov_direccion) VALUES
-('Zamora Inc', '+57 4720062312', 'gilanselma@gmail.com', 'Paseo Carmen Reina 1, Murcia, 08621'),
-('Zamora and Sons', '+57 4639845461', 'santiago79@gmail.com', 'C. de Rene Tamarit 1, Avila, 65918'),
-('Gras and Sons', '+57 4729740148', 'escobarursula@gmail.com', 'Rambla de Cintia Hernandez 668, Valladolid, 18501'),
-('Guerra-Benitez', '+57 4739996504', 'otrujillo@gmail.com', 'Urbanización de Leyre Beltrán 5, Jaen, 65511'),
-('Mendez Group', '+57 4641212678', 'bcalderon@gmail.com', 'Canada Severiano Pons 9 Apt. 98 , Soria, 22444'),
-('Coello-Barroso', '+57 4706464715', 'jose-manuel79@gmail.com', 'Alameda de Prudencia Pinto 67, Segovia, 45937'),
-('Elias-Puig', '+57 4724793564', 'hpatino@gmail.com', 'Avenida de Olivia Rebollo 52 Apt. 42 , Zamora, 17979'),
-('Velazquez-Ripoll', '+57 4700589113', 'flavio90@gmail.com', 'Urbanizacion de Arcelia Villena 499, Huesca, 79825'),
-('Tolosa Inc', '+57 4706112545', 'hgabaldon@gmail.com', 'Avenida de Marcelo Arribas 1 Piso 1 , Valencia, 82825'),
-('Roldan, Sevilla and Guardiola', '+57 4822660937', 'aporcel@gmail.com', 'Alameda de Haroldo Seco 5, Melilla, 96969'),
-('Oliveras LLC', '+57 4739249912', 'desiderio34@gmail.com', 'Camino Rodolfo Rocha 97 Puerta 2 , Madrid, 22579'),
-('Palomar Inc', '+57 4623688767', 'fsaldana@gmail.com', 'Callejon Jafet Malo 87 Puerta 8 , Ourense, 48580'),
-('Sainz, Gil and Rodríguez', '+57 4743407451', 'xcarpio@gmail.com', 'Glorieta Odalys Gabaldon 6, Pontevedra, 54494'),
-('Bustos, Cerda and Reina', '+57 4714223253', 'jtovar@gmail.com', 'Pasadizo de Maribel Lobo 87, Palencia, 17518'),
-('Gibert-Roman', '+57 4737454589', 'clarisatoro@gmail.com', 'Rambla Valero Sastre 7, Tarragona, 42415');
-INSERT INTO SERVICIO (ser_nombre, ser_descripcion, ser_precio_unitario, ser_categoria) VALUES
-('Natus servicio', 'Omnis ab quibusdam quo. Quod dolor rem possimus.', 200931.51, 'Hogar'),
-('Pariatur servicio', 'Praesentium quisquam cumque non quibusdam beatae reprehenderit. Autem ad est perspiciatis vero.', 232432.95, 'Hogar'),
-('Magni servicio', 'Sed delectus distinctio reiciendis excepturi sunt praesentium.', 293278.94, 'Otro'),
-('Quod servicio', 'Incidunt quia ex praesentium earum dolorum. Quam et quia veritatis. Deleniti qui eius nihil.', 69700.05, 'Mantenimiento'),
-('Perferendis servicio', 'Id asperiores occaecati amet. Repellat veniam assumenda dolorum.', 257351.17, 'Mantenimiento'),
-('Odio servicio', 'Quo sequi excepturi ratione eaque. Eligendi error nesciunt.', 194338.04, 'Hogar'),
-('Totam servicio', 'Vitae commodi vitae ex aut sapiente aut. Accusamus corporis sit voluptas asperiores quos eaque.', 61456.1, 'Belleza'),
-('Minima servicio', 'Ipsam exercitationem nesciunt odit. Porro itaque error voluptatum sequi autem.', 243267.09, 'Hogar'),
-('Explicabo servicio', 'Ducimus repudiandae laboriosam rem. Rem iusto asperiores quidem dolorem perspiciatis.', 263829.43, 'Hogar'),
-('Incidunt servicio', 'Molestias voluptate facere id deleniti commodi. At distinctio odit voluptas amet ex voluptates.', 145031.56, 'Otro'),
-('Iste servicio', 'Eaque consectetur in beatae.', 208921.11, 'Mantenimiento'),
-('Numquam servicio', 'Eum corporis commodi numquam. Molestias eveniet voluptatum minus iste non aut praesentium.', 90663.52, 'Mantenimiento'),
-('Repudiandae servicio', 'Sapiente voluptate repellendus nostrum odit ad. Adipisci earum quis ullam expedita.', 102376.76, 'Mantenimiento'),
-('Odit servicio', 'Fuga quam quod necessitatibus. Sunt culpa quidem amet. Earum optio laborum ipsam.', 225455.08, 'Hogar'),
-('Deserunt servicio', 'Eveniet ab quia cupiditate fugit. Magnam rerum rem asperiores similique.', 202282.75, 'Belleza');
-INSERT INTO PRODUCTO (prod_nombre, prod_descripcion, prod_cantidad_disponible, prod_precio_unitario) VALUES
-('Nesciunt producto', 'Illo vitae cupiditate veniam. Rerum ullam at sapiente doloribus nihil minima.', 18, 39165.07),
-('Autem producto', 'Eos aut eveniet eos ipsum quaerat cumque. Expedita aliquam sit explicabo voluptatum earum.', 6, 28490.41),
-('Aliquid producto', 'Doloremque officia facere veniam. Non perspiciatis veniam.', 9, 49580.93),
-('Illo producto', 'Commodi sequi iste tempore ipsum. Repellat voluptas voluptates pariatur. Mollitia enim error culpa.', 18, 18784.61),
-('Perferendis producto', 'Veniam maxime eligendi aspernatur deserunt vero. Commodi esse modi magnam cumque.', 11, 43714.08),
-('Sequi producto', 'Similique eum voluptates exercitationem id quis. Natus eum iure eaque dolorum atque enim.', 2, 19161.92),
-('Non producto', 'Quas quisquam facilis id necessitatibus. Facere enim harum ipsum mollitia.', 2, 42201.83),
-('Nesciunt producto', 'Provident porro laborum laboriosam natus. Enim nemo molestiae tempore hic.', 13, 20709.64),
-('Quia producto', 'Amet impedit quaerat aut quo. Vitae voluptate culpa.', 7, 46525.44),
-('Ea producto', 'Ab necessitatibus autem. Eligendi voluptatibus molestiae laudantium vel sed.', 19, 45054.71),
-('Commodi producto', 'Debitis consequatur odit quas vitae fugiat. Ipsum totam fugiat aspernatur vitae soluta.', 11, 18505.06),
-('Nisi producto', 'Reprehenderit dolorum expedita eius vel quam. Adipisci optio nostrum vel. Dolores architecto nisi.', 16, 25825.28),
-('Quasi producto', 'Error aperiam veniam sunt tenetur numquam. Nam aliquid exercitationem officia fugit minima.', 15, 15714.86),
-('Quidem producto', 'Eaque perferendis nobis. Deleniti quis quam nam.', 5, 19865.1),
-('Totam producto', 'Ea maiores libero atque voluptatem. Quis eum dicta est aliquid sint qui. Ea vel neque.', 18, 31559.09);
+
+CALL sp_insert_empleado('Feliciana', 'Canton', '+57 4843321819', 'andresciro@gmail.com', 'Estilista', 1050021.51, '12345');
+CALL sp_insert_empleado('Joan', 'Vazquez', '+57 4740838637', 'cuervojose@gmail.com', 'Gerente', 1489783.71, '12345');
+CALL sp_insert_empleado('Noe', 'Lobo', '+57 4835116155', 'segoviabrunilda@gmail.com', 'Recepcionista', 2472942.43, '12345');
+CALL sp_insert_empleado('Agata', 'Pinedo', '+57 4738495931', 'maria-teresamancebo@gmail.com', 'Estilista', 2180985.02, '12345');
+CALL sp_insert_empleado('Leopoldo', 'Santana', '+57 4952553419', 'fernandosevilla@gmail.com', 'Estilista', 1059594.44, '12345');
+CALL sp_insert_empleado('Pia', 'Barba', '+57 4740564139', 'gabrielavalera@gmail.com', 'Recepcionista', 1465321.79, '12345');
+CALL sp_insert_empleado('Soledad', 'Segarra', '+57 4842388496', 'isidoro28@gmail.com', 'Estilista', 2122490.13, '12345');
+CALL sp_insert_empleado('Ciriaco', 'Arevalo', '+57 4622691669', 'carolina01@gmail.com', 'Asistente', 1440881.24, '12345');
+CALL sp_insert_empleado('Sonia', 'Lasa', '+57 4851462704', 'martinprudencia@gmail.com', 'Gerente', 2618860.91, '12345');
+CALL sp_insert_empleado('María Belen', 'Cuellar', '+57 4708095701', 'jose03@gmail.com', 'Estilista', 2517614.73, '12345');
+CALL sp_insert_empleado('Cayetano', 'Boada', '+57 4747182278', 'belen96@gmail.com', 'Recepcionista', 2396278.79, '12345');
+CALL sp_insert_empleado('Sabas', 'Perea', '+57 4728713315', 'dionisiagimenez@gmail.com', 'Gerente', 1555742.68, '12345');
+CALL sp_insert_empleado('Jenaro', 'Bauza', '+57 4705183473', 'yherrero@gmail.com', 'Recepcionista', 2914426.14, '12345');
+CALL sp_insert_empleado('Cleto', 'Rosa', '+57 4746670106', 'ibarragregorio@gmail.com', 'Gerente', 1204420.55, '12345');
+CALL sp_insert_empleado('Brunilda', 'Sanabria', '+57 4962473178', 'alcoleaciro@gmail.com', 'Asistente', 1193432.75, '12345');
+
+CALL sp_insert_cliente('Alicia', 'Garcia', '+57 4802606474', 'mcortina@gmail.com', '12345');
+CALL sp_insert_cliente('Isaac', 'Barragan', '+57 4738050097', 'verdejocecilio@gmail.com', '12345');
+CALL sp_insert_cliente('Imelda', 'Gutierrez', '+57 4819399091', 'juan-carlos35@gmail.com', '12345');
+CALL sp_insert_cliente('Juan Manuel', 'Priego', '+57 4947510799', 'garcesantonia@gmail.com', '12345');
+CALL sp_insert_cliente('Serafina', 'Hidalgo', '+57 4642784980', 'canizaresjuan-luis@gmail.com', '12345');
+CALL sp_insert_cliente('Tania', 'Campo', '+57 4682449353', 'diglesias@gmail.com', '12345');
+CALL sp_insert_cliente('Fabiana', 'Roda', '+57 4800524278', 'caparroscarlos@gmail.com', '12345');
+CALL sp_insert_cliente('Vera', 'Company', '+57 4700598262', 'panfilo05@gmail.com', '12345');
+CALL sp_insert_cliente('Paulino', 'Ramos', '+57 4623226025', 'juanitocuervo@gmail.com', '12345');
+CALL sp_insert_cliente('Candido', 'Pineiro', '+57 4707337543', 'ferrandosabas@gmail.com', '12345');
+CALL sp_insert_cliente('Pascual', 'Vergara', '+57 4885014294', 'roviraonofre@gmail.com', '12345');
+CALL sp_insert_cliente('Rogelio', 'Falcon', '+57 4906088356', 'estrella51@gmail.com', '12345');
+CALL sp_insert_cliente('Nacho', 'Quevedo', '+57 4724823662', 'tabad@gmail.com', '12345');
+CALL sp_insert_cliente('Humberto', 'Ropero', '+57 4739577738', 'genovevablazquez@gmail.com', '12345');
+CALL sp_insert_cliente('Aranzazu', 'Naranjo', '+57 4733433200', 'dbeltran@gmail.com', '12345');
+
+
+CALL CrearProveedor('Zamora Inc', '+57 4720062312', 'gilanselma@gmail.com', 'Paseo Carmen Reina 1, Murcia, 08621');
+CALL CrearProveedor('Zamora and Sons', '+57 4639845461', 'santiago79@gmail.com', 'C. de Rene Tamarit 1, Avila, 65918');
+CALL CrearProveedor('Gras and Sons', '+57 4729740148', 'escobarursula@gmail.com', 'Rambla de Cintia Hernandez 668, Valladolid, 18501');
+CALL CrearProveedor('Guerra-Benitez', '+57 4739996504', 'otrujillo@gmail.com', 'Urbanización de Leyre Beltrán 5, Jaen, 65511');
+CALL CrearProveedor('Mendez Group', '+57 4641212678', 'bcalderon@gmail.com', 'Canada Severiano Pons 9 Apt. 98 , Soria, 22444');
+CALL CrearProveedor('Coello-Barroso', '+57 4706464715', 'jose-manuel79@gmail.com', 'Alameda de Prudencia Pinto 67, Segovia, 45937');
+CALL CrearProveedor('Elias-Puig', '+57 4724793564', 'hpatino@gmail.com', 'Avenida de Olivia Rebollo 52 Apt. 42 , Zamora, 17979');
+CALL CrearProveedor('Velazquez-Ripoll', '+57 4700589113', 'flavio90@gmail.com', 'Urbanizacion de Arcelia Villena 499, Huesca, 79825');
+CALL CrearProveedor('Tolosa Inc', '+57 4706112545', 'hgabaldon@gmail.com', 'Avenida de Marcelo Arribas 1 Piso 1 , Valencia, 82825');
+CALL CrearProveedor('Roldan, Sevilla and Guardiola', '+57 4822660937', 'aporcel@gmail.com', 'Alameda de Haroldo Seco 5, Melilla, 96969');
+CALL CrearProveedor('Oliveras LLC', '+57 4739249912', 'desiderio34@gmail.com', 'Camino Rodolfo Rocha 97 Puerta 2 , Madrid, 22579');
+CALL CrearProveedor('Palomar Inc', '+57 4623688767', 'fsaldana@gmail.com', 'Callejon Jafet Malo 87 Puerta 8 , Ourense, 48580');
+CALL CrearProveedor('Sainz, Gil and Rodríguez', '+57 4743407451', 'xcarpio@gmail.com', 'Glorieta Odalys Gabaldon 6, Pontevedra, 54494');
+CALL CrearProveedor('Bustos, Cerda and Reina', '+57 4714223253', 'jtovar@gmail.com', 'Pasadizo de Maribel Lobo 87, Palencia, 17518');
+CALL CrearProveedor('Gibert-Roman', '+57 4737454589', 'clarisatoro@gmail.com', 'Rambla Valero Sastre 7, Tarragona, 42415');
+
+
+CALL sp_insertar_servicio('Coloración', 'Tintes, mechas, reflejos, y otros servicios de coloración.', 'Hogar', 200931.51, 10);
+CALL sp_insertar_servicio('Manicura', 'Cuidado y embellecimiento de las uñas de las manos.', 'Hogar', 232432.95, 10);
+CALL sp_insertar_servicio('Corte Cabello', 'Cortes adaptados a diferentes estilos y tipos de cabello.', 293278.94, 'Hogar', 10);
+CALL sp_insertar_servicio('Alisado', 'Permanente o temporal, como el alisado japonés o con keratina.', 'Hogar', 69700.05, 10);
+CALL sp_insertar_servicio('Pedicura', 'Cuidado y embellecimiento de las uñas de los pies.', 'Mantenimiento', 257351.17, 10);
+CALL sp_insertar_servicio('Decoración de uñas', 'Uñas de gel, acrílicas, esmaltado permanente.', 'Mantenimiento', 194338.04, 10);
+CALL sp_insertar_servicio('Depilación de cejas', 'Depilación de cejas con láser o pinzas', 'Mantenimiento', 61456.1, 10);
+
+
+CALL sp_insert_producto('Nesciunt producto', 'Illo vitae cupiditate veniam. Rerum ullam at sapiente doloribus nihil minima.', 18, 39165.07);
+CALL sp_insert_producto('Autem producto', 'Eos aut eveniet eos ipsum quaerat cumque. Expedita aliquam sit explicabo voluptatum earum.', 6, 28490.41);
+CALL sp_insert_producto('Aliquid producto', 'Doloremque officia facere veniam. Non perspiciatis veniam.', 9, 49580.93);
+CALL sp_insert_producto('Illo producto', 'Commodi sequi iste tempore ipsum. Repellat voluptas voluptates pariatur. Mollitia enim error culpa.', 18, 18784.61);
+CALL sp_insert_producto('Perferendis producto', 'Veniam maxime eligendi aspernatur deserunt vero. Commodi esse modi magnam cumque.', 11, 43714.08);
+CALL sp_insert_producto('Sequi producto', 'Similique eum voluptates exercitationem id quis. Natus eum iure eaque dolorum atque enim.', 2, 19161.92);
+CALL sp_insert_producto('Non producto', 'Quas quisquam facilis id necessitatibus. Facere enim harum ipsum mollitia.', 2, 42201.83);
+CALL sp_insert_producto('Nesciunt producto', 'Provident porro laborum laboriosam natus. Enim nemo molestiae tempore hic.', 13, 20709.64);
+CALL sp_insert_producto('Quia producto', 'Amet impedit quaerat aut quo. Vitae voluptate culpa.', 7, 46525.44);
+CALL sp_insert_producto('Ea producto', 'Ab necessitatibus autem. Eligendi voluptatibus molestiae laudantium vel sed.', 19, 45054.71);
+CALL sp_insert_producto('Commodi producto', 'Debitis consequatur odit quas vitae fugiat. Ipsum totam fugiat aspernatur vitae soluta.', 11, 18505.06);
+CALL sp_insert_producto('Nisi producto', 'Reprehenderit dolorum expedita eius vel quam. Adipisci optio nostrum vel. Dolores architecto nisi.', 16, 25825.28);
+CALL sp_insert_producto('Quasi producto', 'Error aperiam veniam sunt tenetur numquam. Nam aliquid exercitationem officia fugit minima.', 15, 15714.86);
+CALL sp_insert_producto('Quidem producto', 'Eaque perferendis nobis. Deleniti quis quam nam.', 5, 19865.1);
+CALL sp_insert_producto('Totam producto', 'Ea maiores libero atque voluptatem. Quis eum dicta est aliquid sint qui. Ea vel neque.', 18, 31559.09);
+
+
 INSERT INTO GASTO_MENSUAL (gas_descripcion, gas_fecha, gas_monto, gas_tipo) VALUES
 ('Assumenda optio officiis amet numquam.', '2025-02-01', 772312.43, 'Indirecto'),
 ('Maxime ipsum ab exercitationem blanditiis.', '2024-11-05', 908040.6, 'Indirecto'),
@@ -111,73 +108,92 @@ INSERT INTO PAGO (pag_fecha, pag_monto, pag_metodo, gas_id, emp_id) VALUES
 ('2025-06-16', 429042.68, 'Tarjeta', 8, 15),
 ('2025-06-16', 541697.05, 'Efectivo', 4, 4),
 ('2025-06-16', 110824.6, 'Efectivo', 10, 9);
-INSERT INTO FACTURA_SERVICIO (fac_total, fac_fecha, fac_hora, cli_id) VALUES
-(161250.48, '2025-06-16', '22:07:15', 4),
-(63163.97, '2025-06-16', '06:15:41', 12),
-(337685.3, '2025-06-16', '13:23:31', 4),
-(89656.14, '2025-06-16', '23:50:29', 1),
-(438239.58, '2025-06-16', '23:09:30', 2),
-(286228.69, '2025-06-16', '09:50:37', 5),
-(354350.22, '2025-06-16', '15:06:17', 4),
-(297262.93, '2025-06-16', '08:49:09', 12),
-(471626.27, '2025-06-16', '11:59:54', 10),
-(313533.13, '2025-06-16', '08:47:13', 4),
-(405232.55, '2025-06-16', '01:52:41', 13),
-(239106.38, '2025-06-16', '12:49:37', 2),
-(102649.56, '2025-06-16', '03:18:13', 7),
-(215890.93, '2025-06-16', '01:00:34', 7),
-(265490.85, '2025-06-16', '08:09:16', 12);
-INSERT INTO CITA (cit_fecha, cit_hora, emp_id, ser_id, cli_id) VALUES
-('2025-06-16', '22:16:06', 1, 11, 11),
-('2025-06-16', '06:47:00', 11, 2, 1),
-('2025-06-16', '11:02:19', 7, 12, 6),
-('2025-06-16', '13:00:33', 13, 14, 2),
-('2025-06-16', '11:13:32', 4, 4, 4),
-('2025-06-16', '13:14:02', 9, 8, 3),
-('2025-06-16', '12:47:26', 7, 3, 5),
-('2025-06-16', '09:40:12', 8, 4, 14),
-('2025-06-16', '08:32:12', 15, 2, 8),
-('2025-06-16', '02:36:59', 13, 14, 14),
-('2025-06-16', '00:49:19', 9, 2, 1),
-('2025-06-16', '02:37:36', 11, 9, 14),
-('2025-06-16', '11:37:08', 1, 2, 15),
-('2025-06-16', '11:32:14', 13, 14, 4),
-('2025-06-16', '13:11:14', 3, 7, 8);
+
+
+CALL sp_insertar_factura(161250.48, '2025-06-16', '22:07:15', 4);
+CALL sp_insertar_factura(63163.97, '2025-06-16', '06:15:41', 12);
+CALL sp_insertar_factura(337685.3, '2025-06-16', '13:23:31', 4);
+CALL sp_insertar_factura(89656.14, '2025-06-16', '23:50:29', 1);
+CALL sp_insertar_factura(438239.58, '2025-06-16', '23:09:30', 2);
+CALL sp_insertar_factura(286228.69, '2025-06-16', '09:50:37', 5);
+CALL sp_insertar_factura(354350.22, '2025-06-16', '15:06:17', 4);
+CALL sp_insertar_factura(297262.93, '2025-06-16', '08:49:09', 12);
+CALL sp_insertar_factura(471626.27, '2025-06-16', '11:59:54', 10);
+CALL sp_insertar_factura(313533.13, '2025-06-16', '08:47:13', 4);
+CALL sp_insertar_factura(405232.55, '2025-06-16', '01:52:41', 13);
+CALL sp_insertar_factura(239106.38, '2025-06-16', '12:49:37', 2);
+CALL sp_insertar_factura(102649.56, '2025-06-16', '03:18:13', 7);
+CALL sp_insertar_factura(215890.93, '2025-06-16', '01:00:34', 7);
+CALL sp_insertar_factura(265490.85, '2025-06-16', '08:09:16', 12);
+
+
+CALL sp_insertar_cita('2025-06-16', '22:16:06', 1, 11, 11);
+CALL sp_insertar_cita('2025-06-16', '06:47:00', 11, 2, 1);
+CALL sp_insertar_cita('2025-06-16', '11:02:19', 7, 12, 6);
+CALL sp_insertar_cita('2025-06-16', '13:00:33', 13, 14, 2);
+CALL sp_insertar_cita('2025-06-16', '11:13:32', 4, 4, 4);
+CALL sp_insertar_cita('2025-06-16', '13:14:02', 9, 8, 3);
+CALL sp_insertar_cita('2025-06-16', '12:47:26', 7, 3, 5);
+CALL sp_insertar_cita('2025-06-16', '09:40:12', 8, 4, 14);
+CALL sp_insertar_cita('2025-06-16', '08:32:12', 15, 2, 8);
+CALL sp_insertar_cita('2025-06-16', '02:36:59', 13, 14, 14);
+CALL sp_insertar_cita('2025-06-16', '00:49:19', 9, 2, 1);
+CALL sp_insertar_cita('2025-06-16', '02:37:36', 11, 9, 14);
+CALL sp_insertar_cita('2025-06-16', '11:37:08', 1, 2, 15);
+CALL sp_insertar_cita('2025-06-16', '11:32:14', 13, 14, 4);
+CALL sp_insertar_cita('2025-06-16', '13:11:14', 3, 7, 8);
+
 -- Temporarily disable the trigger that causes dynamic SQL issues
 DROP TRIGGER IF EXISTS trg_after_insert_usuario_sistema;
 
-INSERT INTO USUARIO_SISTEMA (usu_nombre_usuario, usu_contrasena, usu_rol, emp_id, cli_id) VALUES
-('jsantamaria', '+8_!Hy)mFd', 'empleado', NULL, 15),
-('figueroavanesa', '&o_7vZeKfO', 'cliente', 7, NULL),
-('leonardolosada', '269BS%t_*r', 'empleado', NULL, NULL),
-('alexandra87', 'G^9Qkj%zRi', 'cliente', NULL, 4),
-('gimenezcoral', '5B5EFeEf&w', 'admin', 12, NULL),
-('farellano', '@hTXlD1l!3', 'cliente', NULL, 9),
-('camilo56', 'By1KZjBeT)', 'cliente', 9, 14),
-('umelero', 'fEw4zx#fu+', 'cliente', 10, 11),
-('natanaelbermejo', '$5mbfCKfdD', 'empleado', 2, 10),
-('adelgado', 'F*6ULrLl#@', 'admin', NULL, NULL),
-('ucuevas', 'VXN8C0k+@3', 'empleado', NULL, NULL),
-('manuel31', 'o!EJ6aSr@0', 'empleado', NULL, NULL),
-('qtorrijos', 'G1G1$Urn%+', 'cliente', NULL, 10),
-('carolinabarrera', 'cN85AHprU&', 'cliente', 9, NULL),
-('florenciogalan', '^c2m2Bnf$&', 'cliente', NULL, 15);
-INSERT INTO DETALLE_FACTURA_SERVICIO (fac_id, ser_id) VALUES
-(1, 6),
-(2, 5),
-(3, 3),
-(4, 8),
-(5, 14),
-(6, 9),
-(7, 12),
-(8, 5),
-(9, 10),
-(10, 13),
-(11, 11),
-(12, 9),
-(13, 1),
-(14, 11),
-(15, 14);
+DESCRIBE USUARIO_SISTEMA;
+
+CALL insertar_usuario_sistema('jsantamaria', '+8_!Hy)mFd', 'empleado', 20, 15);
+CALL insertar_usuario_sistema('figueroavanesa', '&o_7vZeKfO', 'cliente', 7, NULL);
+CALL insertar_usuario_sistema('leonardolosada', '269BS%t_*r', 'empleado', NULL, NULL);
+CALL insertar_usuario_sistema('alexandra87', 'G^9Qkj%zRi', 'cliente', NULL, 4);
+CALL insertar_usuario_sistema('gimenezcoral', '5B5EFeEf&w', 'admin', 12, NULL);
+CALL insertar_usuario_sistema('farellano', '@hTXlD1l!3', 'cliente', NULL, 9);
+CALL insertar_usuario_sistema('camilo56', 'By1KZjBeT)', 'cliente', 9, 14);
+CALL insertar_usuario_sistema('umelero', 'fEw4zx#fu+', 'cliente', 10, 11);
+CALL insertar_usuario_sistema('natanaelbermejo', '$5mbfCKfdD', 'empleado', 2, 10);
+CALL insertar_usuario_sistema('adelgado', 'F*6ULrLl#@', 'admin', NULL, NULL);
+CALL insertar_usuario_sistema('ucuevas', 'VXN8C0k+@3', 'empleado', NULL, NULL);
+CALL insertar_usuario_sistema('manuel31', 'o!EJ6aSr@0', 'empleado', NULL, NULL);
+CALL insertar_usuario_sistema('qtorrijos', 'G1G1$Urn%+', 'cliente', NULL, 10);
+CALL insertar_usuario_sistema('carolinabarrera', 'cN85AHprU&', 'cliente', 9, NULL);
+CALL insertar_usuario_sistema('florenciogalan', '^c2m2Bnf$&', 'cliente', NULL, 15);
+
+-- Recreate the trigger after data insertion
+DELIMITER //
+CREATE TRIGGER trg_after_insert_usuario_sistema
+AFTER INSERT ON USUARIO_SISTEMA
+FOR EACH ROW
+BEGIN
+  -- Crear usuario de base de datos con rol correspondiente
+  CALL CrearUsuarioConRol(NEW.usu_nombre_usuario, NEW.usu_contrasena, CONCAT('rol_', NEW.usu_rol));
+END;
+//
+
+DELIMITER ;
+
+
+CALL sp_insertar_detalle_factura(1, 6);
+CALL sp_insertar_detalle_factura(2, 5);
+CALL sp_insertar_detalle_factura(3, 3);
+CALL sp_insertar_detalle_factura(4, 8);
+CALL sp_insertar_detalle_factura(5, 14);
+CALL sp_insertar_detalle_factura(6, 9);
+CALL sp_insertar_detalle_factura(7, 12);
+CALL sp_insertar_detalle_factura(8, 5);
+CALL sp_insertar_detalle_factura(9, 10);
+CALL sp_insertar_detalle_factura(10, 13);
+CALL sp_insertar_detalle_factura(11, 11);
+CALL sp_insertar_detalle_factura(12, 9);
+CALL sp_insertar_detalle_factura(13, 1);
+CALL sp_insertar_detalle_factura(14, 11);
+CALL sp_insertar_detalle_factura(15, 14);
+
 INSERT INTO PRODUCTO_USADO (ser_id, prod_id, pru_cantidad_usada, pru_botellas_usadas) VALUES
 (1, 9, 300, 3),
 (2, 2, 200, 2),
@@ -195,23 +211,22 @@ INSERT INTO PRODUCTO_USADO (ser_id, prod_id, pru_cantidad_usada, pru_botellas_us
 (14, 7, 500, 1),
 (15, 2, 100, 3);
 
-DELETE FROM PRODUCTO_USADO;
-INSERT INTO PROMOCION (pro_nombre, pro_descripcion, pro_fecha_inicio, pro_fecha_fin, pro_descuento_porcentaje, ser_id, pro_usos) VALUES
-('Promo 1', 'Itaque sit ratione numquam minima in impedit.', '2025-06-16', '2025-06-16', 27.6, 9, 1),
-('Promo 2', 'Ratione sint sunt soluta. Fugit laborum non alias eius.', '2025-06-16', '2025-06-16', 25.86, 10, 9),
-('Promo 3', 'Quia ullam tempore. Excepturi recusandae est.', '2025-06-16', '2025-06-16', 8.7, 3, 1),
-('Promo 4', 'Non at ipsam totam illum laborum.', '2025-06-16', '2025-06-16', 12.71, 15, 1),
-('Promo 5', 'Soluta dicta animi alias amet.', '2025-06-16', '2025-06-16', 27.47, 4, 4),
-('Promo 6', 'Laborum ipsum vero labore mollitia exercitationem.', '2025-06-16', '2025-06-16', 21.67, 6, 9),
-('Promo 7', 'Perspiciatis eaque illum accusantium quos.', '2025-06-16', '2025-06-16', 27.1, 7, 10),
-('Promo 8', 'Non velit quae quae eius.', '2025-06-16', '2025-06-16', 23.74, 15, 4),
-('Promo 9', 'Voluptatum vitae saepe natus nisi eligendi placeat.', '2025-06-16', '2025-06-16', 26.62, 13, 3),
-('Promo 10', 'Maxime dolores animi similique.', '2025-06-16', '2025-06-16', 27.04, 1, 3),
-('Promo 11', 'Repellendus exercitationem quae placeat odit labore velit.', '2025-06-16', '2025-06-16', 23.41, 6, 7),
-('Promo 12', 'Quis delectus perspiciatis excepturi at explicabo quia.', '2025-06-16', '2025-06-16', 25.06, 14, 4),
-('Promo 13', 'Sint nesciunt velit.', '2025-06-16', '2025-06-16', 11.67, 13, 2),
-('Promo 14', 'Sit corrupti voluptatibus.', '2025-06-16', '2025-06-16', 14.56, 1, 8),
-('Promo 15', 'Occaecati debitis odio a earum quis. Nemo culpa quos quod.', '2025-06-16', '2025-06-16', 10.56, 14, 8);
+CALL sp_crear_promocion('Promo 1', 'Itaque sit ratione numquam minima in impedit.', '2025-06-16', '2025-06-16', 27.6, 9, 1);
+CALL sp_crear_promocion('Promo 2', 'Ratione sint sunt soluta. Fugit laborum non alias eius.', '2025-06-16', '2025-06-16', 25.86, 10, 9);
+CALL sp_crear_promocion('Promo 3', 'Quia ullam tempore. Excepturi recusandae est.', '2025-06-16', '2025-06-16', 8.7, 3, 1);
+CALL sp_crear_promocion('Promo 4', 'Non at ipsam totam illum laborum.', '2025-06-16', '2025-06-16', 12.71, 15, 1);
+CALL sp_crear_promocion('Promo 5', 'Soluta dicta animi alias amet.', '2025-06-16', '2025-06-16', 27.47, 4, 4);
+CALL sp_crear_promocion('Promo 6', 'Laborum ipsum vero labore mollitia exercitationem.', '2025-06-16', '2025-06-16', 21.67, 6, 9);
+CALL sp_crear_promocion('Promo 7', 'Perspiciatis eaque illum accusantium quos.', '2025-06-16', '2025-06-16', 27.1, 7, 10);
+CALL sp_crear_promocion('Promo 8', 'Non velit quae quae eius.', '2025-06-16', '2025-06-16', 23.74, 15, 4);
+CALL sp_crear_promocion('Promo 9', 'Voluptatum vitae saepe natus nisi eligendi placeat.', '2025-06-16', '2025-06-16', 26.62, 13, 3);
+CALL sp_crear_promocion('Promo 10', 'Maxime dolores animi similique.', '2025-06-16', '2025-06-16', 27.04, 1, 3);
+CALL sp_crear_promocion('Promo 11', 'Repellendus exercitationem quae placeat odit labore velit.', '2025-06-16', '2025-06-16', 23.41, 6, 7);
+CALL sp_crear_promocion('Promo 12', 'Quis delectus perspiciatis excepturi at explicabo quia.', '2025-06-16', '2025-06-16', 25.06, 14, 4);
+CALL sp_crear_promocion('Promo 13', 'Sint nesciunt velit.', '2025-06-16', '2025-06-16', 11.67, 13, 2);
+CALL sp_crear_promocion('Promo 14', 'Sit corrupti voluptatibus.', '2025-06-16', '2025-06-16', 14.56, 1, 8);
+CALL sp_crear_promocion('Promo 15', 'Occaecati debitis odio a earum quis. Nemo culpa quos quod.', '2025-06-16', '2025-06-16', 10.56, 14, 8);
+
 INSERT INTO COMPRA_PRODUCTO (cop_fecha_compra, cop_total_compra, cop_metodo_pago, prov_id, gas_id) VALUES
 ('2025-06-16', 191890.7, 'Efectivo', 4, 1),
 ('2025-06-16', 291210.62, 'Tarjeta', 6, 5),
@@ -292,6 +307,7 @@ INSERT INTO HISTORIAL_CITA (his_observaciones, cit_id) VALUES
 ('Perferendis modi odit nulla quidem nesciunt.', 8),
 ('Assumenda quisquam ipsa hic optio labore modi consequatur.', 15),
 ('Vero accusamus soluta consequuntur aliquam nemo.', 3);
+
 
 
 
