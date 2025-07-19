@@ -61,18 +61,46 @@ CREATE ROLE IF NOT EXISTS 'rol_empleado';
 CREATE ROLE IF NOT EXISTS 'rol_cliente';
 
 
-
+-- Permisos Admin
 GRANT ALL PRIVILEGES ON salondb.* TO 'rol_admin';
+GRANT EXECUTE ON salondb.* TO 'rol_admin';
 
+-- Permisos Empleado
 GRANT SELECT, INSERT, UPDATE ON salondb.CITA TO 'rol_empleado';
 GRANT SELECT, INSERT ON salondb.FACTURA_SERVICIO TO 'rol_empleado';
 GRANT SELECT ON salondb.vw_citas_hoy TO 'rol_empleado';
 GRANT SELECT ON salondb.vw_servicios_totales TO 'rol_empleado';
 GRANT SELECT ON salondb.vw_precio_promedio_servicios TO 'rol_empleado';
+GRANT SELECT ON salondb.EMPLEADO TO 'rol_empleado';
+GRANT SELECT ON salondb.CITA TO 'rol_empleado';
+GRANT SELECT ON salondb.SERVICIO TO 'rol_empleado';
+GRANT SELECT ON salondb.HISTORIAL_CITA TO 'rol_empleado';
+GRANT SELECT ON salondb.USUARIO_SISTEMA TO 'rol_empleado';
+GRANT UPDATE ON salondb.EMPLEADO TO 'rol_empleado';
+GRANT UPDATE ON salondb.USUARIO_SISTEMA TO 'rol_empleado';
+GRANT EXECUTE ON PROCEDURE salondb.sp_update_empleado TO 'rol_empleado';
+GRANT EXECUTE ON PROCEDURE salondb.sp_update_usuario TO 'rol_empleado';
+GRANT EXECUTE ON PROCEDURE salondb.sp_ver_citas_empleado TO 'rol_empleado';
+GRANT EXECUTE ON PROCEDURE salondb.sp_ver_historial_empleado TO 'rol_empleado';
 
+
+-- Permisos Cliente
 GRANT SELECT, INSERT ON salondb.CITA TO 'rol_cliente';
 GRANT SELECT ON salondb.vw_citas_hoy TO 'rol_cliente';
 GRANT SELECT ON salondb.vw_servicios_totales TO 'rol_cliente';
+GRANT SELECT ON salondb.CLIENTE TO 'rol_cliente';
+GRANT SELECT ON salondb.CITA TO 'rol_cliente';
+GRANT SELECT ON salondb.SERVICIO TO 'rol_cliente';
+GRANT SELECT ON salondb.PROMOCION TO 'rol_cliente';
+GRANT SELECT ON salondb.FACTURA_SERVICIO TO 'rol_cliente';
+GRANT SELECT ON salondb.DETALLE_FACTURA_SERVICIO TO 'rol_cliente';
+GRANT SELECT ON salondb.HISTORIAL_CITA TO 'rol_cliente';
+GRANT SELECT ON salondb.USUARIO_SISTEMA TO 'rol_cliente';
+GRANT UPDATE ON salondb.CLIENTE TO 'rol_cliente';
+GRANT UPDATE ON salondb.USUARIO_SISTEMA TO 'rol_cliente';
+GRANT EXECUTE ON PROCEDURE salondb.sp_insert_cliente TO 'rol_cliente';
+GRANT EXECUTE ON PROCEDURE salondb.sp_update_cliente TO 'rol_cliente';
+GRANT EXECUTE ON PROCEDURE salondb.sp_update_usuario TO 'rol_cliente';
 
 
 CREATE USER IF NOT EXISTS 'admin01'@'localhost' IDENTIFIED BY 'admin123';
