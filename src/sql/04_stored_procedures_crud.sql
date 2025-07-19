@@ -82,21 +82,21 @@ CREATE PROCEDURE sp_insert_cliente(
 )
 BEGIN
   DECLARE cli_id_new INT;
-  -- DECLARE EXIT HANDLER FOR SQLEXCEPTION
-  -- BEGIN
-  --   ROLLBACK;
-  --   RESIGNAL;
-  -- END;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    ROLLBACK;
+    RESIGNAL;
+  END;
 
-  -- START TRANSACTION;
+  START TRANSACTION;
 
   -- Insert into CLIENTE table
   INSERT INTO CLIENTE(cli_nombre, cli_apellido, cli_telefono, cli_correo)
   VALUES (p_nombre, p_apellido, p_telefono, p_correo);
-  
+
   -- Get the ID of the newly inserted client
   SET cli_id_new = LAST_INSERT_ID();
-  
+
   -- Insert into USUARIO_SISTEMA table
   INSERT INTO USUARIO_SISTEMA (
     usu_nombre_usuario,
@@ -112,8 +112,8 @@ BEGIN
     NULL,
     cli_id_new
   );
-  
-  -- COMMIT;
+
+  COMMIT;
 END;
 //
 
