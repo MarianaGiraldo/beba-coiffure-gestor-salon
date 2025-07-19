@@ -239,15 +239,15 @@ INSERT INTO DETALLE_COMPRA (com_id, prod_id, dec_cantidad, dec_precio_unitario) 
 (14, 13, 4, 30183.87),
 (15, 4, 4, 14420.62);
 INSERT INTO INVENTARIO (inv_fecha_actualizacion, prod_id, inv_cantidad_actual, inv_observaciones) VALUES
-('2025-06-16', 1, 2, 'Comprar más producto'),
-('2025-06-16', 2, 8, 'Sin observaciones'),
-('2025-06-16', 3, 16, 'Sin observaciones'),
-('2025-06-16', 4, 20, 'Sin observaciones'),
-('2025-06-16', 5, 28, 'Sin observaciones'),
-('2025-06-16', 6, 25, 'Sin observaciones'),
-('2025-06-16', 7, 3, 'Sin observaciones'),
-('2025-06-16', 8, 15, 'Sin observaciones'),
-('2025-06-16', 9, 14, 'Sin observaciones'),
+('2025-06-16', 1, 18, 'Comprar más producto'),
+('2025-06-16', 2, 6, 'Sin observaciones'),
+('2025-06-16', 3, 9, 'Sin observaciones'),
+('2025-06-16', 4, 18, 'Sin observaciones'),
+('2025-06-16', 5, 11, 'Sin observaciones'),
+('2025-06-16', 6, 2, 'Sin observaciones'),
+('2025-06-16', 7, 2, 'Sin observaciones'),
+('2025-06-16', 8, 13, 'Sin observaciones'),
+('2025-06-16', 9, 13, 'Sin observaciones'),
 
 INSERT INTO HORARIO_EMPLEADO (hor_dia_semana, hor_hora_entrada, hor_hora_salida, emp_id) VALUES
 ('Jueves', '13:26:48', '06:05:58', 8),
