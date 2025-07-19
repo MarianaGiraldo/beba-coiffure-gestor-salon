@@ -15,24 +15,6 @@ BEGIN
 END;
 //
 
--- Trigger para USUARIO_SISTEMA.emp_id y cli_id
-CREATE TRIGGER trg_insert_usuario_sistema
-BEFORE INSERT ON USUARIO_SISTEMA
-FOR EACH ROW
-BEGIN
-  IF NEW.emp_id IS NOT NULL THEN
-    IF NOT EXISTS (SELECT 1 FROM EMPLEADO WHERE emp_id = NEW.emp_id) THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Empleado no existe para el usuario del sistema';
-    END IF;
-  END IF;
-  IF NEW.cli_id IS NOT NULL THEN
-    IF NOT EXISTS (SELECT 1 FROM CLIENTE WHERE cli_id = NEW.cli_id) THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cliente no existe para el usuario del sistema';
-    END IF;
-  END IF;
-END;
-//
-
 -- Trigger para CITA
 CREATE TRIGGER trg_insert_cita
 BEFORE INSERT ON CITA
