@@ -50,15 +50,16 @@ CALL CrearProveedor('Bustos, Cerda and Reina', '+57 4714223253', 'jtovar@gmail.c
 CALL CrearProveedor('Gibert-Roman', '+57 4737454589', 'clarisatoro@gmail.com', 'Rambla Valero Sastre 7, Tarragona, 42415');
 
 
-CALL sp_insertar_servicio('Coloracion', 'Tintes, mechas, reflejos, y otros servicios de coloracion.', 'Cabello', 200931.51, 10);
-CALL sp_insertar_servicio('Manicura', 'Cuidado y embellecimiento de las unas de las manos.', 'Unas', 232432.95, 10);
-CALL sp_insertar_servicio('Corte Cabello', 'Cortes adaptados a diferentes estilos y tipos de cabello.', 293278.94, 'Cabello', 10);
-CALL sp_insertar_servicio('Alisado', 'Permanente o temporal.', 'Cabello', 69700.05, 10);
-CALL sp_insertar_servicio('Pedicura', 'Cuidado y embellecimiento de las unas de los pies.', 'Unas', 257351.17, 10);
-CALL sp_insertar_servicio('Decoración de unas', 'Unas de gel, acrilicas, esmaltado permanente.', 'Unas', 194338.04, 10);
-CALL sp_insertar_servicio('Depilación de cejas', 'Depilacion de cejas con laser o pinzas', 'Facial', 61456.1, 10);
-CALL sp_insertar_servicio('Mascarilla facial', 'Tratamiento de limpieza para la cara', 'Facial', 3500000.00, 45);
-CALL sp_insertar_servicio('Hidratacion facial', 'Tratamiento de hidratacion para la cara', 'Facial', 3500000.00, 45);
+CALL sp_insertar_servicio('Coloracion', 'Tintes, mechas, reflejos, y otros servicios de coloracion.', 'Cabello', 200931.51, 90);
+CALL sp_insertar_servicio('Manicura', 'Cuidado y embellecimiento de las unas de las manos.', 'Unas', 20000, 60);
+CALL sp_insertar_servicio('Corte Cabello', 'Cortes adaptados a diferentes estilos y tipos de cabello.', 'Cabello', 30000, 30);
+CALL sp_insertar_servicio('Alisado', 'Permanente o temporal.', 'Cabello', 25000, 30);
+CALL sp_insertar_servicio('Pedicura', 'Cuidado y embellecimiento de las unas de los pies.', 'Unas', 30000, 60);
+CALL sp_insertar_servicio('Decoración de unas', 'Unas de gel, acrilicas, esmaltado permanente.', 'Unas', 15000, 30);
+CALL sp_insertar_servicio('Depilación de cejas', 'Depilacion de cejas con laser o pinzas', 'Facial', 16000, 20);
+CALL sp_insertar_servicio('Mascarilla facial', 'Tratamiento de limpieza para la cara', 'Facial', 32500, 45);
+CALL sp_insertar_servicio('Hidratacion facial', 'Tratamiento de hidratacion para la cara', 'Facial', 25000, 45);
+
 
 
 
@@ -144,8 +145,6 @@ CALL sp_insertar_cita('2025-06-07', '13:11:14', 3, 9, 8);
 -- Temporarily disable the trigger that causes dynamic SQL issues
 DROP TRIGGER IF EXISTS trg_after_insert_usuario_sistema;
 
-DESCRIBE USUARIO_SISTEMA;
-
 CALL insertar_usuario_sistema('jsantamaria', '+8_!Hy)mFd', 'empleado', 20, 15);
 CALL insertar_usuario_sistema('figueroavanesa', '&o_7vZeKfO', 'cliente', 7, NULL);
 CALL insertar_usuario_sistema('leonardolosada', '269BS%t_*r', 'empleado', NULL, NULL);
@@ -161,19 +160,6 @@ CALL insertar_usuario_sistema('manuel31', 'o!EJ6aSr@0', 'empleado', NULL, NULL);
 CALL insertar_usuario_sistema('qtorrijos', 'G1G1$Urn%+', 'cliente', NULL, 10);
 CALL insertar_usuario_sistema('carolinabarrera', 'cN85AHprU&', 'cliente', 9, NULL);
 CALL insertar_usuario_sistema('florenciogalan', '^c2m2Bnf$&', 'cliente', NULL, 15);
-
--- Recreate the trigger after data insertion
-DELIMITER //
-CREATE TRIGGER trg_after_insert_usuario_sistema
-AFTER INSERT ON USUARIO_SISTEMA
-FOR EACH ROW
-BEGIN
-  -- Crear usuario de base de datos con rol correspondiente
-  CALL CrearUsuarioConRol(NEW.usu_nombre_usuario, NEW.usu_contrasena, CONCAT('rol_', NEW.usu_rol));
-END;
-//
-
-DELIMITER ;
 
 
 CALL sp_insertar_detalle_factura(1, 6);
