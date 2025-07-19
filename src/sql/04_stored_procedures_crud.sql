@@ -715,6 +715,49 @@ END $$
 
 DELIMITER ;
 
+
+-- Insertar Usuario
+
+DELIMITER $$
+
+CREATE PROCEDURE insertar_usuario_sistema(
+  IN p_usuario VARCHAR(50),
+  IN p_correo VARCHAR(100),
+  IN p_contrasena VARCHAR(100),
+  IN p_emp_id INT,
+  IN p_cli_id INT
+)
+BEGIN
+  IF p_emp_id IS NOT NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM EMPLEADO WHERE emp_id = p_emp_id) THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Empleado no existe para el usuario del sistema';
+    END IF;
+  END IF;
+
+  IF p_cli_id IS NOT NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM CLIENTE WHERE cli_id = p_cli_id) THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cliente no existe para el usuario del sistema';
+    END IF;
+  END IF;
+
+  INSERT INTO USUARIO_SISTEMA (usuario, correo, contrasena, emp_id, cli_id)
+  VALUES (p_usuario, p_correo, p_contrasena, p_emp_id, p_cli_id);
+END $$
+
+DELIMITER ;
+
+
+-- Leer cliente por correo
+
+DELIMITER $$
+
+CREATE PROCEDURE buscar_cliente_por_correo(IN p_correo VARCHAR(100))
+  BEGIN
+    SELECT * FROM CLIENTE WHERE cli_correo=p_correo;
+  END $$
+  
+DELIMITER ;
+
 -- Log CRUD stored procedures completion
 INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('04_stored_procedures_crud.sql', 'SUCCESS');
