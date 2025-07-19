@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"salon/models"
 
 	"gorm.io/gorm"
@@ -23,9 +24,13 @@ func (s *DatabaseService) GetEmpleados() ([]models.Employee, error) {
 }
 
 func (s *DatabaseService) InsertEmpleado(emp models.Employee) error {
-	return s.DB.Exec("CALL sp_insert_empleado(?, ?, ?, ?, ?, ?)",
+	err := s.DB.Exec("CALL sp_insert_empleado(?, ?, ?, ?, ?, ?, ?)",
 		emp.EmpNombre, emp.EmpApellido, emp.EmpTelefono,
-		emp.EmpCorreo, emp.EmpPuesto, emp.EmpSalario).Error
+		emp.EmpCorreo, emp.EmpPuesto, emp.EmpSalario, emp.EmpPassword).Error
+	if err != nil {
+		return err
+	}
+	return s.CrearUsuarioConRolDirecto(emp.EmpCorreo, emp.EmpPassword, "empleado")
 }
 
 func (s *DatabaseService) UpdateEmpleado(emp models.Employee) error {
@@ -47,8 +52,12 @@ func (s *DatabaseService) GetClientes() ([]models.Client, error) {
 }
 
 func (s *DatabaseService) InsertCliente(cli models.Client) error {
-	return s.DB.Exec("CALL sp_insert_cliente(?, ?, ?, ?)",
-		cli.CliNombre, cli.CliApellido, cli.CliTelefono, cli.CliCorreo).Error
+	err := s.DB.Exec("CALL sp_insert_cliente(?, ?, ?, ?, ?)",
+		cli.CliNombre, cli.CliApellido, cli.CliTelefono, cli.CliCorreo, cli.CliPassword).Error
+	if err != nil {
+		return err
+	}
+	return s.CrearUsuarioConRolDirecto(cli.CliCorreo, cli.CliPassword, "cliente")
 }
 
 func (s *DatabaseService) UpdateCliente(cli models.Client) error {
@@ -323,4 +332,287 @@ func (s *DatabaseService) UpdateSupplier(supplier models.Supplier) error {
 
 func (s *DatabaseService) DeleteSupplier(id uint) error {
 	return s.DB.Delete(&models.Supplier{}, id).Error
+}
+
+// ============= SEARCH/LOOKUP PROCEDURES =============
+
+func (s *DatabaseService) BuscarClientePorID(id uint) (*models.Client, error) {
+	var client models.Client
+	err := s.DB.Raw("CALL BuscarClientePorID(?)", id).Scan(&client).Error
+	if err != nil {
+		return nil, err
+	}
+	return &client, nil
+}
+
+func (s *DatabaseService) BuscarEmpleadoPorID(id uint) (*models.Employee, error) {
+	var employee models.Employee
+	err := s.DB.Raw("CALL BuscarEmpleadoPorID(?)", id).Scan(&employee).Error
+	if err != nil {
+		return nil, err
+	}
+	return &employee, nil
+}
+
+func (s *DatabaseService) BuscarUsuario(username string) (*models.UsuarioSistema, error) {
+	var user models.UsuarioSistema
+	err := s.DB.Raw("CALL BuscarUsuario(?)", username).Scan(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (s *DatabaseService) BuscarClientePorCorreo(email string) (*models.Client, error) {
+	var client models.Client
+	err := s.DB.Raw("CALL buscar_cliente_por_correo(?)", email).Scan(&client).Error
+	if err != nil {
+		return nil, err
+	}
+	return &client, nil
+}
+
+// ============= USER MANAGEMENT PROCEDURES =============
+
+func (s *DatabaseService) CrearUsuarioConRol(username, password, role string) error {
+	// Use the direct approach instead of the problematic stored procedure
+	return s.CrearUsuarioConRolDirecto(username, password, role)
+}
+
+// CrearUsuarioConRolDirecto creates a MySQL user with the specified role using direct SQL commands
+// This function replaces the problematic stored procedure that uses dynamic SQL
+func (s *DatabaseService) CrearUsuarioConRolDirecto(username, password, role string) error {
+	// Validate the role
+	validRoles := map[string]string{
+		"admin":    "rol_admin",
+		"empleado": "rol_empleado",
+		"cliente":  "rol_cliente",
+	}
+
+	mysqlRole, roleExists := validRoles[role]
+	if !roleExists {
+		return fmt.Errorf("rol no válido. Use: admin, empleado o cliente")
+	}
+
+	// Start a transaction to ensure all operations succeed or fail together
+	tx := s.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 1. Create the MySQL user
+	createUserSQL := fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'localhost' IDENTIFIED BY '%s'", username, password)
+	if err := tx.Exec(createUserSQL).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error creating user: %v", err)
+	}
+
+	// 2. Grant the appropriate role to the user
+	grantRoleSQL := fmt.Sprintf("GRANT %s TO '%s'@'localhost'", mysqlRole, username)
+	if err := tx.Exec(grantRoleSQL).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error granting role: %v", err)
+	}
+
+	// 3. Set the default role for the user
+	setDefaultRoleSQL := fmt.Sprintf("SET DEFAULT ROLE %s TO '%s'@'localhost'", mysqlRole, username)
+	if err := tx.Exec(setDefaultRoleSQL).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error setting default role: %v", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return nil
+}
+
+// CrearUsuarioSistemaConRol creates a user in the USUARIO_SISTEMA table only (not MySQL users)
+// This is useful when you only need application-level users without MySQL database users
+func (s *DatabaseService) CrearUsuarioSistemaConRol(username, password, role string, empID, cliID *uint) error {
+	// Validate the role
+	if role != "admin" && role != "empleado" && role != "cliente" {
+		return fmt.Errorf("rol no válido. Use: admin, empleado o cliente")
+	}
+
+	// Validate that either emp_id or cli_id is provided based on role
+	if role == "empleado" && empID == nil {
+		return fmt.Errorf("emp_id es requerido para el rol empleado")
+	}
+	if role == "cliente" && cliID == nil {
+		return fmt.Errorf("cli_id es requerido para el rol cliente")
+	}
+
+	// Check if username already exists
+	var existingUser models.UsuarioSistema
+	if err := s.DB.Where("usu_nombre_usuario = ?", username).First(&existingUser).Error; err == nil {
+		return fmt.Errorf("el nombre de usuario ya existe")
+	}
+
+	// Create user in USUARIO_SISTEMA table
+	user := models.UsuarioSistema{
+		UsuNombreUsuario: username,
+		UsuContrasena:    password,
+		UsuRol:           role,
+		EmpID:            empID,
+		CliID:            cliID,
+	}
+
+	if err := s.DB.Create(&user).Error; err != nil {
+		return fmt.Errorf("error creating user in USUARIO_SISTEMA: %v", err)
+	}
+
+	return nil
+}
+
+func (s *DatabaseService) ObtenerDatosUsuario(username, role string) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := s.DB.Raw("CALL ObtenerDatosUsuario(?, ?)", username, role).Scan(&result).Error
+	return result, err
+}
+
+func (s *DatabaseService) InsertarUsuarioSistema(username, email, password string, empID, cliID *uint) error {
+	return s.DB.Exec("CALL insertar_usuario_sistema(?, ?, ?, ?, ?)",
+		username, email, password, empID, cliID).Error
+}
+
+// ============= INVENTORY PROCEDURES =============
+
+func (s *DatabaseService) CrearInventario(fecha string, prodID uint, cantidad int, observaciones string) error {
+	return s.DB.Exec("CALL CrearInventario(?, ?, ?, ?)",
+		fecha, prodID, cantidad, observaciones).Error
+}
+
+func (s *DatabaseService) ObtenerInventarioCompleto() ([]map[string]interface{}, error) {
+	var inventories []map[string]interface{}
+	err := s.DB.Raw("CALL ObtenerInventarioCompleto()").Scan(&inventories).Error
+	return inventories, err
+}
+
+func (s *DatabaseService) ActualizarInventario(invID uint, fecha string, cantidad int, observaciones string) error {
+	return s.DB.Exec("CALL ActualizarInventario(?, ?, ?, ?)",
+		invID, fecha, cantidad, observaciones).Error
+}
+
+func (s *DatabaseService) EliminarInventario(invID uint) error {
+	return s.DB.Exec("CALL EliminarInventario(?)", invID).Error
+}
+
+// ============= ALTERNATIVE PRODUCT PROCEDURES =============
+
+func (s *DatabaseService) CrearProducto(nombre, descripcion string, cantidad int, precio float64) error {
+	return s.DB.Exec("CALL CrearProducto(?, ?, ?, ?)",
+		nombre, descripcion, cantidad, precio).Error
+}
+
+func (s *DatabaseService) ActualizarProducto(prodID uint, nombre, descripcion string, cantidad int, precio float64) error {
+	return s.DB.Exec("CALL ActualizarProducto(?, ?, ?, ?, ?)",
+		prodID, nombre, descripcion, cantidad, precio).Error
+}
+
+func (s *DatabaseService) EliminarProducto(prodID uint) error {
+	return s.DB.Exec("CALL EliminarProducto(?)", prodID).Error
+}
+
+// ============= SUPPLIER PROCEDURES (using stored procedures) =============
+
+func (s *DatabaseService) CrearProveedor(nombre, contacto, correo, telefono, direccion string) error {
+	return s.DB.Exec("CALL CrearProveedor(?, ?, ?, ?, ?)",
+		nombre, contacto, correo, telefono, direccion).Error
+}
+
+func (s *DatabaseService) ObtenerProveedores() ([]models.Supplier, error) {
+	var suppliers []models.Supplier
+	err := s.DB.Raw("CALL ObtenerProveedores()").Scan(&suppliers).Error
+	return suppliers, err
+}
+
+func (s *DatabaseService) ActualizarProveedor(provID uint, nombre, contacto, correo, telefono, direccion string) error {
+	return s.DB.Exec("CALL ActualizarProveedor(?, ?, ?, ?, ?, ?)",
+		provID, nombre, contacto, correo, telefono, direccion).Error
+}
+
+func (s *DatabaseService) EliminarProveedor(provID uint) error {
+	return s.DB.Exec("CALL EliminarProveedor(?)", provID).Error
+}
+
+// ============= PAYMENT PROCEDURES =============
+
+func (s *DatabaseService) CrearPago(facID uint, fecha string, monto float64, metodo, referencia string) error {
+	return s.DB.Exec("CALL CrearPago(?, ?, ?, ?, ?)",
+		facID, fecha, monto, metodo, referencia).Error
+}
+
+func (s *DatabaseService) ObtenerPagos() ([]map[string]interface{}, error) {
+	var pagos []map[string]interface{}
+	err := s.DB.Raw("CALL ObtenerPagos()").Scan(&pagos).Error
+	return pagos, err
+}
+
+func (s *DatabaseService) ActualizarPago(pagoID, facID uint, fecha string, monto float64, metodo, referencia string) error {
+	return s.DB.Exec("CALL ActualizarPago(?, ?, ?, ?, ?, ?)",
+		pagoID, facID, fecha, monto, metodo, referencia).Error
+}
+
+func (s *DatabaseService) EliminarPago(pagoID uint) error {
+	return s.DB.Exec("CALL EliminarPago(?)", pagoID).Error
+}
+
+func (s *DatabaseService) ObtenerPagosPorEmpleado(empID uint) ([]map[string]interface{}, error) {
+	var pagos []map[string]interface{}
+	err := s.DB.Raw("CALL ObtenerPagosPorEmpleado(?)", empID).Scan(&pagos).Error
+	return pagos, err
+}
+
+func (s *DatabaseService) ObtenerTodosLosPagosConEmpleado() ([]map[string]interface{}, error) {
+	var pagos []map[string]interface{}
+	err := s.DB.Raw("CALL ObtenerTodosLosPagosConEmpleado()").Scan(&pagos).Error
+	return pagos, err
+}
+
+// ============= PROMOTION PROCEDURES =============
+
+type PromocionParams struct {
+	Nombre      string
+	Descripcion string
+	FechaInicio string
+	FechaFin    string
+	Descuento   float64
+	SerID       uint
+	Usos        int
+}
+
+func (s *DatabaseService) CrearPromocion(params PromocionParams) error {
+	return s.DB.Exec("CALL sp_crear_promocion(?, ?, ?, ?, ?, ?, ?)",
+		params.Nombre, params.Descripcion, params.FechaInicio, params.FechaFin,
+		params.Descuento, params.SerID, params.Usos).Error
+}
+
+func (s *DatabaseService) ListarPromociones() ([]map[string]interface{}, error) {
+	var promociones []map[string]interface{}
+	err := s.DB.Raw("CALL sp_listar_promociones()").Scan(&promociones).Error
+	return promociones, err
+}
+
+func (s *DatabaseService) ObtenerPromocionPorID(proID uint) (map[string]interface{}, error) {
+	var promocion map[string]interface{}
+	err := s.DB.Raw("CALL sp_obtener_promocion_por_id(?)", proID).Scan(&promocion).Error
+	return promocion, err
+}
+
+func (s *DatabaseService) ActualizarPromocion(proID uint, params PromocionParams) error {
+	return s.DB.Exec("CALL sp_actualizar_promocion(?, ?, ?, ?, ?, ?, ?, ?)",
+		proID, params.Nombre, params.Descripcion, params.FechaInicio, params.FechaFin,
+		params.Descuento, params.SerID, params.Usos).Error
+}
+
+func (s *DatabaseService) EliminarPromocion(proID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_promocion(?)", proID).Error
 }

@@ -293,59 +293,16 @@ BEGIN
 END;
 //
 
--- Trigger empleado->usuario_sistema
+-- Trigger para crear usuario de base de datos después de insertar en USUARIO_SISTEMA
+-- CREATE TRIGGER trg_after_insert_usuario_sistema
+-- AFTER INSERT ON USUARIO_SISTEMA
+-- FOR EACH ROW
+-- BEGIN
+--   -- Crear usuario de base de datos con rol correspondiente
+--   CALL CrearUsuarioConRol(NEW.usu_nombre_usuario, NEW.usu_contrasena, CONCAT('rol_', NEW.usu_rol));
+-- END;
+-- //
 
-DELIMITER //
-
-CREATE TRIGGER trg_insert_usuario_empleado
-AFTER INSERT ON EMPLEADO
-FOR EACH ROW
-BEGIN
-  INSERT INTO USUARIO_SISTEMA (
-    usu_nombre_usuario,
-    usu_contrasena,
-    usu_rol,
-    emp_id,
-    cli_id
-  )
-  VALUES (
-    CONCAT(LOWER(LEFT(NEW.emp_nombre, 1)), LOWER(NEW.emp_apellido)),
-    SHA2('default123', 256), 
-    'empleado',
-    NEW.emp_id,
-    NULL
-  );
-END;
-//
-
-DELIMITER ;
-
--- Trigger cliente->usuario_sistema
-
-DELIMITER //
-
-CREATE TRIGGER trg_insert_usuario_cliente
-AFTER INSERT ON CLIENTE
-FOR EACH ROW
-BEGIN
-  INSERT INTO USUARIO_SISTEMA (
-    usu_nombre_usuario,
-    usu_contrasena,
-    usu_rol,
-    emp_id,
-    cli_id
-  )
-  VALUES (
-    CONCAT(LOWER(LEFT(NEW.cli_nombre, 1)), LOWER(NEW.cli_apellido)),
-    SHA2('default123', 256), 
-    'cliente',
-    NULL,
-    NEW.cli_id
-  );
-END;
-//
-
-DELIMITER ;
 
 -- Log triggers completion
 INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 

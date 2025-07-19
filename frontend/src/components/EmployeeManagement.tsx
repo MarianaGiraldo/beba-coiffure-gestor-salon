@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,27 +31,10 @@ interface Payment {
 
 const EmployeeManagement = () => {
   const { toast } = useToast();
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      emp_id: 1,
-      emp_nombre: "María",
-      emp_apellido: "González",
-      emp_telefono: "3001234567",
-      emp_correo: "maria@bebacoiffure.com",
-      emp_puesto: "Estilista Senior",
-      emp_salario: 1500000
-    },
-    {
-      emp_id: 2,
-      emp_nombre: "Carlos",
-      emp_apellido: "Rodríguez",
-      emp_telefono: "3007654321",
-      emp_correo: "carlos@bebacoiffure.com",
-      emp_puesto: "Barbero",
-      emp_salario: 1200000
-    }
-  ]);
-
+  // API URL is configured through Docker environment variables
+  // Fallback for local development outside Docker
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [payments, setPayments] = useState<Payment[]>([
     {
       pag_id: 1,
@@ -67,34 +50,203 @@ const EmployeeManagement = () => {
   const [isAddingEmployee, setIsAddingEmployee] = useState(false);
   const [isAddingPayment, setIsAddingPayment] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleAddEmployee = () => {
-    if (!newEmployee.emp_nombre || !newEmployee.emp_apellido || !newEmployee.emp_puesto || !newEmployee.emp_password) {
+  // Load employees when component mounts
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  // Get authentication token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  // API function to fetch employees
+  const fetchEmployees = async () => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/employees`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data.data || []);
+      } else {
+        throw new Error('Failed to fetch employees');
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
       toast({
         title: "Error",
-        description: "Por favor completa todos los campos obligatorios incluyendo la contraseña",
+        description: "No se pudieron cargar los empleados",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // API function to create employee
+  const createEmployee = async (employee: Partial<Employee>) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/employees`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          emp_nombre: employee.emp_nombre,
+          emp_apellido: employee.emp_apellido,
+          emp_telefono: employee.emp_telefono,
+          emp_correo: employee.emp_correo,
+          emp_puesto: employee.emp_puesto,
+          emp_salario: employee.emp_salario,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchEmployees(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create employee');
+      }
+    } catch (error) {
+      console.error('Error creating employee:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo crear el empleado",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // API function to update employee
+  const updateEmployee = async (employee: Employee) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/employees/${employee.emp_id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          emp_nombre: employee.emp_nombre,
+          emp_apellido: employee.emp_apellido,
+          emp_telefono: employee.emp_telefono,
+          emp_correo: employee.emp_correo,
+          emp_puesto: employee.emp_puesto,
+          emp_salario: employee.emp_salario,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchEmployees(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update employee');
+      }
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo actualizar el empleado",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // API function to delete employee
+  const deleteEmployee = async (id: number) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/employees/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (response.ok) {
+        await fetchEmployees(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete employee');
+      }
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el empleado",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const handleAddEmployee = async () => {
+    if (!newEmployee.emp_nombre || !newEmployee.emp_apellido || !newEmployee.emp_puesto) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos obligatorios",
         variant: "destructive"
       });
       return;
     }
 
-    const employee: Employee = {
-      emp_id: Math.max(...employees.map(e => e.emp_id), 0) + 1,
-      emp_nombre: newEmployee.emp_nombre || "",
-      emp_apellido: newEmployee.emp_apellido || "",
-      emp_telefono: newEmployee.emp_telefono || "",
-      emp_correo: newEmployee.emp_correo || "",
-      emp_puesto: newEmployee.emp_puesto || "",
-      emp_salario: newEmployee.emp_salario || 0
-    };
+    if (!newEmployee.emp_salario || newEmployee.emp_salario <= 0) {
+      toast({
+        title: "Error",
+        description: "El salario debe ser mayor a 0",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    setEmployees([...employees, employee]);
-    setNewEmployee({});
-    setIsAddingEmployee(false);
-    toast({
-      title: "Empleado agregado",
-      description: "El empleado ha sido agregado exitosamente"
-    });
+    const success = await createEmployee(newEmployee);
+    if (success) {
+      setNewEmployee({});
+      setIsAddingEmployee(false);
+      toast({
+        title: "Empleado agregado",
+        description: "El empleado ha sido agregado exitosamente"
+      });
+    }
   };
 
   const handleAddPayment = () => {
@@ -124,25 +276,47 @@ const EmployeeManagement = () => {
     });
   };
 
-  const handleUpdateEmployee = () => {
+  const handleUpdateEmployee = async () => {
     if (!editingEmployee) return;
 
-    setEmployees(employees.map(emp => 
-      emp.emp_id === editingEmployee.emp_id ? editingEmployee : emp
-    ));
-    setEditingEmployee(null);
-    toast({
-      title: "Empleado actualizado",
-      description: "Los datos del empleado han sido actualizados"
-    });
+    if (!editingEmployee.emp_nombre || !editingEmployee.emp_apellido || !editingEmployee.emp_puesto) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos obligatorios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!editingEmployee.emp_salario || editingEmployee.emp_salario <= 0) {
+      toast({
+        title: "Error",
+        description: "El salario debe ser mayor a 0",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const success = await updateEmployee(editingEmployee);
+    if (success) {
+      setEditingEmployee(null);
+      toast({
+        title: "Empleado actualizado",
+        description: "Los datos del empleado han sido actualizados"
+      });
+    }
   };
 
-  const handleDeleteEmployee = (id: number) => {
-    setEmployees(employees.filter(emp => emp.emp_id !== id));
-    toast({
-      title: "Empleado eliminado",
-      description: "El empleado ha sido eliminado del sistema"
-    });
+  const handleDeleteEmployee = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este empleado?')) {
+      const success = await deleteEmployee(id);
+      if (success) {
+        toast({
+          title: "Empleado eliminado",
+          description: "El empleado ha sido eliminado del sistema"
+        });
+      }
+    }
   };
 
   const getEmployeeName = (empId: number) => {
@@ -225,19 +399,11 @@ const EmployeeManagement = () => {
                     onChange={(e) => setNewEmployee({...newEmployee, emp_salario: parseFloat(e.target.value)})}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="password">Contraseña *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Contraseña para acceso al sistema"
-                    value={newEmployee.emp_password || ""}
-                    onChange={(e) => setNewEmployee({...newEmployee, emp_password: e.target.value})}
-                  />
-                </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddEmployee}>Agregar Empleado</Button>
+                <Button onClick={handleAddEmployee} disabled={loading}>
+                  {loading ? "Agregando..." : "Agregar Empleado"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -309,7 +475,7 @@ const EmployeeManagement = () => {
           <CardHeader>
             <CardTitle>Lista de Empleados</CardTitle>
             <CardDescription>
-              {employees.length} empleados registrados
+              {loading ? "Cargando..." : `${employees.length} empleados registrados`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -341,6 +507,7 @@ const EmployeeManagement = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => setEditingEmployee(employee)}
+                          disabled={loading}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -348,6 +515,7 @@ const EmployeeManagement = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDeleteEmployee(employee.emp_id)}
+                          disabled={loading}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -456,19 +624,11 @@ const EmployeeManagement = () => {
                   onChange={(e) => setEditingEmployee({...editingEmployee, emp_salario: parseFloat(e.target.value)})}
                 />
               </div>
-              <div>
-                <Label htmlFor="edit-password">Nueva Contraseña (opcional)</Label>
-                <Input
-                  id="edit-password"
-                  type="password"
-                  placeholder="Dejar vacío para mantener la actual"
-                  value={editingEmployee.emp_password || ""}
-                  onChange={(e) => setEditingEmployee({...editingEmployee, emp_password: e.target.value})}
-                />
-              </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleUpdateEmployee}>Actualizar Empleado</Button>
+              <Button onClick={handleUpdateEmployee} disabled={loading}>
+                {loading ? "Actualizando..." : "Actualizar Empleado"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

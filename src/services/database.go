@@ -13,24 +13,24 @@ func InitializeDatabase() error {
 	db := config.AppConfig.DB
 
 	// Auto-migrate all models
-	// err := db.AutoMigrate(
-	// 	&models.Admin{},
-	// 	&models.Employee{},
-	// 	&models.Client{},
-	// 	&models.Service{},
-	// 	&models.Product{},
-	// 	&models.Inventory{},
-	// 	&models.Supplier{},
-	// 	&models.Purchase{},
-	// 	&models.Payment{},
-	// 	&models.ClientPayment{},
-	// 	&models.Appointment{},
-	// 	&models.Promotion{},
-	// )
+	err := db.AutoMigrate(
+		&models.Admin{},
+		// &models.Employee{},
+		// &models.Client{},
+		// &models.Service{},
+		// &models.Product{},
+		// &models.Inventory{},
+		// &models.Supplier{},
+		// &models.Purchase{},
+		// &models.Payment{},
+		// &models.ClientPayment{},
+		// &models.Appointment{},
+		// &models.Promotion{},
+	)
 
-	// if err != nil {
-	// 	return err
-	// }
+	if err != nil {
+		return err
+	}
 
 	// Create default admin user if not exists
 	var admin models.Admin

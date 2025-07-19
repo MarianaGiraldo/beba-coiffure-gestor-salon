@@ -7,11 +7,41 @@ DELIMITER //
 -- Insertar Empleado
 CREATE PROCEDURE sp_insert_empleado(
   IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_telefono VARCHAR(20),
-  IN p_correo VARCHAR(100), IN p_puesto VARCHAR(50), IN p_salario DECIMAL(10,2)
+  IN p_correo VARCHAR(100), IN p_puesto VARCHAR(50), IN p_salario DECIMAL(10,2), IN p_contrasena VARCHAR(100)
 )
 BEGIN
+  DECLARE emp_id_new INT;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    ROLLBACK;
+    RESIGNAL;
+  END;
+
+  START TRANSACTION;
+
+  -- Insert into EMPLEADO table
   INSERT INTO EMPLEADO(emp_nombre, emp_apellido, emp_telefono, emp_correo, emp_puesto, emp_salario)
   VALUES (p_nombre, p_apellido, p_telefono, p_correo, p_puesto, p_salario);
+
+  -- Get the ID of the newly inserted employee
+  SET emp_id_new = LAST_INSERT_ID();
+
+  -- Insert into USUARIO_SISTEMA table
+  INSERT INTO USUARIO_SISTEMA (
+    usu_nombre_usuario,
+    usu_contrasena,
+    usu_rol,
+    emp_id,
+    cli_id
+  )
+  VALUES (
+    CONCAT(LOWER(LEFT(p_nombre, 1)), LOWER(p_apellido)),
+    p_contrasena,
+    'empleado',
+    emp_id_new,
+    NULL
+  );
+
 END;
 //
 
@@ -48,11 +78,42 @@ END;
 
 -- Insertar Cliente
 CREATE PROCEDURE sp_insert_cliente(
-  IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_telefono VARCHAR(20), IN p_correo VARCHAR(100)
+  IN p_nombre VARCHAR(50), IN p_apellido VARCHAR(50), IN p_telefono VARCHAR(20), IN p_correo VARCHAR(100), IN p_contrasena VARCHAR(100)
 )
 BEGIN
+  DECLARE cli_id_new INT;
+  -- DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  -- BEGIN
+  --   ROLLBACK;
+  --   RESIGNAL;
+  -- END;
+
+  -- START TRANSACTION;
+
+  -- Insert into CLIENTE table
   INSERT INTO CLIENTE(cli_nombre, cli_apellido, cli_telefono, cli_correo)
   VALUES (p_nombre, p_apellido, p_telefono, p_correo);
+  
+  -- Get the ID of the newly inserted client
+  SET cli_id_new = LAST_INSERT_ID();
+  
+  -- Insert into USUARIO_SISTEMA table
+  INSERT INTO USUARIO_SISTEMA (
+    usu_nombre_usuario,
+    usu_contrasena,
+    usu_rol,
+    emp_id,
+    cli_id
+  )
+  VALUES (
+    CONCAT(LOWER(LEFT(p_nombre, 1)), LOWER(p_apellido)),
+    p_contrasena,
+    'cliente',
+    NULL,
+    cli_id_new
+  );
+  
+  -- COMMIT;
 END;
 //
 
@@ -718,7 +779,7 @@ DELIMITER ;
 
 -- Insertar Usuario
 
-DELIMITER $$
+DELIMITER //
 
 CREATE PROCEDURE insertar_usuario_sistema(
   IN p_usuario VARCHAR(50),
@@ -742,20 +803,21 @@ BEGIN
 
   INSERT INTO USUARIO_SISTEMA (usuario, correo, contrasena, emp_id, cli_id)
   VALUES (p_usuario, p_correo, p_contrasena, p_emp_id, p_cli_id);
-END $$
+END //
 
 DELIMITER ;
 
 
 -- Leer cliente por correo
 
-DELIMITER $$
+DELIMITER //
 
 CREATE PROCEDURE buscar_cliente_por_correo(IN p_correo VARCHAR(100))
-  BEGIN
-    SELECT * FROM CLIENTE WHERE cli_correo=p_correo;
-  END $$
-  
+BEGIN
+  SELECT * FROM CLIENTE WHERE cli_correo = p_correo;
+END //
+
+
 DELIMITER ;
 
 -- Log CRUD stored procedures completion

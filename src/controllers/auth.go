@@ -1,16 +1,24 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"salon/config"
 	"salon/middleware"
 	"salon/models"
+	"salon/services"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthController struct{}
+type AuthController struct {
+	dbService *services.DatabaseService
+}
+
+func NewAuthController(dbService *services.DatabaseService) *AuthController {
+	return &AuthController{dbService: dbService}
+}
 
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -58,49 +66,66 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Check employee login
-	var employee models.Employee
-	if err := config.AppConfig.DB.Where("emp_correo = ?", req.Email).First(&employee).Error; err == nil {
-		//TODO: Get password from usuario_sistema
-		if err := bcrypt.CompareHashAndPassword([]byte(employee.EmpPassword), []byte(req.Password)); err == nil {
-			token, err := middleware.GenerateJWT(employee.EmpID, employee.EmpCorreo, "employee", employee.EmpPuesto)
+	// Use BuscarUsuario stored procedure to find user by email
+	user, err := ac.dbService.BuscarUsuario(req.Email)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	// Validate password using bcrypt.CompareHashAndPassword
+	if err := bcrypt.CompareHashAndPassword([]byte(user.UsuContrasena), []byte(req.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	// Determine user type and get additional user data based on role
+	var userData interface{}
+	var userID uint
+	var userRole string
+
+	switch user.UsuRol {
+	case "empleado":
+		if user.EmpID != nil {
+			employee, err := ac.dbService.BuscarEmpleadoPorID(*user.EmpID)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get employee data"})
 				return
 			}
-
 			employee.EmpPassword = "" // Don't return password
-			c.JSON(http.StatusOK, AuthResponse{
-				Token:    token,
-				UserType: "employee",
-				User:     employee,
-			})
-			return
+			userData = employee
+			userID = employee.EmpID
+			userRole = employee.EmpPuesto
 		}
-	}
-
-	// Check client login
-	var client models.Client
-	if err := config.AppConfig.DB.Where("cli_correo = ?", req.Email).First(&client).Error; err == nil {
-		//TODO: Get password from usuario_sistema
-		if err := bcrypt.CompareHashAndPassword([]byte(client.CliPassword), []byte(req.Password)); err == nil {
-			token, err := middleware.GenerateJWT(client.CliID, client.CliCorreo, "client", "client")
+	case "cliente":
+		if user.CliID != nil {
+			client, err := ac.dbService.BuscarClientePorID(*user.CliID)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get client data"})
 				return
 			}
-
 			client.CliPassword = "" // Don't return password
-			c.JSON(http.StatusOK, AuthResponse{
-				Token:    token,
-				UserType: "client",
-				User:     client,
-			})
-			return
+			userData = client
+			userID = client.CliID
+			userRole = "client"
 		}
+	default:
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user role"})
+		return
 	}
 
-	c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+	// Generate JWT token
+	token, err := middleware.GenerateJWT(userID, req.Email, user.UsuRol, userRole)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, AuthResponse{
+		Token:    token,
+		UserType: user.UsuRol,
+		User:     userData,
+	})
 }
 
 func (ac *AuthController) Register(c *gin.Context) {
@@ -115,9 +140,10 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// Check if email already exists
-	var existingClient models.Client
-	if err := config.AppConfig.DB.Where("cli_correo = ?", req.Email).First(&existingClient).Error; err == nil {
+	// Check if email already exists using stored procedure
+	user, err := ac.dbService.BuscarUsuario(req.Email)
+	if user.CliID != nil || user.EmpID != nil {
+		log.Printf("ERROR: Email already registered, %+v", user)
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 		return
 	}
@@ -129,7 +155,7 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// Create new client
+	// Create new client using stored procedure
 	client := models.Client{
 		CliNombre:   req.Nombre,
 		CliApellido: req.Apellido,
@@ -138,15 +164,23 @@ func (ac *AuthController) Register(c *gin.Context) {
 		CliPassword: string(hashedPassword),
 	}
 
-	if err := config.AppConfig.DB.Create(&client).Error; err != nil {
+	// Use stored procedure to insert client (this will also create the user account)
+	if err := ac.dbService.InsertCliente(client); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account"})
 		return
 	}
 
-	client.CliPassword = "" // Don't return password
+	// Get the created client to return the ID
+	createdClient, err := ac.dbService.BuscarClientePorCorreo(req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Account created but failed to retrieve details"})
+		return
+	}
+
+	createdClient.CliPassword = "" // Don't return password
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Account created successfully",
-		"user":    client,
+		"user":    createdClient,
 	})
 }
 
@@ -163,23 +197,32 @@ func (ac *AuthController) Me(c *gin.Context) {
 			"user_type": userType,
 			"role":      "admin",
 		})
-	// TODO: Call procedure to get employees or clients based on id
-	case "employee":
-		var employee models.Employee
-		if err := config.AppConfig.DB.Where("emp_id = ?", userID).First(&employee).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
-			return
+	case "empleado":
+		// Use stored procedure to get employee by ID
+		if id, ok := userID.(uint); ok {
+			employee, err := ac.dbService.BuscarEmpleadoPorID(id)
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
+				return
+			}
+			employee.EmpPassword = ""
+			c.JSON(http.StatusOK, employee)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		}
-		employee.EmpPassword = ""
-		c.JSON(http.StatusOK, employee)
-	case "client":
-		var client models.Client
-		if err := config.AppConfig.DB.Where("cli_id = ?", userID).First(&client).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Client not found"})
-			return
+	case "cliente":
+		// Use stored procedure to get client by ID
+		if id, ok := userID.(uint); ok {
+			client, err := ac.dbService.BuscarClientePorID(id)
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Client not found"})
+				return
+			}
+			client.CliPassword = ""
+			c.JSON(http.StatusOK, client)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		}
-		client.CliPassword = ""
-		c.JSON(http.StatusOK, client)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user type"})
 	}

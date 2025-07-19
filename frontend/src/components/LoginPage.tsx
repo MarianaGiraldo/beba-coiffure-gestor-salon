@@ -13,7 +13,11 @@ interface LoginPageProps {
 
 const LoginPage = ({ onLogin }: LoginPageProps) => {
   const { toast } = useToast();
+  // API URL is configured through Docker environment variables
+  // Fallback for local development outside Docker
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
@@ -54,7 +58,7 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
     }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!registerData.nombre || !registerData.apellido || !registerData.email || !registerData.password) {
       toast({
         title: "Error",
@@ -82,23 +86,58 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
       return;
     }
 
-    // Aquí enviarías los datos a tu API MySQL para crear el cliente
-    console.log("Registrar cliente:", registerData);
-    
-    toast({
-      title: "Registro exitoso",
-      description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión."
-    });
-    
-    // Limpiar formulario
-    setRegisterData({
-      nombre: "",
-      apellido: "",
-      telefono: "",
-      email: "",
-      password: "",
-      confirmPassword: ""
-    });
+    setIsLoading(true);
+    try {
+      // Llamar a la API para registrar el cliente
+      const response = await fetch(`${apiUrl}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: registerData.nombre,
+          apellido: registerData.apellido,
+          telefono: registerData.telefono,
+          email: registerData.email,
+          password: registerData.password,
+          confirmPassword: registerData.confirmPassword
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Registro exitoso",
+          description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión."
+        });
+        
+        // Limpiar formulario
+        setRegisterData({
+          nombre: "",
+          apellido: "",
+          telefono: "",
+          email: "",
+          password: "",
+          confirmPassword: ""
+        });
+      } else {
+        toast({
+          title: "Error en el registro",
+          description: data.error || "No se pudo crear la cuenta. Inténtalo de nuevo.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error registrando cliente:", error);
+      toast({
+        title: "Error de conexión",
+        description: "Error creando cliente",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -228,9 +267,13 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
                       onChange={(e) => setRegisterData({...registerData, confirmPassword: e.target.value})}
                     />
                   </div>
-                  <Button onClick={handleRegister} className="w-full bg-purple-600 hover:bg-purple-700">
+                  <Button 
+                    onClick={handleRegister} 
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    disabled={isLoading}
+                  >
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Registrarse
+                    {isLoading ? "Registrando..." : "Registrarse"}
                   </Button>
                 </div>
               </TabsContent>

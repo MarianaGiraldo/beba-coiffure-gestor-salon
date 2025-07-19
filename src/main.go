@@ -24,14 +24,19 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
-	// CORS middleware
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{config.AppConfig.FrontendURL},
+	// CORS middleware - temporarily allow all origins for debugging
+	corsConfig := cors.Config{
+		AllowAllOrigins:  true, // Temporary fix for CORS issues
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
+		AllowCredentials: false, // Set to false when using AllowAllOrigins
+	}
+
+	r.Use(cors.New(corsConfig))
+
+	// Debug middleware to log requests
+	r.Use(gin.Logger())
 
 	// Setup routes
 	routes.SetupRoutes(r)

@@ -143,22 +143,37 @@ INSERT INTO CITA (cit_fecha, cit_hora, emp_id, ser_id, cli_id) VALUES
 ('2025-06-16', '11:37:08', 1, 2, 15),
 ('2025-06-16', '11:32:14', 13, 14, 4),
 ('2025-06-16', '13:11:14', 3, 7, 8);
+-- Temporarily disable the trigger that causes dynamic SQL issues
+DROP TRIGGER IF EXISTS trg_after_insert_usuario_sistema;
+
 INSERT INTO USUARIO_SISTEMA (usu_nombre_usuario, usu_contrasena, usu_rol, emp_id, cli_id) VALUES
-('jsantamaria', '+8_!Hy)mFd', 'empleado', NULL, 15.0),
-('figueroavanesa', '&o_7vZeKfO', 'cliente', 7.0, NULL),
+('jsantamaria', '+8_!Hy)mFd', 'empleado', NULL, 15),
+('figueroavanesa', '&o_7vZeKfO', 'cliente', 7, NULL),
 ('leonardolosada', '269BS%t_*r', 'empleado', NULL, NULL),
-('alexandra87', 'G^9Qkj%zRi', 'cliente', NULL, 4.0),
-('gimenezcoral', '5B5EFeEf&w', 'admin', 12.0, NULL),
-('farellano', '@hTXlD1l!3', 'cliente', NULL, 9.0),
-('camilo56', 'By1KZjBeT)', 'cliente', 9.0, 14.0),
-('umelero', 'fEw4zx#fu+', 'cliente', 10.0, 11.0),
-('natanaelbermejo', '$5mbfCKfdD', 'empleado', 2.0, 10.0),
+('alexandra87', 'G^9Qkj%zRi', 'cliente', NULL, 4),
+('gimenezcoral', '5B5EFeEf&w', 'admin', 12, NULL),
+('farellano', '@hTXlD1l!3', 'cliente', NULL, 9),
+('camilo56', 'By1KZjBeT)', 'cliente', 9, 14),
+('umelero', 'fEw4zx#fu+', 'cliente', 10, 11),
+('natanaelbermejo', '$5mbfCKfdD', 'empleado', 2, 10),
 ('adelgado', 'F*6ULrLl#@', 'admin', NULL, NULL),
 ('ucuevas', 'VXN8C0k+@3', 'empleado', NULL, NULL),
 ('manuel31', 'o!EJ6aSr@0', 'empleado', NULL, NULL),
-('qtorrijos', 'G1G1$Urn%+', 'cliente', NULL, 10.0),
-('carolinabarrera', 'cN85AHprU&', 'cliente', 9.0, NULL),
-('florenciogalan', '^c2m2Bnf$&', 'cliente', NULL, 15.0);
+('qtorrijos', 'G1G1$Urn%+', 'cliente', NULL, 10),
+('carolinabarrera', 'cN85AHprU&', 'cliente', 9, NULL),
+('florenciogalan', '^c2m2Bnf$&', 'cliente', NULL, 15);
+
+-- Recreate the trigger after data insertion
+DELIMITER //
+CREATE TRIGGER trg_after_insert_usuario_sistema
+AFTER INSERT ON USUARIO_SISTEMA
+FOR EACH ROW
+BEGIN
+  -- Crear usuario de base de datos con rol correspondiente
+  CALL CrearUsuarioConRol(NEW.usu_nombre_usuario, NEW.usu_contrasena, CONCAT('rol_', NEW.usu_rol));
+END;
+//
+DELIMITER ;
 INSERT INTO DETALLE_FACTURA_SERVICIO (fac_id, ser_id) VALUES
 (1, 6),
 (2, 5),
@@ -226,21 +241,21 @@ INSERT INTO COMPRA_PRODUCTO (cop_fecha_compra, cop_total_compra, cop_metodo_pago
 ('2025-06-16', 383639.84, 'Tarjeta', 10, 6),
 ('2025-06-16', 292283.99, 'Efectivo', 12, 15);
 INSERT INTO DETALLE_COMPRA (com_id, prod_id, dec_cantidad, dec_precio_unitario) VALUES
-(1.0, 5.0, 9.0, 19278.54),
-(2.0, 7.0, 6.0, 22072.01),
-(3.0, 5.0, 9.0, 13818.63),
-(4.0, 7.0, 7.0, 30319.54),
-(5.0, 15.0, 3.0, 28465.45),
-(6.0, 5.0, 7.0, 26438.12),
-(7.0, 1.0, 5.0, 18607.41),
-(8.0, 7.0, 10.0, 28199.85),
-(9.0, 6.0, 8.0, 23253.58),
-(10.0, 11.0, 4.0, 25335.22),
-(11.0, 13.0, 3.0, 29765.52),
-(12.0, 5.0, 9.0, 29915.62),
-(13.0, 10.0, 6.0, 12801.62),
-(14.0, 13.0, 4.0, 30183.87),
-(15.0, 4.0, 4.0, 14420.62);
+(1, 5, 9, 19278.54),
+(2, 7, 6, 22072.01),
+(3, 5, 9, 13818.63),
+(4, 7, 7, 30319.54),
+(5, 15, 3, 28465.45),
+(6, 5, 7, 26438.12),
+(7, 1, 5, 18607.41),
+(8, 7, 10, 28199.85),
+(9, 6, 8, 23253.58),
+(10, 11, 4, 25335.22),
+(11, 13, 3, 29765.52),
+(12, 5, 9, 29915.62),
+(13, 10, 6, 12801.62),
+(14, 13, 4, 30183.87),
+(15, 4, 4, 14420.62);
 INSERT INTO INVENTARIO (inv_fecha_actualizacion, prod_id, inv_cantidad_actual, inv_observaciones) VALUES
 ('2025-06-16', 1, 2, 'Fugit nihil cumque reprehenderit.'),
 ('2025-06-16', 2, 8, 'Dolorem quas consectetur.'),
