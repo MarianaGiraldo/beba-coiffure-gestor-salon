@@ -9,7 +9,7 @@ CALL sp_insert_empleado('Pia', 'Barba', '+57 4740564139', 'gabrielavalera@gmail.
 CALL sp_insert_empleado('Soledad', 'Segarra', '+57 4842388496', 'isidoro28@gmail.com', 'Estilista', 2122490.13, '12345');
 CALL sp_insert_empleado('Ciriaco', 'Arevalo', '+57 4622691669', 'carolina01@gmail.com', 'Asistente', 1440881.24, '12345');
 CALL sp_insert_empleado('Sonia', 'Lasa', '+57 4851462704', 'martinprudencia@gmail.com', 'Gerente', 2618860.91, '12345');
-CALL sp_insert_empleado('María Belen', 'Cuellar', '+57 4708095701', 'jose03@gmail.com', 'Estilista', 2517614.73, '12345');
+CALL sp_insert_empleado('Maria Belen', 'Cuellar', '+57 4708095701', 'jose03@gmail.com', 'Estilista', 2517614.73, '12345');
 CALL sp_insert_empleado('Cayetano', 'Boada', '+57 4747182278', 'belen96@gmail.com', 'Recepcionista', 2396278.79, '12345');
 CALL sp_insert_empleado('Sabas', 'Perea', '+57 4728713315', 'dionisiagimenez@gmail.com', 'Gerente', 1555742.68, '12345');
 CALL sp_insert_empleado('Jenaro', 'Bauza', '+57 4705183473', 'yherrero@gmail.com', 'Recepcionista', 2914426.14, '12345');
@@ -50,30 +50,28 @@ CALL CrearProveedor('Bustos, Cerda and Reina', '+57 4714223253', 'jtovar@gmail.c
 CALL CrearProveedor('Gibert-Roman', '+57 4737454589', 'clarisatoro@gmail.com', 'Rambla Valero Sastre 7, Tarragona, 42415');
 
 
-CALL sp_insertar_servicio('Coloración', 'Tintes, mechas, reflejos, y otros servicios de coloración.', 'Hogar', 200931.51, 10);
-CALL sp_insertar_servicio('Manicura', 'Cuidado y embellecimiento de las uñas de las manos.', 'Hogar', 232432.95, 10);
-CALL sp_insertar_servicio('Corte Cabello', 'Cortes adaptados a diferentes estilos y tipos de cabello.', 293278.94, 'Hogar', 10);
-CALL sp_insertar_servicio('Alisado', 'Permanente o temporal, como el alisado japonés o con keratina.', 'Hogar', 69700.05, 10);
-CALL sp_insertar_servicio('Pedicura', 'Cuidado y embellecimiento de las uñas de los pies.', 'Mantenimiento', 257351.17, 10);
-CALL sp_insertar_servicio('Decoración de uñas', 'Uñas de gel, acrílicas, esmaltado permanente.', 'Mantenimiento', 194338.04, 10);
-CALL sp_insertar_servicio('Depilación de cejas', 'Depilación de cejas con láser o pinzas', 'Mantenimiento', 61456.1, 10);
+CALL sp_insertar_servicio('Coloracion', 'Tintes, mechas, reflejos, y otros servicios de coloracion.', 'Cabello', 200931.51, 10);
+CALL sp_insertar_servicio('Manicura', 'Cuidado y embellecimiento de las unas de las manos.', 'Unas', 232432.95, 10);
+CALL sp_insertar_servicio('Corte Cabello', 'Cortes adaptados a diferentes estilos y tipos de cabello.', 293278.94, 'Cabello', 10);
+CALL sp_insertar_servicio('Alisado', 'Permanente o temporal.', 'Cabello', 69700.05, 10);
+CALL sp_insertar_servicio('Pedicura', 'Cuidado y embellecimiento de las unas de los pies.', 'Unas', 257351.17, 10);
+CALL sp_insertar_servicio('Decoración de unas', 'Unas de gel, acrilicas, esmaltado permanente.', 'Unas', 194338.04, 10);
+CALL sp_insertar_servicio('Depilación de cejas', 'Depilacion de cejas con laser o pinzas', 'Facial', 61456.1, 10);
+CALL sp_insertar_servicio('Mascarilla facial', 'Tratamiento de limpieza para la cara', 'Facial', 3500000.00, 45);
+CALL sp_insertar_servicio('Hidratacion facial', 'Tratamiento de hidratacion para la cara', 'Facial', 3500000.00, 45);
 
 
-CALL sp_insert_producto('Nesciunt producto', 'Illo vitae cupiditate veniam. Rerum ullam at sapiente doloribus nihil minima.', 18, 39165.07);
-CALL sp_insert_producto('Autem producto', 'Eos aut eveniet eos ipsum quaerat cumque. Expedita aliquam sit explicabo voluptatum earum.', 6, 28490.41);
-CALL sp_insert_producto('Aliquid producto', 'Doloremque officia facere veniam. Non perspiciatis veniam.', 9, 49580.93);
-CALL sp_insert_producto('Illo producto', 'Commodi sequi iste tempore ipsum. Repellat voluptas voluptates pariatur. Mollitia enim error culpa.', 18, 18784.61);
-CALL sp_insert_producto('Perferendis producto', 'Veniam maxime eligendi aspernatur deserunt vero. Commodi esse modi magnam cumque.', 11, 43714.08);
-CALL sp_insert_producto('Sequi producto', 'Similique eum voluptates exercitationem id quis. Natus eum iure eaque dolorum atque enim.', 2, 19161.92);
-CALL sp_insert_producto('Non producto', 'Quas quisquam facilis id necessitatibus. Facere enim harum ipsum mollitia.', 2, 42201.83);
-CALL sp_insert_producto('Nesciunt producto', 'Provident porro laborum laboriosam natus. Enim nemo molestiae tempore hic.', 13, 20709.64);
-CALL sp_insert_producto('Quia producto', 'Amet impedit quaerat aut quo. Vitae voluptate culpa.', 7, 46525.44);
-CALL sp_insert_producto('Ea producto', 'Ab necessitatibus autem. Eligendi voluptatibus molestiae laudantium vel sed.', 19, 45054.71);
-CALL sp_insert_producto('Commodi producto', 'Debitis consequatur odit quas vitae fugiat. Ipsum totam fugiat aspernatur vitae soluta.', 11, 18505.06);
-CALL sp_insert_producto('Nisi producto', 'Reprehenderit dolorum expedita eius vel quam. Adipisci optio nostrum vel. Dolores architecto nisi.', 16, 25825.28);
-CALL sp_insert_producto('Quasi producto', 'Error aperiam veniam sunt tenetur numquam. Nam aliquid exercitationem officia fugit minima.', 15, 15714.86);
-CALL sp_insert_producto('Quidem producto', 'Eaque perferendis nobis. Deleniti quis quam nam.', 5, 19865.1);
-CALL sp_insert_producto('Totam producto', 'Ea maiores libero atque voluptatem. Quis eum dicta est aliquid sint qui. Ea vel neque.', 18, 31559.09);
+
+CALL sp_insert_producto('Tinte 1', 'Tinte rubio', 18, 39165.07);
+CALL sp_insert_producto('Tinte 2', 'Tinte castaño', 6, 28490.41);
+CALL sp_insert_producto('Pintauñas 1', 'Pintauñas rojo', 9, 49580.93);
+CALL sp_insert_producto('Pintauñas 2', 'Pintauñas blanco', 18, 18784.61);
+CALL sp_insert_producto('Shampoo 1', 'Shampoo para cabellos lisos', 11, 43714.08);
+CALL sp_insert_producto('Shampoo 2', 'Shampoo para cabellos rizados', 2, 19161.92);
+CALL sp_insert_producto('Crema de peinar 1', 'Crema de peinar para cabellos lisos', 2, 42201.83);
+CALL sp_insert_producto('Acondicionador 1', 'Acondicionador para cabellos ondulados', 13, 20709.64);
+CALL sp_insert_producto('Mascarilla 1', 'Mascarilla facial', 13, 20709.64);
+
 
 
 INSERT INTO GASTO_MENSUAL (gas_descripcion, gas_fecha, gas_monto, gas_tipo) VALUES
@@ -127,21 +125,21 @@ CALL sp_insertar_factura(215890.93, '2025-06-16', '01:00:34', 7);
 CALL sp_insertar_factura(265490.85, '2025-06-16', '08:09:16', 12);
 
 
-CALL sp_insertar_cita('2025-06-16', '22:16:06', 1, 11, 11);
-CALL sp_insertar_cita('2025-06-16', '06:47:00', 11, 2, 1);
-CALL sp_insertar_cita('2025-06-16', '11:02:19', 7, 12, 6);
-CALL sp_insertar_cita('2025-06-16', '13:00:33', 13, 14, 2);
-CALL sp_insertar_cita('2025-06-16', '11:13:32', 4, 4, 4);
-CALL sp_insertar_cita('2025-06-16', '13:14:02', 9, 8, 3);
-CALL sp_insertar_cita('2025-06-16', '12:47:26', 7, 3, 5);
-CALL sp_insertar_cita('2025-06-16', '09:40:12', 8, 4, 14);
-CALL sp_insertar_cita('2025-06-16', '08:32:12', 15, 2, 8);
-CALL sp_insertar_cita('2025-06-16', '02:36:59', 13, 14, 14);
-CALL sp_insertar_cita('2025-06-16', '00:49:19', 9, 2, 1);
-CALL sp_insertar_cita('2025-06-16', '02:37:36', 11, 9, 14);
-CALL sp_insertar_cita('2025-06-16', '11:37:08', 1, 2, 15);
-CALL sp_insertar_cita('2025-06-16', '11:32:14', 13, 14, 4);
-CALL sp_insertar_cita('2025-06-16', '13:11:14', 3, 7, 8);
+CALL sp_insertar_cita('2025-06-16', '22:16:06', 1, 3, 11);
+CALL sp_insertar_cita('2025-07-16', '06:47:00', 11, 2, 1);
+CALL sp_insertar_cita('2025-03-16', '11:02:19', 7, 5, 6);
+CALL sp_insertar_cita('2025-06-16', '13:00:33', 13, 6, 2);
+CALL sp_insertar_cita('2025-06-14', '11:13:32', 4, 2, 4);
+CALL sp_insertar_cita('2025-06-13', '13:14:02', 9, 1, 3);
+CALL sp_insertar_cita('2025-06-10', '12:47:26', 7, 7, 5);
+CALL sp_insertar_cita('2025-06-20', '09:40:12', 8, 3, 14);
+CALL sp_insertar_cita('2025-06-12', '08:32:12', 15, 4, 8);
+CALL sp_insertar_cita('2025-06-04', '02:36:59', 13, 1, 14);
+CALL sp_insertar_cita('2025-06-05', '00:49:19', 9, 2, 1);
+CALL sp_insertar_cita('2025-05-25', '02:37:36', 11, 8, 14);
+CALL sp_insertar_cita('2025-05-18', '11:37:08', 1, 4, 15);
+CALL sp_insertar_cita('2025-06-01', '11:32:14', 13, 5, 4);
+CALL sp_insertar_cita('2025-06-07', '13:11:14', 3, 9, 8);
 
 -- Temporarily disable the trigger that causes dynamic SQL issues
 DROP TRIGGER IF EXISTS trg_after_insert_usuario_sistema;
@@ -204,12 +202,7 @@ INSERT INTO PRODUCTO_USADO (ser_id, prod_id, pru_cantidad_usada, pru_botellas_us
 (7, 11, 300, 3),
 (8, 8, 300, 1),
 (9, 2, 400, 2),
-(10, 1, 100, 2),
-(11, 13, 200, 3),
-(12, 5, 200, 3),
-(13, 8, 500, 3),
-(14, 7, 500, 1),
-(15, 2, 100, 3);
+
 
 CALL sp_crear_promocion('Promo 1', 'Itaque sit ratione numquam minima in impedit.', '2025-06-16', '2025-06-16', 27.6, 9, 1);
 CALL sp_crear_promocion('Promo 2', 'Ratione sint sunt soluta. Fugit laborum non alias eius.', '2025-06-16', '2025-06-16', 25.86, 10, 9);
@@ -260,21 +253,16 @@ INSERT INTO DETALLE_COMPRA (com_id, prod_id, dec_cantidad, dec_precio_unitario) 
 (14, 13, 4, 30183.87),
 (15, 4, 4, 14420.62);
 INSERT INTO INVENTARIO (inv_fecha_actualizacion, prod_id, inv_cantidad_actual, inv_observaciones) VALUES
-('2025-06-16', 1, 2, 'Fugit nihil cumque reprehenderit.'),
-('2025-06-16', 2, 8, 'Dolorem quas consectetur.'),
-('2025-06-16', 3, 16, 'Fugiat odit quo.'),
-('2025-06-16', 4, 20, 'Optio earum non consequatur.'),
-('2025-06-16', 5, 28, 'Non quod rerum voluptate facere.'),
-('2025-06-16', 6, 25, 'Perferendis tenetur saepe.'),
-('2025-06-16', 7, 3, 'Iure aut cupiditate aliquam enim.'),
-('2025-06-16', 8, 15, 'Eveniet tempora veritatis eaque.'),
-('2025-06-16', 9, 14, 'Saepe porro laboriosam in suscipit.'),
-('2025-06-16', 10, 29, 'Impedit nihil rem perspiciatis.'),
-('2025-06-16', 11, 21, 'Ex eius magni mollitia fugiat.'),
-('2025-06-16', 12, 19, 'Voluptatem quia accusantium illo.'),
-('2025-06-16', 13, 7, 'A explicabo odio reiciendis molestias.'),
-('2025-06-16', 14, 23, 'Nostrum deleniti ut hic itaque.'),
-('2025-06-16', 15, 23, 'Quo ipsum omnis vero.');
+('2025-06-16', 1, 2, 'Comprar más producto'),
+('2025-06-16', 2, 8, 'Sin observaciones'),
+('2025-06-16', 3, 16, 'Sin observaciones'),
+('2025-06-16', 4, 20, 'Sin observaciones'),
+('2025-06-16', 5, 28, 'Sin observaciones'),
+('2025-06-16', 6, 25, 'Sin observaciones'),
+('2025-06-16', 7, 3, 'Sin observaciones'),
+('2025-06-16', 8, 15, 'Sin observaciones'),
+('2025-06-16', 9, 14, 'Sin observaciones'),
+
 INSERT INTO HORARIO_EMPLEADO (hor_dia_semana, hor_hora_entrada, hor_hora_salida, emp_id) VALUES
 ('Jueves', '13:26:48', '06:05:58', 8),
 ('Jueves', '08:08:11', '16:23:05', 4),
@@ -292,21 +280,21 @@ INSERT INTO HORARIO_EMPLEADO (hor_dia_semana, hor_hora_entrada, hor_hora_salida,
 ('Viernes', '19:14:30', '17:21:05', 9),
 ('Viernes', '12:58:57', '08:00:41', 6);
 INSERT INTO HISTORIAL_CITA (his_observaciones, cit_id) VALUES
-('Consequuntur nobis suscipit maiores.', 13),
-('Ullam consequatur quae voluptate debitis molestiae.', 15),
-('Enim sed repellat minima ad corporis pariatur.', 8),
-('Porro eos quidem adipisci.', 10),
-('Possimus aliquid fugit impedit ratione.', 14),
-('Rerum tenetur provident officia quidem molestias.', 12),
-('Fugiat incidunt nam consectetur.', 15),
-('Nulla optio laudantium nemo facere quos et dolore.', 9),
-('At dolore distinctio ex facere dolor.', 7),
-('Ad maxime quo maiores magni.', 14),
-('Modi praesentium voluptate quod officia.', 15),
-('Asperiores debitis dolorum architecto.', 9),
-('Perferendis modi odit nulla quidem nesciunt.', 8),
-('Assumenda quisquam ipsa hic optio labore modi consequatur.', 15),
-('Vero accusamus soluta consequuntur aliquam nemo.', 3);
+('Sin observaciones posteriores', 13),
+('Sin observaciones posteriores', 15),
+('Sin observaciones posteriores', 8),
+('Sin observaciones posteriores', 10),
+('Tener cuidado con el uso excesivo de producto', 14),
+('Sin observaciones posteriores', 12),
+('Sin observaciones posteriores', 15),
+('Sin observaciones posteriores', 9),
+('Sin observaciones posteriores', 7),
+('Sin observaciones posteriores', 14),
+('El empleado debe tener mayor puntualidad durante la prestación del servicio', 15),
+('Sin observaciones posteriores', 9),
+('Sin observaciones posteriores', 8),
+('Sin observaciones posteriores', 15),
+('Sin observaciones posteriores', 3);
 
 
 
