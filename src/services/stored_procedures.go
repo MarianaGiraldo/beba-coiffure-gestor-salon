@@ -288,52 +288,6 @@ func (s *DatabaseService) GetDashboardMetrics() (map[string]interface{}, error) 
 	return metrics, nil
 }
 
-// ============= CUSTOM QUERIES FOR FRONTEND COMPATIBILITY =============
-
-// GetInventoryWithProducts returns inventory with product details using joins
-func (s *DatabaseService) GetInventoryWithProducts() ([]models.Inventory, error) {
-	var inventories []models.Inventory
-	err := s.DB.Preload("Product").Find(&inventories).Error
-	return inventories, err
-}
-
-// Custom method for suppliers with additional frontend fields
-func (s *DatabaseService) GetSuppliers() ([]map[string]interface{}, error) {
-	var suppliers []models.Supplier
-	err := s.DB.Find(&suppliers).Error
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to frontend format
-	result := make([]map[string]interface{}, len(suppliers))
-	for i, supplier := range suppliers {
-		result[i] = map[string]interface{}{
-			"prov_id":        supplier.ProvID,
-			"prov_nombre":    supplier.ProvNombre,
-			"prov_telefono":  supplier.ProvTelefono,
-			"prov_correo":    supplier.ProvCorreo,
-			"prov_direccion": supplier.ProvDireccion,
-			"categoria":      "General", // Default category
-			"estado":         "Activo",  // Default status
-		}
-	}
-	return result, nil
-}
-
-// Add supplier using direct GORM (since no stored procedure exists for suppliers)
-func (s *DatabaseService) AddSupplier(supplier models.Supplier) error {
-	return s.DB.Create(&supplier).Error
-}
-
-func (s *DatabaseService) UpdateSupplier(supplier models.Supplier) error {
-	return s.DB.Save(&supplier).Error
-}
-
-func (s *DatabaseService) DeleteSupplier(id uint) error {
-	return s.DB.Delete(&models.Supplier{}, id).Error
-}
-
 // ============= SEARCH/LOOKUP PROCEDURES =============
 
 func (s *DatabaseService) BuscarClientePorID(id uint) (*models.Client, error) {
@@ -490,8 +444,8 @@ func (s *DatabaseService) CrearInventario(fecha string, prodID uint, cantidad in
 		fecha, prodID, cantidad, observaciones).Error
 }
 
-func (s *DatabaseService) ObtenerInventarioCompleto() ([]map[string]interface{}, error) {
-	var inventories []map[string]interface{}
+func (s *DatabaseService) ObtenerInventarioCompleto() ([]models.InventoryComplete, error) {
+	var inventories []models.InventoryComplete
 	err := s.DB.Raw("CALL ObtenerInventarioCompleto()").Scan(&inventories).Error
 	return inventories, err
 }
@@ -523,9 +477,9 @@ func (s *DatabaseService) EliminarProducto(prodID uint) error {
 
 // ============= SUPPLIER PROCEDURES (using stored procedures) =============
 
-func (s *DatabaseService) CrearProveedor(nombre, contacto, correo, telefono, direccion string) error {
-	return s.DB.Exec("CALL CrearProveedor(?, ?, ?, ?, ?)",
-		nombre, contacto, correo, telefono, direccion).Error
+func (s *DatabaseService) CrearProveedor(nombre, telefono, correo, direccion string) error {
+	return s.DB.Exec("CALL CrearProveedor(?, ?, ?, ?)",
+		nombre, telefono, correo, direccion).Error
 }
 
 func (s *DatabaseService) ObtenerProveedores() ([]models.Supplier, error) {
@@ -534,9 +488,9 @@ func (s *DatabaseService) ObtenerProveedores() ([]models.Supplier, error) {
 	return suppliers, err
 }
 
-func (s *DatabaseService) ActualizarProveedor(provID uint, nombre, contacto, correo, telefono, direccion string) error {
-	return s.DB.Exec("CALL ActualizarProveedor(?, ?, ?, ?, ?, ?)",
-		provID, nombre, contacto, correo, telefono, direccion).Error
+func (s *DatabaseService) ActualizarProveedor(provID uint, nombre, telefono, correo, direccion string) error {
+	return s.DB.Exec("CALL ActualizarProveedor(?, ?, ?, ?, ?)",
+		provID, nombre, telefono, correo, direccion).Error
 }
 
 func (s *DatabaseService) EliminarProveedor(provID uint) error {
@@ -545,34 +499,34 @@ func (s *DatabaseService) EliminarProveedor(provID uint) error {
 
 // ============= PAYMENT PROCEDURES =============
 
-func (s *DatabaseService) CrearPago(facID uint, fecha string, monto float64, metodo, referencia string) error {
+func (s *DatabaseService) CrearPago(fecha string, monto float64, metodo string, gasID, empID uint) error {
 	return s.DB.Exec("CALL CrearPago(?, ?, ?, ?, ?)",
-		facID, fecha, monto, metodo, referencia).Error
+		fecha, monto, metodo, gasID, empID).Error
 }
 
-func (s *DatabaseService) ObtenerPagos() ([]map[string]interface{}, error) {
-	var pagos []map[string]interface{}
+func (s *DatabaseService) ObtenerPagos() ([]models.Payment, error) {
+	var pagos []models.Payment
 	err := s.DB.Raw("CALL ObtenerPagos()").Scan(&pagos).Error
 	return pagos, err
 }
 
-func (s *DatabaseService) ActualizarPago(pagoID, facID uint, fecha string, monto float64, metodo, referencia string) error {
+func (s *DatabaseService) ActualizarPago(pagoID uint, fecha string, monto float64, metodo string, gasID, empID uint) error {
 	return s.DB.Exec("CALL ActualizarPago(?, ?, ?, ?, ?, ?)",
-		pagoID, facID, fecha, monto, metodo, referencia).Error
+		pagoID, fecha, monto, metodo, gasID, empID).Error
 }
 
 func (s *DatabaseService) EliminarPago(pagoID uint) error {
 	return s.DB.Exec("CALL EliminarPago(?)", pagoID).Error
 }
 
-func (s *DatabaseService) ObtenerPagosPorEmpleado(empID uint) ([]map[string]interface{}, error) {
-	var pagos []map[string]interface{}
+func (s *DatabaseService) ObtenerPagosPorEmpleado(empID uint) ([]models.EmployeePaymentSummary, error) {
+	var pagos []models.EmployeePaymentSummary
 	err := s.DB.Raw("CALL ObtenerPagosPorEmpleado(?)", empID).Scan(&pagos).Error
 	return pagos, err
 }
 
-func (s *DatabaseService) ObtenerTodosLosPagosConEmpleado() ([]map[string]interface{}, error) {
-	var pagos []map[string]interface{}
+func (s *DatabaseService) ObtenerTodosLosPagosConEmpleado() ([]models.PaymentWithEmployee, error) {
+	var pagos []models.PaymentWithEmployee
 	err := s.DB.Raw("CALL ObtenerTodosLosPagosConEmpleado()").Scan(&pagos).Error
 	return pagos, err
 }
@@ -595,16 +549,19 @@ func (s *DatabaseService) CrearPromocion(params PromocionParams) error {
 		params.Descuento, params.SerID, params.Usos).Error
 }
 
-func (s *DatabaseService) ListarPromociones() ([]map[string]interface{}, error) {
-	var promociones []map[string]interface{}
+func (s *DatabaseService) ListarPromociones() ([]models.Promotion, error) {
+	var promociones []models.Promotion
 	err := s.DB.Raw("CALL sp_listar_promociones()").Scan(&promociones).Error
 	return promociones, err
 }
 
-func (s *DatabaseService) ObtenerPromocionPorID(proID uint) (map[string]interface{}, error) {
-	var promocion map[string]interface{}
+func (s *DatabaseService) ObtenerPromocionPorID(proID uint) (*models.Promotion, error) {
+	var promocion models.Promotion
 	err := s.DB.Raw("CALL sp_obtener_promocion_por_id(?)", proID).Scan(&promocion).Error
-	return promocion, err
+	if err != nil {
+		return nil, err
+	}
+	return &promocion, err
 }
 
 func (s *DatabaseService) ActualizarPromocion(proID uint, params PromocionParams) error {
@@ -632,8 +589,8 @@ func (s *DatabaseService) VerCitasEmpleado(empID uint) ([]models.Cita, error) {
 	return citas, err
 }
 
-func (s *DatabaseService) VerHistorialEmpleado(empID uint) ([]map[string]interface{}, error) {
-	var historial []map[string]interface{}
+func (s *DatabaseService) VerHistorialEmpleado(empID uint) ([]models.EmployeeHistory, error) {
+	var historial []models.EmployeeHistory
 	err := s.DB.Raw("CALL sp_ver_historial_empleado(?)", empID).Scan(&historial).Error
 	return historial, err
 }

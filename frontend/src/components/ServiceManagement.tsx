@@ -243,7 +243,9 @@ const ServiceManagement = () => {
   };
 
   const handleDeleteService = async (id: number) => {
-    await deleteService(id);
+    if (window.confirm('¿Estás seguro de que deseas eliminar este servicio?')) {
+      await deleteService(id);
+    }
   };
 
   const getServicesByCategory = (category: string) => {

@@ -518,18 +518,16 @@ DELIMITER //
 CREATE PROCEDURE ActualizarProveedor(
   IN p_prov_id INT,
   IN p_nombre VARCHAR(100),
-  IN p_contacto VARCHAR(100),
-  IN p_correo VARCHAR(100),
   IN p_telefono VARCHAR(20),
+  IN p_correo VARCHAR(100),
   IN p_direccion TEXT
 )
 BEGIN
   UPDATE PROVEEDOR
   SET
     prov_nombre = p_nombre,
-    prov_contacto = p_contacto,
-    prov_correo = p_correo,
     prov_telefono = p_telefono,
+    prov_correo = p_correo,
     prov_direccion = p_direccion
   WHERE prov_id = p_prov_id;
 END;
@@ -642,11 +640,11 @@ BEGIN
   SELECT 
     e.emp_id,
     CONCAT(e.emp_nombre, ' ', e.emp_apellido) AS empleado,
-    p.pago_id,
-    p.pago_fecha,
-    p.pago_monto,
-    p.pago_metodo,
-    p.pago_referencia
+    p.pag_id,
+    p.pag_fecha,
+    p.pag_monto,
+    p.pag_metodo,
+    p.gas_id
   FROM EMPLEADO e
   JOIN PAGO p ON e.emp_id=p.emp_id
   WHERE e.emp_id = p_emp_id;
@@ -662,11 +660,11 @@ DELIMITER //
 CREATE PROCEDURE ObtenerTodosLosPagosConEmpleado()
 BEGIN
   SELECT
-    p.pago_id,
-    p.pago_fecha,
-    p.pago_monto,
-    p.pago_metodo,
-    p.pago_referencia,
+    p.pag_id,
+    p.pag_fecha,
+    p.pag_monto,
+    p.pag_metodo,
+    p.gas_id,
     e.emp_id,
     e.emp_nombre,
     e.emp_apellido

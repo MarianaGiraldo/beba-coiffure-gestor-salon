@@ -248,6 +248,53 @@ type ClientPayment struct {
 	Cliente  string    `json:"cliente"`
 }
 
+// PaymentWithEmployee represents payment data with employee information
+type PaymentWithEmployee struct {
+	PagID       uint    `json:"pag_id" gorm:"column:pag_id"`
+	PagFecha    string  `json:"pag_fecha" gorm:"column:pag_fecha"` // DATE returns as string from stored procedure
+	PagMonto    float64 `json:"pag_monto" gorm:"column:pag_monto"`
+	PagMetodo   string  `json:"pag_metodo" gorm:"column:pag_metodo"`
+	GasID       uint    `json:"gas_id" gorm:"column:gas_id"`
+	EmpID       uint    `json:"emp_id" gorm:"column:emp_id"`
+	EmpNombre   string  `json:"emp_nombre" gorm:"column:emp_nombre"`
+	EmpApellido string  `json:"emp_apellido" gorm:"column:emp_apellido"`
+}
+
+// EmployeePaymentSummary represents payment summary for a specific employee
+type EmployeePaymentSummary struct {
+	EmpID     uint    `json:"emp_id" gorm:"column:emp_id"`
+	Empleado  string  `json:"empleado" gorm:"column:empleado"` // CONCAT result
+	PagID     uint    `json:"pag_id" gorm:"column:pag_id"`
+	PagFecha  string  `json:"pag_fecha" gorm:"column:pag_fecha"`
+	PagMonto  float64 `json:"pag_monto" gorm:"column:pag_monto"`
+	PagMetodo string  `json:"pag_metodo" gorm:"column:pag_metodo"`
+	GasID     uint    `json:"gas_id" gorm:"column:gas_id"`
+}
+
+// InventoryComplete represents inventory data with product information
+type InventoryComplete struct {
+	InvID                  uint    `json:"inv_id" gorm:"column:inv_id"`
+	InvFechaActualizacion  string  `json:"inv_fecha_actualizacion" gorm:"column:inv_fecha_actualizacion"`
+	ProdID                 uint    `json:"prod_id" gorm:"column:prod_id"`
+	InvCantidadActual      int     `json:"inv_cantidad_actual" gorm:"column:inv_cantidad_actual"`
+	InvObservaciones       string  `json:"inv_observaciones" gorm:"column:inv_observaciones"`
+	ProdNombre             string  `json:"prod_nombre" gorm:"column:prod_nombre"`
+	ProdDescripcion        string  `json:"prod_descripcion" gorm:"column:prod_descripcion"`
+	ProdCantidadDisponible int     `json:"prod_cantidad_disponible" gorm:"column:prod_cantidad_disponible"`
+	ProdPrecioUnitario     float64 `json:"prod_precio_unitario" gorm:"column:prod_precio_unitario"`
+}
+
+// EmployeeHistory represents employee appointment history
+type EmployeeHistory struct {
+	HisID            uint   `json:"his_id" gorm:"column:his_id"`
+	HisObservaciones string `json:"his_observaciones" gorm:"column:his_observaciones"`
+	CitID            uint   `json:"cit_id" gorm:"column:cit_id"`
+	CitFecha         string `json:"cit_fecha" gorm:"column:cit_fecha"`
+	CitHora          string `json:"cit_hora" gorm:"column:cit_hora"`
+	CliID            uint   `json:"cli_id" gorm:"column:cli_id"`
+	SerID            uint   `json:"ser_id" gorm:"column:ser_id"`
+}
+
 type Appointment struct {
 	AptID    uint      `json:"apt_id"`
 	AptFecha time.Time `json:"apt_fecha"`
