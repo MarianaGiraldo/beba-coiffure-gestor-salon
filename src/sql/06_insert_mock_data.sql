@@ -280,21 +280,21 @@ INSERT INTO HORARIO_EMPLEADO (hor_dia_semana, hor_hora_entrada, hor_hora_salida,
 ('Viernes', '19:14:30', '17:21:05', 9),
 ('Viernes', '12:58:57', '08:00:41', 6);
 INSERT INTO HISTORIAL_CITA (his_observaciones, cit_id) VALUES
-('Consequuntur nobis suscipit maiores.', 13),
-('Ullam consequatur quae voluptate debitis molestiae.', 15),
-('Enim sed repellat minima ad corporis pariatur.', 8),
-('Porro eos quidem adipisci.', 10),
-('Possimus aliquid fugit impedit ratione.', 14),
-('Rerum tenetur provident officia quidem molestias.', 12),
-('Fugiat incidunt nam consectetur.', 15),
-('Nulla optio laudantium nemo facere quos et dolore.', 9),
-('At dolore distinctio ex facere dolor.', 7),
-('Ad maxime quo maiores magni.', 14),
-('Modi praesentium voluptate quod officia.', 15),
-('Asperiores debitis dolorum architecto.', 9),
-('Perferendis modi odit nulla quidem nesciunt.', 8),
-('Assumenda quisquam ipsa hic optio labore modi consequatur.', 15),
-('Vero accusamus soluta consequuntur aliquam nemo.', 3);
+('Sin observaciones posteriores', 13),
+('Sin observaciones posteriores', 15),
+('Sin observaciones posteriores', 8),
+('Sin observaciones posteriores', 10),
+('Tener cuidado con el uso excesivo de producto', 14),
+('Sin observaciones posteriores', 12),
+('Sin observaciones posteriores', 15),
+('Sin observaciones posteriores', 9),
+('Sin observaciones posteriores', 7),
+('Sin observaciones posteriores', 14),
+('El empleado debe tener mayor puntualidad durante la prestación del servicio', 15),
+('Sin observaciones posteriores', 9),
+('Sin observaciones posteriores', 8),
+('Sin observaciones posteriores', 15),
+('Sin observaciones posteriores', 3);
 
 
 
