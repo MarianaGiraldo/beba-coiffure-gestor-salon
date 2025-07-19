@@ -36,7 +36,7 @@ func LoadConfig() error {
 	dbUser := getEnv("DB_USER", "root")
 	dbPassword := getEnv("DB_PASSWORD", "")
 	dbName := getEnv("DB_NAME", "beba_coiffure_db")
-
+	log.Printf("Connecting to database %s at %s:%s as user %s", dbName, dbHost, dbPort, dbUser)
 	// Create DSN (Data Source Name)
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		dbUser, dbPassword, dbHost, dbPort, dbName)
@@ -60,6 +60,7 @@ func LoadConfig() error {
 		AdminPass:   getEnv("ADMIN_PASSWORD", "admin123"),
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
 	}
+	db.Exec("SET ROLE 'rol_admin'@'%';") // Set default role for the connection
 
 	return nil
 }

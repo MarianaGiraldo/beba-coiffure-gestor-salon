@@ -162,18 +162,6 @@ INSERT INTO USUARIO_SISTEMA (usu_nombre_usuario, usu_contrasena, usu_rol, emp_id
 ('qtorrijos', 'G1G1$Urn%+', 'cliente', NULL, 10),
 ('carolinabarrera', 'cN85AHprU&', 'cliente', 9, NULL),
 ('florenciogalan', '^c2m2Bnf$&', 'cliente', NULL, 15);
-
--- Recreate the trigger after data insertion
-DELIMITER //
-CREATE TRIGGER trg_after_insert_usuario_sistema
-AFTER INSERT ON USUARIO_SISTEMA
-FOR EACH ROW
-BEGIN
-  -- Crear usuario de base de datos con rol correspondiente
-  CALL CrearUsuarioConRol(NEW.usu_nombre_usuario, NEW.usu_contrasena, CONCAT('rol_', NEW.usu_rol));
-END;
-//
-DELIMITER ;
 INSERT INTO DETALLE_FACTURA_SERVICIO (fac_id, ser_id) VALUES
 (1, 6),
 (2, 5),

@@ -406,21 +406,21 @@ func (s *DatabaseService) CrearUsuarioConRolDirecto(username, password, role str
 	}()
 
 	// 1. Create the MySQL user
-	createUserSQL := fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'localhost' IDENTIFIED BY '%s'", username, password)
+	createUserSQL := fmt.Sprintf("CREATE USER IF NOT EXISTS '%s'@'%%' IDENTIFIED BY '%s'", username, password)
 	if err := tx.Exec(createUserSQL).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error creating user: %v", err)
 	}
 
 	// 2. Grant the appropriate role to the user
-	grantRoleSQL := fmt.Sprintf("GRANT %s TO '%s'@'localhost'", mysqlRole, username)
+	grantRoleSQL := fmt.Sprintf("GRANT %s TO '%s'@'%%'", mysqlRole, username)
 	if err := tx.Exec(grantRoleSQL).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error granting role: %v", err)
 	}
 
 	// 3. Set the default role for the user
-	setDefaultRoleSQL := fmt.Sprintf("SET DEFAULT ROLE %s TO '%s'@'localhost'", mysqlRole, username)
+	setDefaultRoleSQL := fmt.Sprintf("SET DEFAULT ROLE %s TO '%s'@'%%'", mysqlRole, username)
 	if err := tx.Exec(setDefaultRoleSQL).Error; err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error setting default role: %v", err)

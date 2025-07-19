@@ -7,7 +7,10 @@ CREATE ROLE IF NOT EXISTS 'rol_cliente';
 
 -- Permisos Admin
 GRANT ALL PRIVILEGES ON salondb.* TO 'rol_admin';
+GRANT CREATE USER ON *.* TO 'rol_admin';
 GRANT EXECUTE ON salondb.* TO 'rol_admin';
+GRANT 'rol_cliente'@'%' TO 'rol_admin'@'%' WITH ADMIN OPTION;
+GRANT 'rol_empleado'@'%' TO 'rol_admin'@'%' WITH ADMIN OPTION;
 
 -- Permisos Empleado
 GRANT SELECT, INSERT, UPDATE ON salondb.CITA TO 'rol_empleado';
@@ -46,18 +49,22 @@ GRANT EXECUTE ON PROCEDURE salondb.sp_insert_cliente TO 'rol_cliente';
 GRANT EXECUTE ON PROCEDURE salondb.sp_update_cliente TO 'rol_cliente';
 GRANT EXECUTE ON PROCEDURE salondb.sp_update_usuario TO 'rol_cliente';
 
+CREATE USER IF NOT EXISTS 'salon_user'@'%' IDENTIFIED BY 'salon_password_456';
+GRANT 'rol_admin'@'%' TO 'salon_user'@'%';
+SET DEFAULT ROLE 'rol_admin' TO 'salon_user'@'%';
 
-CREATE USER IF NOT EXISTS 'admin01'@'localhost' IDENTIFIED BY 'admin123';
-GRANT 'rol_admin' TO 'admin01'@'localhost';
-SET DEFAULT ROLE 'rol_admin' TO 'admin01'@'localhost';
 
-CREATE USER IF NOT EXISTS 'empleado01'@'localhost' IDENTIFIED BY 'empPass456';
-GRANT 'rol_empleado' TO 'empleado01'@'localhost';
-SET DEFAULT ROLE 'rol_empleado' TO 'empleado01'@'localhost';
+-- CREATE USER IF NOT EXISTS 'admin01'@'%' IDENTIFIED BY 'admin123';
+-- GRANT 'rol_admin'@'%' TO 'admin01'@'%';
+-- SET DEFAULT ROLE 'rol_admin'@'%' TO 'admin01'@'%';
 
-CREATE USER IF NOT EXISTS 'cliente01'@'localhost' IDENTIFIED BY 'cliPass789';
-GRANT 'rol_cliente' TO 'cliente01'@'localhost';
-SET DEFAULT ROLE 'rol_cliente' TO 'cliente01'@'localhost';
+-- CREATE USER IF NOT EXISTS 'empleado01'@'%' IDENTIFIED BY 'empPass456';
+-- GRANT 'rol_empleado'@'%' TO 'empleado01'@'%';
+-- SET DEFAULT ROLE 'rol_empleado'@'%' TO 'empleado01'@'%';
+
+-- CREATE USER IF NOT EXISTS 'cliente01'@'%' IDENTIFIED BY 'cliPass789';
+-- GRANT 'rol_cliente'@'%' TO 'cliente01'@'%';
+-- SET DEFAULT ROLE 'rol_cliente'@'%' TO 'cliente01'@'%';
 
 
 
