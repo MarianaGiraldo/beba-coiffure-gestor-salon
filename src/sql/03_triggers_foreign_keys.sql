@@ -293,16 +293,6 @@ BEGIN
 END;
 //
 
--- Trigger para crear usuario de base de datos después de insertar en USUARIO_SISTEMA
--- CREATE TRIGGER trg_after_insert_usuario_sistema
--- AFTER INSERT ON USUARIO_SISTEMA
--- FOR EACH ROW
--- BEGIN
---   -- Crear usuario de base de datos con rol correspondiente
---   CALL CrearUsuarioConRol(NEW.usu_nombre_usuario, NEW.usu_contrasena, CONCAT('rol_', NEW.usu_rol));
--- END;
--- //
-
 
 -- Log triggers completion
 INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
