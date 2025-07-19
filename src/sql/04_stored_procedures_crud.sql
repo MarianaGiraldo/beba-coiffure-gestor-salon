@@ -556,26 +556,26 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE CrearPago(
-  IN p_fac_id INT,
   IN p_fecha DATE,
   IN p_monto DECIMAL(10,2),
   IN p_metodo VARCHAR(50),
-  IN p_referencia VARCHAR(100)
+  IN p_gas_id INT,
+  IN p_emp_id INT
 )
 BEGIN
   INSERT INTO PAGO (
-    fac_id,
-    pago_fecha,
-    pago_monto,
-    pago_metodo,
-    pago_referencia
+    pag_fecha,
+    pag_monto,
+    pag_metodo,
+    gas_id,
+    emp_id
   )
   VALUES (
-    p_fac_id,
     p_fecha,
     p_monto,
     p_metodo,
-    p_referencia
+    p_gas_id,
+    p_emp_id
   );
 END;
 //
@@ -598,21 +598,21 @@ DELIMITER //
 
 CREATE PROCEDURE ActualizarPago(
   IN p_pago_id INT,
-  IN p_fac_id INT,
   IN p_fecha DATE,
   IN p_monto DECIMAL(10,2),
   IN p_metodo VARCHAR(50),
-  IN p_referencia VARCHAR(100)
+  IN p_gas_id INT,
+  IN p_emp_id INT
 )
 BEGIN
   UPDATE PAGO
   SET
-    fac_id = p_fac_id,
-    pago_fecha = p_fecha,
-    pago_monto = p_monto,
-    pago_metodo = p_metodo,
-    pago_referencia = p_referencia
-  WHERE pago_id = p_pago_id;
+    pag_fecha = p_fecha,
+    pag_monto = p_monto,
+    pag_metodo = p_metodo,
+    gas_id = p_gas_id,
+    emp_id = p_emp_id
+  WHERE pag_id = p_pago_id;
 END;
 //
 
@@ -626,7 +626,7 @@ CREATE PROCEDURE EliminarPago(
 )
 BEGIN
   DELETE FROM PAGO
-  WHERE pago_id = p_pago_id;
+  WHERE pag_id = p_pago_id;
 END;
 //
 
