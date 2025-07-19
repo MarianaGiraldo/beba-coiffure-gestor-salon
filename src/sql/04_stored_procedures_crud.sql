@@ -152,6 +152,11 @@ CREATE PROCEDURE sp_insert_producto(
 BEGIN
   INSERT INTO PRODUCTO(prod_nombre, prod_descripcion, prod_cantidad_disponible, prod_precio_unitario)
   VALUES (p_nombre, p_descripcion, p_cantidad, p_precio);
+
+  SET @p_prod_id1 = (SELECT prod_id FROM PRODUCTO WHERE prod_nombre=p_nombre);
+  
+  INSERT INTO INVENTARIO(inv_fecha_actualizacion, prod_id, inv_cantidad_actual, inv_observaciones)
+  VALUES (CURDATE(), p_id, p_cantidad, NULL);
 END;
 //
 
@@ -403,74 +408,6 @@ END;
 //
 
 DELIMITER ;
-
--- Insertar Producto
-
-DELIMITER //
-
-CREATE PROCEDURE CrearProducto(
-  IN p_nombre VARCHAR(100),
-  IN p_descripcion TEXT,
-  IN p_cantidad INT,
-  IN p_precio DECIMAL(10,2)
-)
-BEGIN
-  INSERT INTO PRODUCTO (
-    prod_nombre,
-    prod_descripcion,
-    prod_cantidad_disponible,
-    prod_precio_unitario
-  )
-  VALUES (
-    p_nombre,
-    p_descripcion,
-    p_cantidad,
-    p_precio
-  );
-END;
-//
-
-DELIMITER ;
-
--- Actualizar Producto
-
-DELIMITER //
-
-CREATE PROCEDURE ActualizarProducto(
-  IN p_prod_id INT,
-  IN p_nombre VARCHAR(100),
-  IN p_descripcion TEXT,
-  IN p_cantidad INT,
-  IN p_precio DECIMAL(10,2)
-)
-BEGIN
-  UPDATE PRODUCTO
-  SET
-    prod_nombre = p_nombre,
-    prod_descripcion = p_descripcion,
-    prod_cantidad_disponible = p_cantidad,
-    prod_precio_unitario = p_precio
-  WHERE prod_id = p_prod_id;
-END;
-//
-
-DELIMITER ;
-
--- Borrar Producto
-
-DELIMITER //
-
-CREATE PROCEDURE EliminarProducto(
-  IN p_prod_id INT
-)
-BEGIN
-  DELETE FROM PRODUCTO
-  WHERE prod_id = p_prod_id;
-END;
-//
-
-DELIMITER ;
-
 
 -- Insertar Proveedor
 DELIMITER //
