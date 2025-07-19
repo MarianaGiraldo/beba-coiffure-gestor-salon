@@ -168,6 +168,9 @@ CREATE PROCEDURE sp_update_producto(
   IN p_id INT, IN p_nombre VARCHAR(100), IN p_descripcion TEXT, IN p_cantidad TINYINT, IN p_precio DECIMAL(10,2)
 )
 BEGIN
+  UPDATE INVENTARIO
+  SET inv_cantidad_actual = p_cantidad WHERE p_id=prod_id;
+  
   UPDATE PRODUCTO
   SET prod_nombre = p_nombre, prod_descripcion = p_descripcion, prod_cantidad_disponible = p_cantidad,
       prod_precio_unitario = p_precio
