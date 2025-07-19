@@ -44,9 +44,14 @@ func SetupRoutes(r *gin.Engine) {
 		protectedEmployees.PUT("/:id", employeeController.UpdateEmployee)
 		protectedEmployees.DELETE("/:id", employeeController.DeleteEmployee)
 
-
 		// Setup client routes from separate file
 		SetupClientRoutes(api, dbService)
+
+		// Setup service routes
+		SetupServiceRoutes(api, dbService)
+
+		// Setup appointment routes
+		SetupAppointmentRoutes(api, dbService)
 	}
 
 	// Protected routes

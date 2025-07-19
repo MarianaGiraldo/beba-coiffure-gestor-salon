@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,87 +15,207 @@ interface Service {
   ser_nombre: string;
   ser_descripcion: string;
   ser_precio_unitario: number;
-  categoria: string;
-  duracion_estimada: number; // in minutes
+  ser_categoria: string;
+  ser_duracion_estimada: number; // in minutes
 }
 
 const ServiceManagement = () => {
   const { toast } = useToast();
-  const [services, setServices] = useState<Service[]>([
-    {
-      ser_id: 1,
-      ser_nombre: "Corte de Cabello Dama",
-      ser_descripcion: "Corte profesional para dama con lavado incluido",
-      ser_precio_unitario: 25000,
-      categoria: "Cabello",
-      duracion_estimada: 45
-    },
-    {
-      ser_id: 2,
-      ser_nombre: "Corte de Cabello Caballero",
-      ser_descripcion: "Corte tradicional o moderno para caballero",
-      ser_precio_unitario: 18000,
-      categoria: "Cabello",
-      duracion_estimada: 30
-    },
-    {
-      ser_id: 3,
-      ser_nombre: "Coloración Completa",
-      ser_descripcion: "Aplicación de color permanente en todo el cabello",
-      ser_precio_unitario: 80000,
-      categoria: "Cabello",
-      duracion_estimada: 120
-    },
-    {
-      ser_id: 4,
-      ser_nombre: "Mechas",
-      ser_descripcion: "Aplicación de mechas con papel aluminio",
-      ser_precio_unitario: 65000,
-      categoria: "Cabello",
-      duracion_estimada: 90
-    },
-    {
-      ser_id: 5,
-      ser_nombre: "Manicure Tradicional",
-      ser_descripcion: "Cuidado completo de uñas con esmaltado",
-      ser_precio_unitario: 20000,
-      categoria: "Uñas",
-      duracion_estimada: 45
-    },
-    {
-      ser_id: 6,
-      ser_nombre: "Pedicure Spa",
-      ser_descripcion: "Pedicure relajante con exfoliación y masaje",
-      ser_precio_unitario: 35000,
-      categoria: "Uñas",
-      duracion_estimada: 60
-    },
-    {
-      ser_id: 7,
-      ser_nombre: "Tratamiento Facial",
-      ser_descripcion: "Limpieza facial profunda con mascarilla",
-      ser_precio_unitario: 45000,
-      categoria: "Facial",
-      duracion_estimada: 75
-    },
-    {
-      ser_id: 8,
-      ser_nombre: "Depilación Cejas",
-      ser_descripcion: "Diseño y depilación profesional de cejas",
-      ser_precio_unitario: 15000,
-      categoria: "Facial",
-      duracion_estimada: 20
-    }
-  ]);
-
+  // API URL is configured through Docker environment variables
+  // Fallback for local development outside Docker
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [newService, setNewService] = useState<Partial<Service>>({});
   const [isAddingService, setIsAddingService] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
   const categories = ["Cabello", "Uñas", "Facial", "Corporal", "Especiales"];
 
-  const handleAddService = () => {
-    if (!newService.ser_nombre || !newService.ser_precio_unitario || !newService.categoria) {
+  // Load services when component mounts
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  // Get authentication token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('authToken') || null;
+  };
+
+  // API function to fetch services
+  const fetchServices = async () => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/services`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setServices(data.services || []);
+      } else {
+        console.error('Failed to fetch services');
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los servicios",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los servicios",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // API function to create service
+  const createService = async (service: Partial<Service>) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/services`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          ser_nombre: service.ser_nombre,
+          ser_descripcion: service.ser_descripcion,
+          ser_categoria: service.ser_categoria,
+          ser_precio_unitario: service.ser_precio_unitario,
+          ser_duracion_estimada: service.ser_duracion_estimada,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Servicio creado",
+          description: "El servicio ha sido agregado exitosamente"
+        });
+        fetchServices(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "No se pudo crear el servicio",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error creating service:', error);
+      return false;
+    }
+  };
+
+  // API function to update service
+  const updateService = async (service: Service) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/services/${service.ser_id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          ser_nombre: service.ser_nombre,
+          ser_descripcion: service.ser_descripcion,
+          ser_categoria: service.ser_categoria,
+          ser_precio_unitario: service.ser_precio_unitario,
+          ser_duracion_estimada: service.ser_duracion_estimada,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Servicio actualizado",
+          description: "Los datos del servicio han sido actualizados"
+        });
+        fetchServices(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "No se pudo actualizar el servicio",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating service:', error);
+      return false;
+    }
+  };
+
+  // API function to delete service
+  const deleteService = async (id: number) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/services/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Servicio eliminado",
+          description: "El servicio ha sido eliminado del sistema"
+        });
+        fetchServices(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "No se pudo eliminar el servicio",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      return false;
+    }
+  };
+
+  const handleAddService = async () => {
+    if (!newService.ser_nombre || !newService.ser_precio_unitario || !newService.ser_categoria) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos obligatorios",
@@ -104,47 +224,28 @@ const ServiceManagement = () => {
       return;
     }
 
-    const service: Service = {
-      ser_id: Math.max(...services.map(s => s.ser_id), 0) + 1,
-      ser_nombre: newService.ser_nombre || "",
-      ser_descripcion: newService.ser_descripcion || "",
-      ser_precio_unitario: newService.ser_precio_unitario || 0,
-      categoria: newService.categoria || "",
-      duracion_estimada: newService.duracion_estimada || 30
-    };
-
-    setServices([...services, service]);
-    setNewService({});
-    setIsAddingService(false);
-    toast({
-      title: "Servicio agregado",
-      description: "El servicio ha sido agregado exitosamente"
-    });
+    const success = await createService(newService);
+    if (success) {
+      setNewService({});
+      setIsAddingService(false);
+    }
   };
 
-  const handleUpdateService = () => {
+  const handleUpdateService = async () => {
     if (!editingService) return;
 
-    setServices(services.map(service => 
-      service.ser_id === editingService.ser_id ? editingService : service
-    ));
-    setEditingService(null);
-    toast({
-      title: "Servicio actualizado",
-      description: "Los datos del servicio han sido actualizados"
-    });
+    const success = await updateService(editingService);
+    if (success) {
+      setEditingService(null);
+    }
   };
 
-  const handleDeleteService = (id: number) => {
-    setServices(services.filter(service => service.ser_id !== id));
-    toast({
-      title: "Servicio eliminado",
-      description: "El servicio ha sido eliminado del sistema"
-    });
+  const handleDeleteService = async (id: number) => {
+    await deleteService(id);
   };
 
   const getServicesByCategory = (category: string) => {
-    return services.filter(service => service.categoria === category);
+    return services.filter(service => service.ser_categoria === category);
   };
 
   const getCategoryColor = (category: string) => {
@@ -223,8 +324,8 @@ const ServiceManagement = () => {
                   <Input
                     id="ser-duracion"
                     type="number"
-                    value={newService.duracion_estimada || ""}
-                    onChange={(e) => setNewService({...newService, duracion_estimada: parseInt(e.target.value)})}
+                    value={newService.ser_duracion_estimada || ""}
+                    onChange={(e) => setNewService({...newService, ser_duracion_estimada: parseInt(e.target.value)})}
                   />
                 </div>
               </div>
@@ -232,8 +333,8 @@ const ServiceManagement = () => {
                 <Label htmlFor="ser-categoria">Categoría *</Label>
                 <select
                   className="w-full p-2 border rounded-md"
-                  value={newService.categoria || ""}
-                  onChange={(e) => setNewService({...newService, categoria: e.target.value})}
+                  value={newService.ser_categoria || ""}
+                  onChange={(e) => setNewService({...newService, ser_categoria: e.target.value})}
                 >
                   <option value="">Seleccionar categoría</option>
                   {categories.map(category => (
@@ -325,7 +426,7 @@ const ServiceManagement = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
-                            {service.duracion_estimada} min
+                            {service.ser_duracion_estimada} min
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -400,8 +501,8 @@ const ServiceManagement = () => {
                   <Input
                     id="edit-ser-duracion"
                     type="number"
-                    value={editingService.duracion_estimada}
-                    onChange={(e) => setEditingService({...editingService, duracion_estimada: parseInt(e.target.value)})}
+                    value={editingService.ser_duracion_estimada}
+                    onChange={(e) => setEditingService({...editingService, ser_duracion_estimada: parseInt(e.target.value)})}
                   />
                 </div>
               </div>
@@ -409,8 +510,8 @@ const ServiceManagement = () => {
                 <Label htmlFor="edit-ser-categoria">Categoría</Label>
                 <select
                   className="w-full p-2 border rounded-md"
-                  value={editingService.categoria}
-                  onChange={(e) => setEditingService({...editingService, categoria: e.target.value})}
+                  value={editingService.ser_categoria}
+                  onChange={(e) => setEditingService({...editingService, ser_categoria: e.target.value})}
                 >
                   {categories.map(category => (
                     <option key={category} value={category}>

@@ -190,6 +190,54 @@ type TotalProveedores struct {
 	TotalProveedores int `json:"total_proveedores" gorm:"column:total_proveedores"`
 }
 
+// Cita represents appointments table (matches database schema exactly)
+type Cita struct {
+	CitID    uint      `json:"cit_id" gorm:"primaryKey;autoIncrement;column:cit_id"`
+	CitFecha time.Time `json:"cit_fecha" gorm:"not null;column:cit_fecha"`
+	CitHora  string    `json:"cit_hora" gorm:"not null;column:cit_hora"`
+	EmpID    uint      `json:"emp_id" gorm:"not null;column:emp_id"`
+	SerID    uint      `json:"ser_id" gorm:"not null;column:ser_id"`
+	CliID    uint      `json:"cli_id" gorm:"not null;column:cli_id"`
+}
+
+func (Cita) TableName() string {
+	return "CITA"
+}
+
+// FacturaServicio represents service invoices table (matches database schema exactly)
+type FacturaServicio struct {
+	FacID    uint      `json:"fac_id" gorm:"primaryKey;autoIncrement;column:fac_id"`
+	FacTotal float64   `json:"fac_total" gorm:"not null;column:fac_total"`
+	FacFecha time.Time `json:"fac_fecha" gorm:"not null;column:fac_fecha"`
+	FacHora  string    `json:"fac_hora" gorm:"not null;column:fac_hora"`
+	CliID    uint      `json:"cli_id" gorm:"not null;column:cli_id"`
+}
+
+func (FacturaServicio) TableName() string {
+	return "FACTURA_SERVICIO"
+}
+
+// DetalleFacturaServicio represents invoice details table (matches database schema exactly)
+type DetalleFacturaServicio struct {
+	FacID uint `json:"fac_id" gorm:"primaryKey;column:fac_id"`
+	SerID uint `json:"ser_id" gorm:"primaryKey;column:ser_id"`
+}
+
+func (DetalleFacturaServicio) TableName() string {
+	return "DETALLE_FACTURA_SERVICIO"
+}
+
+// HistorialCita represents appointment history table (matches database schema exactly)
+type HistorialCita struct {
+	HisID            uint   `json:"his_id" gorm:"primaryKey;autoIncrement;column:his_id"`
+	HisObservaciones string `json:"his_observaciones" gorm:"column:his_observaciones"`
+	CitID            uint   `json:"cit_id" gorm:"not null;column:cit_id"`
+}
+
+func (HistorialCita) TableName() string {
+	return "HISTORIAL_CITA"
+}
+
 // Additional structs for frontend compatibility
 type ClientPayment struct {
 	PagCliID uint      `json:"pag_cli_id"`

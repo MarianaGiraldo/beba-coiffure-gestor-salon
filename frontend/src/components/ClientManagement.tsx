@@ -20,6 +20,24 @@ interface Client {
   cli_password?: string;
 }
 
+interface Employee {
+  emp_id: number;
+  emp_nombre: string;
+  emp_apellido: string;
+  emp_puesto: string;
+  emp_telefono?: string;
+  emp_correo?: string;
+}
+
+interface Service {
+  ser_id: number;
+  ser_nombre: string;
+  ser_descripcion?: string;
+  ser_categoria: string;
+  ser_precio_unitario: number;
+  ser_duracion_estimada?: number;
+}
+
 interface Appointment {
   cit_id: number;
   cit_fecha: string;
@@ -36,26 +54,9 @@ const ClientManagement = () => {
   // Fallback for local development outside Docker
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
   const [clients, setClients] = useState<Client[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      cit_id: 1,
-      cit_fecha: "2024-01-20",
-      cit_hora: "10:00",
-      emp_id: 1,
-      ser_id: 1,
-      cli_id: 1,
-      estado: "Programada"
-    },
-    {
-      cit_id: 2,
-      cit_fecha: "2024-01-20",
-      cit_hora: "14:00",
-      emp_id: 2,
-      ser_id: 2,
-      cli_id: 2,
-      estado: "Programada"
-    }
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const [newClient, setNewClient] = useState<Partial<Client>>({});
   const [newAppointment, setNewAppointment] = useState<Partial<Appointment>>({});
@@ -66,22 +67,25 @@ const ClientManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Mock data for employees and services
-  const employees = [
-    { emp_id: 1, emp_nombre: "María", emp_apellido: "González", emp_puesto: "Estilista Senior" },
-    { emp_id: 2, emp_nombre: "Carlos", emp_apellido: "Rodríguez", emp_puesto: "Barbero" }
-  ];
-
-  const services = [
-    { ser_id: 1, ser_nombre: "Corte de Cabello", ser_precio_unitario: 25000 },
-    { ser_id: 2, ser_nombre: "Coloración", ser_precio_unitario: 80000 },
-    { ser_id: 3, ser_nombre: "Manicure", ser_precio_unitario: 20000 }
-  ];
-
-  // Load clients when component mounts
+  // Load clients and appointments when component mounts
   useEffect(() => {
     testClientEndpoint(); // Test connectivity first
     fetchClients();
+    fetchEmployees();
+    fetchServices();
+    fetchAppointments();
+
+    // Set up interval to update appointment status every 5 minutes
+    const statusUpdateInterval = setInterval(() => {
+      setAppointments(prevAppointments => 
+        updateAppointmentStatusBasedOnDate(prevAppointments)
+      );
+    }, 5 * 60 * 1000); // 5 minutes
+
+    // Cleanup interval on component unmount
+    return () => {
+      clearInterval(statusUpdateInterval);
+    };
   }, []);
 
   // Test function to check API connectivity
@@ -147,6 +151,80 @@ const ClientManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // API function to fetch employees
+  const fetchEmployees = async () => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/employees`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data.data || []);
+      } else {
+        console.error('Failed to fetch employees');
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los empleados",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los empleados",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // API function to fetch services
+  const fetchServices = async () => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/services`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setServices(data.services || []);
+      } else {
+        console.error('Failed to fetch services');
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los servicios",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los servicios",
+        variant: "destructive"
+      });
     }
   };
 
@@ -294,7 +372,7 @@ const ClientManagement = () => {
     }
   };
 
-  const handleAddAppointment = () => {
+  const handleAddAppointment = async () => {
     if (!newAppointment.cli_id || !newAppointment.emp_id || !newAppointment.ser_id || !newAppointment.cit_fecha || !newAppointment.cit_hora) {
       toast({
         title: "Error",
@@ -304,23 +382,29 @@ const ClientManagement = () => {
       return;
     }
 
-    const appointment: Appointment = {
-      cit_id: Math.max(...appointments.map(a => a.cit_id), 0) + 1,
-      cit_fecha: newAppointment.cit_fecha || "",
-      cit_hora: newAppointment.cit_hora || "",
-      emp_id: newAppointment.emp_id || 0,
-      ser_id: newAppointment.ser_id || 0,
-      cli_id: newAppointment.cli_id || 0,
-      estado: "Programada"
-    };
+    // Validate appointment date is not in the past
+    const appointmentDateTime = new Date(`${newAppointment.cit_fecha}T${newAppointment.cit_hora}`);
+    const now = new Date();
 
-    setAppointments([...appointments, appointment]);
-    setNewAppointment({});
-    setIsAddingAppointment(false);
-    toast({
-      title: "Cita programada",
-      description: "La cita ha sido programada exitosamente"
-    });
+    if (appointmentDateTime <= now) {
+      toast({
+        title: "Error",
+        description: "No se puede programar una cita en el pasado",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const success = await createAppointment(newAppointment);
+      if (success) {
+        setNewAppointment({});
+        setIsAddingAppointment(false);
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleUpdateClient = async () => {
@@ -362,15 +446,212 @@ const ClientManagement = () => {
     }
   };
 
-  const updateAppointmentStatus = (citId: number, newStatus: "Programada" | "Completada" | "Cancelada") => {
-    setAppointments(appointments.map(apt => 
-      apt.cit_id === citId ? { ...apt, estado: newStatus } : apt
-    ));
-    toast({
-      title: "Estado actualizado",
-      description: `La cita ha sido marcada como ${newStatus.toLowerCase()}`
+  // Function to update appointment status based on date comparison
+  const updateAppointmentStatusBasedOnDate = (appointments: Appointment[]) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate date comparison
+    
+    return appointments.map(appointment => {
+      // Parse appointment date
+      const appointmentDate = new Date(appointment.cit_fecha);
+      appointmentDate.setHours(0, 0, 0, 0);
+      
+      // Only update status if currently "Programada"
+      if (appointment.estado === "Programada") {
+        // If appointment date is in the past, mark as completed
+        if (appointmentDate < today) {
+          return { ...appointment, estado: "Completada" as const };
+        }
+        // If appointment is today, we can check time too for more precision
+        else if (appointmentDate.getTime() === today.getTime()) {
+          const currentTime = new Date();
+          const appointmentDateTime = new Date(`${appointment.cit_fecha}T${appointment.cit_hora}`);
+          
+          // If appointment time has passed today, mark as completed
+          if (appointmentDateTime < currentTime) {
+            return { ...appointment, estado: "Completada" as const };
+          }
+        }
+      }
+      
+      return appointment;
     });
   };
+
+  // Function to get appointment status with automatic date-based updates
+  const getAppointmentStatusWithDateCheck = (appointment: Appointment): "Programada" | "Completada" | "Cancelada" => {
+    // If manually set to Cancelada, keep it
+    if (appointment.estado === "Cancelada") {
+      return "Cancelada";
+    }
+    
+    const today = new Date();
+    const appointmentDate = new Date(appointment.cit_fecha);
+    
+    // If appointment date is in the past, it should be completed
+    if (appointmentDate < today) {
+      return "Completada";
+    }
+    
+    // If appointment is today, check time
+    if (appointmentDate.toDateString() === today.toDateString()) {
+      const currentTime = new Date();
+      const appointmentDateTime = new Date(`${appointment.cit_fecha}T${appointment.cit_hora}`);
+      
+      // If appointment time has passed today, mark as completed
+      if (appointmentDateTime < currentTime) {
+        return "Completada";
+      }
+    }
+    
+    // Otherwise, keep original status or default to Programada
+    return appointment.estado === "Completada" ? "Completada" : "Programada";
+  };
+
+  // Function to check if appointment can be modified (not in the past)
+  const canModifyAppointment = (appointment: Appointment): boolean => {
+    const today = new Date();
+    const appointmentDateTime = new Date(`${appointment.cit_fecha}T${appointment.cit_hora}`);
+    
+    // Can modify if appointment is in the future
+    return appointmentDateTime > today;
+  };
+
+  // Function to get relative date description
+  const getRelativeDateDescription = (appointmentDate: string): string => {
+    const today = new Date();
+    const appointment = new Date(appointmentDate);
+    const diffTime = appointment.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return `Hace ${Math.abs(diffDays)} día(s)`;
+    } else if (diffDays === 0) {
+      return "Hoy";
+    } else if (diffDays === 1) {
+      return "Mañana";
+    } else {
+      return `En ${diffDays} día(s)`;
+    }
+  };
+
+  // Function to get appointment urgency level
+  const getAppointmentUrgency = (appointmentDate: string, appointmentTime: string): "overdue" | "today" | "tomorrow" | "upcoming" | "future" => {
+    const today = new Date();
+    const appointment = new Date(appointmentDate);
+    const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+    
+    if (appointmentDateTime < today) {
+      return "overdue";
+    } else if (appointment.toDateString() === today.toDateString()) {
+      return "today";
+    } else if (appointment.getTime() - today.getTime() <= 24 * 60 * 60 * 1000) {
+      return "tomorrow";
+    } else if (appointment.getTime() - today.getTime() <= 7 * 24 * 60 * 60 * 1000) {
+      return "upcoming";
+    } else {
+      return "future";
+    }
+  };
+
+  // Function to get row styling based on urgency
+  const getRowStyling = (appointmentDate: string, appointmentTime: string): string => {
+    const urgency = getAppointmentUrgency(appointmentDate, appointmentTime);
+    
+    switch (urgency) {
+      case "overdue":
+        return "border-l-4 border-red-400";
+      case "today":
+        return "bg-blue-50 border-l-4 border-blue-400";
+      case "tomorrow":
+        return "bg-yellow-50 border-l-4 border-yellow-400";
+      case "upcoming":
+        return "bg-green-50 border-l-4 border-green-400";
+      default:
+        return "";
+    }
+  };
+
+  // API function to fetch appointments
+  const fetchAppointments = async () => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/appointments`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const appointmentsWithStatus = updateAppointmentStatusBasedOnDate(data.appointments || []);
+        setAppointments(appointmentsWithStatus);
+      } else {
+        console.error('Failed to fetch appointments');
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las citas",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
+
+  // API function to create appointment
+  const createAppointment = async (appointment: Partial<Appointment>) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/appointments`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          cit_fecha: appointment.cit_fecha,
+          cit_hora: appointment.cit_hora,
+          emp_id: appointment.emp_id,
+          ser_id: appointment.ser_id,
+          cli_id: appointment.cli_id,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: "Cita creada",
+          description: "La cita ha sido programada exitosamente"
+        });
+        fetchAppointments(); // Refresh the list
+        return true;
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "No se pudo crear la cita",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      return false;
+    }
+  };
+
 
   const getClientName = (cliId: number) => {
     const client = clients.find(c => c.cli_id === cliId);
@@ -563,6 +844,54 @@ const ClientManagement = () => {
         </TabsContent>
 
         <TabsContent value="appointments" className="space-y-4">
+          {/* Appointment Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Hoy</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {appointments.filter(apt => getAppointmentUrgency(apt.cit_fecha, apt.cit_hora) === "today").length}
+                </div>
+                <p className="text-xs text-gray-500">citas programadas</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Mañana</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {appointments.filter(apt => getAppointmentUrgency(apt.cit_fecha, apt.cit_hora) === "tomorrow").length}
+                </div>
+                <p className="text-xs text-gray-500">citas programadas</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Esta Semana</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {appointments.filter(apt => getAppointmentUrgency(apt.cit_fecha, apt.cit_hora) === "upcoming").length}
+                </div>
+                <p className="text-xs text-gray-500">citas próximas</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Vencidas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {appointments.filter(apt => getAppointmentUrgency(apt.cit_fecha, apt.cit_hora) === "overdue" && getAppointmentStatusWithDateCheck(apt) === "Programada").length}
+                </div>
+                <p className="text-xs text-gray-500">sin completar</p>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="flex justify-end">
             <Dialog open={isAddingAppointment} onOpenChange={setIsAddingAppointment}>
               <DialogTrigger asChild>
@@ -630,6 +959,7 @@ const ClientManagement = () => {
                       <Input
                         id="fecha"
                         type="date"
+                        min={new Date().toISOString().split('T')[0]} // Prevent past dates
                         value={newAppointment.cit_fecha || ""}
                         onChange={(e) => setNewAppointment({...newAppointment, cit_fecha: e.target.value})}
                       />
@@ -668,49 +998,31 @@ const ClientManagement = () => {
                     <TableHead>Servicio</TableHead>
                     <TableHead>Fecha y Hora</TableHead>
                     <TableHead>Estado</TableHead>
-                    <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {appointments.map((appointment) => (
-                    <TableRow key={appointment.cit_id}>
+                    <TableRow key={appointment.cit_id} className={getRowStyling(appointment.cit_fecha, appointment.cit_hora)}>
                       <TableCell>{getClientName(appointment.cli_id)}</TableCell>
                       <TableCell>{getEmployeeName(appointment.emp_id)}</TableCell>
                       <TableCell>{getServiceName(appointment.ser_id)}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-500" />
-                          {appointment.cit_fecha}
-                          <Clock className="h-4 w-4 text-gray-500 ml-2" />
-                          {appointment.cit_hora}
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-500" />
+                            {appointment.cit_fecha}
+                            <Clock className="h-4 w-4 text-gray-500 ml-2" />
+                            {appointment.cit_hora}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {getRelativeDateDescription(appointment.cit_fecha)}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(appointment.estado)}>
-                          {appointment.estado}
+                        <Badge className={getStatusColor(getAppointmentStatusWithDateCheck(appointment))}>
+                          {getAppointmentStatusWithDateCheck(appointment)}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {appointment.estado === "Programada" && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateAppointmentStatus(appointment.cit_id, "Completada")}
-                              >
-                                Completar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => updateAppointmentStatus(appointment.cit_id, "Cancelada")}
-                              >
-                                Cancelar
-                              </Button>
-                            </>
-                          )}
-                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

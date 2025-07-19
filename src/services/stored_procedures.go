@@ -616,3 +616,143 @@ func (s *DatabaseService) ActualizarPromocion(proID uint, params PromocionParams
 func (s *DatabaseService) EliminarPromocion(proID uint) error {
 	return s.DB.Exec("CALL sp_eliminar_promocion(?)", proID).Error
 }
+
+// ============= USER MANAGEMENT PROCEDURES =============
+
+func (s *DatabaseService) UpdateUsuario(usuID uint, nombreUsuario, contrasena, rol string) error {
+	return s.DB.Exec("CALL sp_update_usuario(?, ?, ?, ?)",
+		usuID, nombreUsuario, contrasena, rol).Error
+}
+
+// ============= APPOINTMENT PROCEDURES =============
+
+func (s *DatabaseService) VerCitasEmpleado(empID uint) ([]models.Cita, error) {
+	var citas []models.Cita
+	err := s.DB.Raw("CALL sp_ver_citas_empleado(?)", empID).Scan(&citas).Error
+	return citas, err
+}
+
+func (s *DatabaseService) VerHistorialEmpleado(empID uint) ([]map[string]interface{}, error) {
+	var historial []map[string]interface{}
+	err := s.DB.Raw("CALL sp_ver_historial_empleado(?)", empID).Scan(&historial).Error
+	return historial, err
+}
+
+func (s *DatabaseService) InsertarCita(fecha string, hora string, empID, serID, cliID uint) error {
+	return s.DB.Exec("CALL sp_insertar_cita(?, ?, ?, ?, ?)",
+		fecha, hora, empID, serID, cliID).Error
+}
+
+func (s *DatabaseService) ListarCitas() ([]models.Cita, error) {
+	var citas []models.Cita
+	err := s.DB.Raw("CALL sp_listar_citas()").Scan(&citas).Error
+	return citas, err
+}
+
+func (s *DatabaseService) BuscarCitaPorID(citID uint) (*models.Cita, error) {
+	var cita models.Cita
+	err := s.DB.Raw("CALL sp_buscar_cita_por_id(?)", citID).Scan(&cita).Error
+	if err != nil {
+		return nil, err
+	}
+	return &cita, nil
+}
+
+func (s *DatabaseService) ActualizarCita(citID uint, fecha string, hora string, empID, serID, cliID uint) error {
+	return s.DB.Exec("CALL sp_actualizar_cita(?, ?, ?, ?, ?, ?)",
+		citID, fecha, hora, empID, serID, cliID).Error
+}
+
+func (s *DatabaseService) EliminarCita(citID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_cita(?)", citID).Error
+}
+
+// ============= SERVICE PROCEDURES =============
+
+func (s *DatabaseService) InsertarServicio(nombre, descripcion, categoria string, precioUnitario float64, duracionEstimada int) error {
+	return s.DB.Exec("CALL sp_insertar_servicio(?, ?, ?, ?, ?)",
+		nombre, descripcion, categoria, precioUnitario, duracionEstimada).Error
+}
+
+func (s *DatabaseService) ListarServicios() ([]models.Service, error) {
+	var servicios []models.Service
+	err := s.DB.Raw("CALL sp_listar_servicios()").Scan(&servicios).Error
+	return servicios, err
+}
+
+func (s *DatabaseService) BuscarServicioPorID(serID uint) (*models.Service, error) {
+	var servicio models.Service
+	err := s.DB.Raw("CALL sp_buscar_servicio_por_id(?)", serID).Scan(&servicio).Error
+	if err != nil {
+		return nil, err
+	}
+	return &servicio, nil
+}
+
+func (s *DatabaseService) ActualizarServicio(serID uint, nombre, descripcion, categoria string, precioUnitario float64, duracionEstimada int) error {
+	return s.DB.Exec("CALL sp_actualizar_servicio(?, ?, ?, ?, ?, ?)",
+		serID, nombre, descripcion, categoria, precioUnitario, duracionEstimada).Error
+}
+
+func (s *DatabaseService) EliminarServicio(serID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_servicio(?)", serID).Error
+}
+
+// ============= INVOICE PROCEDURES =============
+
+func (s *DatabaseService) InsertarFactura(total float64, fecha string, hora string, cliID uint) error {
+	return s.DB.Exec("CALL sp_insertar_factura(?, ?, ?, ?)",
+		total, fecha, hora, cliID).Error
+}
+
+func (s *DatabaseService) ListarFacturas() ([]models.FacturaServicio, error) {
+	var facturas []models.FacturaServicio
+	err := s.DB.Raw("CALL sp_listar_facturas()").Scan(&facturas).Error
+	return facturas, err
+}
+
+func (s *DatabaseService) BuscarFacturaPorID(facID uint) (*models.FacturaServicio, error) {
+	var factura models.FacturaServicio
+	err := s.DB.Raw("CALL sp_buscar_factura_por_id(?)", facID).Scan(&factura).Error
+	if err != nil {
+		return nil, err
+	}
+	return &factura, nil
+}
+
+func (s *DatabaseService) ActualizarFactura(facID uint, total float64, fecha string, hora string, cliID uint) error {
+	return s.DB.Exec("CALL sp_actualizar_factura(?, ?, ?, ?, ?)",
+		facID, total, fecha, hora, cliID).Error
+}
+
+func (s *DatabaseService) EliminarFactura(facID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_factura(?)", facID).Error
+}
+
+// ============= INVOICE DETAIL PROCEDURES =============
+
+func (s *DatabaseService) InsertarDetalleFactura(facID, serID uint) error {
+	return s.DB.Exec("CALL sp_insertar_detalle_factura(?, ?)",
+		facID, serID).Error
+}
+
+func (s *DatabaseService) ListarDetallesFactura() ([]models.DetalleFacturaServicio, error) {
+	var detalles []models.DetalleFacturaServicio
+	err := s.DB.Raw("CALL sp_listar_detalles_factura()").Scan(&detalles).Error
+	return detalles, err
+}
+
+func (s *DatabaseService) BuscarDetallePorFactura(facID uint) ([]models.DetalleFacturaServicio, error) {
+	var detalles []models.DetalleFacturaServicio
+	err := s.DB.Raw("CALL sp_buscar_detalle_por_factura(?)", facID).Scan(&detalles).Error
+	return detalles, err
+}
+
+func (s *DatabaseService) ActualizarDetalleFactura(facID, serID uint) error {
+	return s.DB.Exec("CALL sp_actualizar_detalle_factura(?, ?)",
+		facID, serID).Error
+}
+
+func (s *DatabaseService) EliminarDetalleFactura(facID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_detalle_factura(?)", facID).Error
+}
