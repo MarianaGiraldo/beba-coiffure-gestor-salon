@@ -648,8 +648,7 @@ BEGIN
     p.pago_metodo,
     p.pago_referencia
   FROM EMPLEADO e
-  JOIN FACTURA_SERVICIO f ON e.emp_id = f.emp_id
-  JOIN PAGO p ON f.fac_id = p.fac_id
+  JOIN PAGO p ON e.emp_id=p.emp_id
   WHERE e.emp_id = p_emp_id;
 END;
 //
@@ -672,8 +671,7 @@ BEGIN
     e.emp_nombre,
     e.emp_apellido
   FROM PAGO p
-  JOIN FACTURA_SERVICIO f ON p.fac_id = f.fac_id
-  JOIN EMPLEADO e ON f.emp_id = e.emp_id;
+  JOIN EMPLEADO e ON p.emp_id = e.emp_id;
 END;
 //
 
