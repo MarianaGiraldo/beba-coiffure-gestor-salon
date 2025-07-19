@@ -820,6 +820,52 @@ END //
 
 DELIMITER ;
 
+-- Actualizar usuario
+DELIMITER $$
+
+CREATE PROCEDURE sp_update_usuario(
+  IN p_usu_id INT,
+  IN p_nombre_usuario VARCHAR(50),
+  IN p_contrasena VARCHAR(100),
+  IN p_rol VARCHAR(20)
+)
+BEGIN
+  UPDATE USUARIO_SISTEMA
+  SET usu_nombre_usuario = p_nombre_usuario,
+      usu_contrasena = p_contrasena,
+      usu_rol = p_rol
+  WHERE usu_id = p_usu_id;
+END $$
+
+DELIMITER ;
+
+-- Leer citas empleado
+DELIMITER $$
+
+CREATE PROCEDURE sp_ver_citas_empleado(IN p_emp_id INT)
+BEGIN
+  SELECT cit_id, cit_fecha, cit_hora, ser_id, cli_id
+  FROM CITA
+  WHERE emp_id = p_emp_id
+  ORDER BY cit_fecha DESC, cit_hora DESC;
+END $$
+
+DELIMITER ;
+
+-- Leer historial_empleado
+DELIMITER $$
+
+CREATE PROCEDURE sp_ver_historial_empleado(IN p_emp_id INT)
+BEGIN
+  SELECT h.his_id, h.his_observaciones, h.cit_id, c.cit_fecha, c.cit_hora, c.cli_id, c.ser_id
+  FROM HISTORIAL_CITA h
+  JOIN CITA c ON h.cit_id = c.cit_id
+  WHERE c.emp_id = p_emp_id
+  ORDER BY c.cit_fecha DESC, c.cit_hora DESC;
+END $$
+
+DELIMITER ;
+
 -- Log CRUD stored procedures completion
 INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('04_stored_procedures_crud.sql', 'SUCCESS');
