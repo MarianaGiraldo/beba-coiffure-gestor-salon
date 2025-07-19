@@ -716,7 +716,7 @@ END $$
 DELIMITER ;
 
 
--- Procedimiento para insertar un usuario en el sistema
+-- Insertar Usuario
 
 DELIMITER $$
 
@@ -744,6 +744,18 @@ BEGIN
   VALUES (p_usuario, p_correo, p_contrasena, p_emp_id, p_cli_id);
 END $$
 
+DELIMITER ;
+
+
+-- Leer cliente por correo
+
+DELIMITER $$
+
+CREATE PROCEDURE buscar_cliente_por_correo(IN p_correo VARCHAR(100))
+  BEGIN
+    SELECT * FROM CLIENTE WHERE cli_correo=p_correo;
+  END $$
+  
 DELIMITER ;
 
 -- Log CRUD stored procedures completion
