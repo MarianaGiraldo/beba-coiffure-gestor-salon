@@ -30,8 +30,7 @@ const ServiceManagement = () => {
   const [newService, setNewService] = useState<Partial<Service>>({});
   const [isAddingService, setIsAddingService] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
-
-  const categories = ["Cabello", "Uñas", "Facial", "Corporal", "Especiales"];
+  const [categories, setCategories] = useState<Set<string>>(new Set(["Cabello", "Uñas", "Facial", "Corporal", "Especiales"]));
 
   // Load services when component mounts
   useEffect(() => {
@@ -63,6 +62,9 @@ const ServiceManagement = () => {
       if (response.ok) {
         const data = await response.json();
         setServices(data.services || []);
+        data.services.forEach((element: Service) => {
+          setCategories(prev => new Set(prev).add(element.ser_categoria));
+        });
       } else {
         console.error('Failed to fetch services');
         toast({
@@ -248,14 +250,29 @@ const ServiceManagement = () => {
     return services.filter(service => service.ser_categoria === category);
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      "Cabello": "bg-purple-100 text-purple-700",
-      "Uñas": "bg-pink-100 text-pink-700",
-      "Facial": "bg-green-100 text-green-700",
-      "Corporal": "bg-blue-100 text-blue-700",
-      "Especiales": "bg-yellow-100 text-yellow-700"
-    };
+  const getCategoryColor = (category: number) => {
+    const colors: string[] = [
+      "bg-purple-100 text-purple-700",
+      "bg-pink-100 text-pink-700",
+      "bg-green-100 text-green-700",
+      "bg-blue-100 text-blue-700",
+      "bg-yellow-100 text-yellow-700",
+      "bg-orange-100 text-orange-700",
+      "bg-red-100 text-red-700",
+      "bg-gray-100 text-gray-700",
+      "bg-indigo-100 text-indigo-700",
+      "bg-cyan-100 text-cyan-700",
+      "bg-teal-100 text-teal-700",
+      "bg-emerald-100 text-emerald-700",
+      "bg-lime-100 text-lime-700",
+      "bg-amber-100 text-amber-700",
+      "bg-rose-100 text-rose-700",
+      "bg-violet-100 text-violet-700",
+      "bg-sky-100 text-sky-700",
+      "bg-slate-100 text-slate-700",
+      "bg-zinc-100 text-zinc-700",
+      "bg-stone-100 text-stone-700"
+    ];
     return colors[category] || "bg-gray-100 text-gray-700";
   };
 
@@ -337,7 +354,7 @@ const ServiceManagement = () => {
                   onChange={(e) => setNewService({...newService, ser_categoria: e.target.value})}
                 >
                   <option value="">Seleccionar categoría</option>
-                  {categories.map(category => (
+                  {Array.from(categories).map(category => (
                     <option key={category} value={category}>
                       {category}
                     </option>
@@ -390,7 +407,7 @@ const ServiceManagement = () => {
       </div>
 
       <div className="grid gap-6">
-        {categories.map(category => {
+        {Array.from(categories).map((category, index) => {
           const categoryServices = getServicesByCategory(category);
           if (categoryServices.length === 0) return null;
 
@@ -398,7 +415,7 @@ const ServiceManagement = () => {
             <Card key={category}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Badge className={getCategoryColor(category)}>
+                  <Badge className={getCategoryColor(index)}>
                     {category}
                   </Badge>
                   <span className="text-lg">{categoryServices.length} servicios</span>
@@ -513,7 +530,7 @@ const ServiceManagement = () => {
                   value={editingService.ser_categoria}
                   onChange={(e) => setEditingService({...editingService, ser_categoria: e.target.value})}
                 >
-                  {categories.map(category => (
+                  {Array.from(categories).map(category => (
                     <option key={category} value={category}>
                       {category}
                     </option>

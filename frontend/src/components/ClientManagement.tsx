@@ -450,12 +450,13 @@ const ClientManagement = () => {
   const updateAppointmentStatusBasedOnDate = (appointments: Appointment[]) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate date comparison
-    
+
     return appointments.map(appointment => {
       // Parse appointment date
-      const appointmentDate = new Date(appointment.cit_fecha);
+      const appointmentDate = new Date(`${appointment.cit_fecha}T00:00:00-05:00`);
+      const appointmentDateTime = new Date(`${appointment.cit_fecha}T${appointment.cit_hora}-05:00`);
       appointmentDate.setHours(0, 0, 0, 0);
-      
+
       // Only update status if currently "Programada"
       if (appointment.estado === "Programada") {
         // If appointment date is in the past, mark as completed
@@ -465,15 +466,14 @@ const ClientManagement = () => {
         // If appointment is today, we can check time too for more precision
         else if (appointmentDate.getTime() === today.getTime()) {
           const currentTime = new Date();
-          const appointmentDateTime = new Date(`${appointment.cit_fecha}T${appointment.cit_hora}`);
-          
+
           // If appointment time has passed today, mark as completed
           if (appointmentDateTime < currentTime) {
             return { ...appointment, estado: "Completada" as const };
           }
         }
       }
-      
+
       return appointment;
     });
   };
@@ -538,9 +538,10 @@ const ClientManagement = () => {
   // Function to get appointment urgency level
   const getAppointmentUrgency = (appointmentDate: string, appointmentTime: string): "overdue" | "today" | "tomorrow" | "upcoming" | "future" => {
     const today = new Date();
-    const appointment = new Date(appointmentDate);
-    const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
-    
+    // Create appointment date in UTC-5 timezone by adding the offset
+    const appointment = new Date(`${appointmentDate}T00:00:00-05:00`);
+    const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}-05:00`);
+
     if (appointmentDateTime < today) {
       return "overdue";
     } else if (appointment.toDateString() === today.toDateString()) {
