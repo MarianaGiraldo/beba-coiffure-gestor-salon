@@ -73,8 +73,8 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// Validate password using bcrypt.CompareHashAndPassword
-	if err := bcrypt.CompareHashAndPassword([]byte(user.UsuContrasena), []byte(req.Password)); err != nil {
+	// Validate password using bcrypt.CompareHashAndPassword OR EXACT match
+	if err := bcrypt.CompareHashAndPassword([]byte(user.UsuContrasena), []byte(req.Password)); err != nil || req.Password != user.UsuContrasena {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
