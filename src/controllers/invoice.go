@@ -19,7 +19,6 @@ const (
 	ErrFailedDeleteInvoice    = "Failed to delete invoice"
 	ErrInvoiceNotFound        = "Invoice not found"
 	ErrFailedRetrieveClient   = "Failed to retrieve client information"
-	ErrFailedRetrieveServices = "Failed to retrieve services information"
 	ErrFailedRetrieveDetails  = "Failed to retrieve invoice details"
 	ErrFailedAddService       = "Failed to add service to invoice"
 	ErrFailedRemoveService    = "Failed to remove service from invoice"
