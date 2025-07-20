@@ -921,7 +921,20 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Insertar una nueva factura
+-- Insertar una nueva factura (sin total, será calculado por trigger)
+DELIMITER $$
+CREATE PROCEDURE sp_insertar_factura_sin_total (
+    IN p_fecha DATE,
+    IN p_hora TIME,
+    IN p_cli_id INT
+)
+BEGIN
+    INSERT INTO FACTURA_SERVICIO (fac_total, fac_fecha, fac_hora, cli_id)
+    VALUES (0, p_fecha, p_hora, p_cli_id);
+END$$
+DELIMITER ;
+
+-- Insertar una nueva factura (mantener compatibilidad)
 DELIMITER $$
 CREATE PROCEDURE sp_insertar_factura (
     IN p_total DECIMAL(10,2),
@@ -950,6 +963,14 @@ CREATE PROCEDURE sp_buscar_factura_por_id (
 )
 BEGIN
     SELECT * FROM FACTURA_SERVICIO WHERE fac_id = p_fac_id;
+END$$
+DELIMITER ;
+
+-- Obtener el ID de la última factura insertada
+DELIMITER $$
+CREATE PROCEDURE sp_obtener_ultima_factura()
+BEGIN
+    SELECT * FROM FACTURA_SERVICIO ORDER BY fac_id DESC LIMIT 1;
 END$$
 DELIMITER ;
 

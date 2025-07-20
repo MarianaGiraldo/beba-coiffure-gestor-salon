@@ -662,6 +662,20 @@ func (s *DatabaseService) InsertarFactura(total float64, fecha string, hora stri
 		total, fecha, hora, cliID).Error
 }
 
+func (s *DatabaseService) InsertarFacturaSinTotal(fecha string, hora string, cliID uint) error {
+	return s.DB.Exec("CALL sp_insertar_factura_sin_total(?, ?, ?)",
+		fecha, hora, cliID).Error
+}
+
+func (s *DatabaseService) ObtenerUltimaFactura() (*models.FacturaServicio, error) {
+	var factura models.FacturaServicio
+	err := s.DB.Raw("CALL sp_obtener_ultima_factura()").Scan(&factura).Error
+	if err != nil {
+		return nil, err
+	}
+	return &factura, nil
+}
+
 func (s *DatabaseService) ListarFacturas() ([]models.FacturaServicio, error) {
 	var facturas []models.FacturaServicio
 	err := s.DB.Raw("CALL sp_listar_facturas()").Scan(&facturas).Error
