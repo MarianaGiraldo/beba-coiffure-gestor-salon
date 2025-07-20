@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,89 +6,252 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, AlertTriangle, Package } from "lucide-react";
+import { Plus, Edit, Trash2, AlertTriangle, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Product {
   prod_id: number;
   prod_nombre: string;
   prod_descripcion: string;
+  prod_cantidad_disponible: number;
   prod_precio_unitario: number;
 }
 
-interface Inventory {
+interface InventoryComplete {
   inv_id: number;
   inv_fecha_actualizacion: string;
   prod_id: number;
   inv_cantidad_actual: number;
   inv_observaciones: string;
+  prod_nombre: string;
+  prod_descripcion: string;
+  prod_cantidad_disponible: number;
+  prod_precio_unitario: number;
+}
+
+interface InventoryMetrics {
+  productos_bajos: number;
+  total_productos: number;
+  valor_inventario: number;
 }
 
 const InventoryManagement = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([
-    {
-      prod_id: 1,
-      prod_nombre: "Shampoo Nutritivo",
-      prod_descripcion: "Shampoo para cabello seco y dañado",
-      prod_precio_unitario: 35000
-    },
-    {
-      prod_id: 2,
-      prod_nombre: "Acondicionador Hidratante",
-      prod_descripcion: "Acondicionador para todo tipo de cabello",
-      prod_precio_unitario: 28000
-    },
-    {
-      prod_id: 3,
-      prod_nombre: "Tinte Profesional",
-      prod_descripcion: "Tinte permanente profesional",
-      prod_precio_unitario: 45000
-    },
-    {
-      prod_id: 4,
-      prod_nombre: "Esmalte Premium",
-      prod_descripcion: "Esmalte de larga duración",
-      prod_precio_unitario: 15000
-    }
-  ]);
-
-  const [inventory, setInventory] = useState<Inventory[]>([
-    {
-      inv_id: 1,
-      inv_fecha_actualizacion: "2024-01-15",
-      prod_id: 1,
-      inv_cantidad_actual: 25,
-      inv_observaciones: "Stock normal"
-    },
-    {
-      inv_id: 2,
-      inv_fecha_actualizacion: "2024-01-15",
-      prod_id: 2,
-      inv_cantidad_actual: 18,
-      inv_observaciones: "Stock normal"
-    },
-    {
-      inv_id: 3,
-      inv_fecha_actualizacion: "2024-01-15",
-      prod_id: 3,
-      inv_cantidad_actual: 5,
-      inv_observaciones: "Stock bajo - Reabastecer pronto"
-    },
-    {
-      inv_id: 4,
-      inv_fecha_actualizacion: "2024-01-15",
-      prod_id: 4,
-      inv_cantidad_actual: 2,
-      inv_observaciones: "Stock crítico - Reabastecer urgente"
-    }
-  ]);
-
+  // API URL is configured through Docker environment variables
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  
+  const [inventory, setInventory] = useState<InventoryComplete[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [metrics, setMetrics] = useState<InventoryMetrics>({
+    productos_bajos: 0,
+    total_productos: 0,
+    valor_inventario: 0
+  });
+  
   const [newProduct, setNewProduct] = useState<Partial<Product>>({});
   const [isAddingProduct, setIsAddingProduct] = useState(false);
-  const [editingInventory, setEditingInventory] = useState<Inventory | null>(null);
+  const [editingInventory, setEditingInventory] = useState<InventoryComplete | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleAddProduct = () => {
+  // Load data when component mounts
+  useEffect(() => {
+    fetchInventory();
+    fetchProducts();
+    fetchMetrics();
+  }, []);
+
+  // Get authentication token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('authToken') || null;
+  };
+
+  // API function to fetch inventory
+  const fetchInventory = async () => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/inventory`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setInventory(data.inventory || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch inventory');
+      }
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar el inventario",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // API function to fetch products
+  const fetchProducts = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/inventory/products`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setProducts(data.products || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch products');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar los productos",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // API function to fetch metrics
+  const fetchMetrics = async () => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/dashboard/inventory`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setMetrics(data.data || {
+          productos_bajos: 0,
+          total_productos: 0,
+          valor_inventario: 0
+        });
+      } else {
+        throw new Error(data.message || 'Failed to fetch metrics');
+      }
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      // Don't show error toast for metrics as it's not critical
+    }
+  };
+
+  // API function to create product
+  const createProduct = async (product: Partial<Product>) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/inventory/products`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(product),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to create product');
+      }
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // API function to update inventory
+  const updateInventory = async (invId: number, cantidad: number, observaciones: string) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/inventory/${invId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cantidad: cantidad,
+          observaciones: observaciones
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to update inventory');
+      }
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // API function to delete inventory
+  const deleteInventory = async (invId: number) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/inventory/${invId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete inventory');
+      }
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleAddProduct = async () => {
     if (!newProduct.prod_nombre || !newProduct.prod_precio_unitario) {
       toast({
         title: "Error",
@@ -99,49 +261,101 @@ const InventoryManagement = () => {
       return;
     }
 
-    const product: Product = {
-      prod_id: Math.max(...products.map(p => p.prod_id), 0) + 1,
-      prod_nombre: newProduct.prod_nombre || "",
-      prod_descripcion: newProduct.prod_descripcion || "",
-      prod_precio_unitario: newProduct.prod_precio_unitario || 0
-    };
+    setSubmitting(true);
+    try {
+      await createProduct({
+        prod_nombre: newProduct.prod_nombre,
+        prod_descripcion: newProduct.prod_descripcion || "",
+        prod_cantidad_disponible: newProduct.prod_cantidad_disponible || 0,
+        prod_precio_unitario: newProduct.prod_precio_unitario
+      });
 
-    const inventoryEntry: Inventory = {
-      inv_id: Math.max(...inventory.map(i => i.inv_id), 0) + 1,
-      inv_fecha_actualizacion: new Date().toISOString().split('T')[0],
-      prod_id: product.prod_id,
-      inv_cantidad_actual: 0,
-      inv_observaciones: "Producto nuevo - Sin stock inicial"
-    };
+      // Refresh data
+      await fetchInventory();
+      await fetchProducts();
+      await fetchMetrics();
 
-    setProducts([...products, product]);
-    setInventory([...inventory, inventoryEntry]);
-    setNewProduct({});
-    setIsAddingProduct(false);
-    toast({
-      title: "Producto agregado",
-      description: "El producto ha sido agregado al inventario"
-    });
+      setNewProduct({});
+      setIsAddingProduct(false);
+      toast({
+        title: "Producto agregado",
+        description: "El producto ha sido agregado al inventario exitosamente"
+      });
+    } catch (error: any) {
+      console.error('Error creating product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo agregar el producto",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleUpdateInventory = () => {
+  const handleUpdateInventory = async () => {
     if (!editingInventory) return;
 
-    setInventory(inventory.map(inv => 
-      inv.inv_id === editingInventory.inv_id ? {
-        ...editingInventory,
-        inv_fecha_actualizacion: new Date().toISOString().split('T')[0]
-      } : inv
-    ));
-    setEditingInventory(null);
-    toast({
-      title: "Inventario actualizado",
-      description: "Los datos del inventario han sido actualizados"
-    });
+    if (editingInventory.inv_cantidad_actual < 0) {
+      toast({
+        title: "Error",
+        description: "La cantidad no puede ser negativa",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await updateInventory(
+        editingInventory.inv_id,
+        editingInventory.inv_cantidad_actual,
+        editingInventory.inv_observaciones
+      );
+
+      // Refresh data
+      await fetchInventory();
+      await fetchMetrics();
+
+      setEditingInventory(null);
+      toast({
+        title: "Inventario actualizado",
+        description: "Los datos del inventario han sido actualizados exitosamente"
+      });
+    } catch (error: any) {
+      console.error('Error updating inventory:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el inventario",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const getProductInfo = (prodId: number) => {
-    return products.find(p => p.prod_id === prodId);
+  const handleDeleteInventory = async (invId: number, productName: string) => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar la entrada de inventario para "${productName}"?`)) {
+      try {
+        await deleteInventory(invId);
+
+        // Refresh data
+        await fetchInventory();
+        await fetchMetrics();
+
+        toast({
+          title: "Inventario eliminado",
+          description: "La entrada de inventario ha sido eliminada exitosamente"
+        });
+      } catch (error: any) {
+        console.error('Error deleting inventory:', error);
+        toast({
+          title: "Error",
+          description: error.message || "No se pudo eliminar la entrada de inventario",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   const getStockStatus = (quantity: number) => {
@@ -150,16 +364,13 @@ const InventoryManagement = () => {
     return { status: "Normal", color: "bg-green-100 text-green-700" };
   };
 
-  const getTotalInventoryValue = () => {
-    return inventory.reduce((total, inv) => {
-      const product = getProductInfo(inv.prod_id);
-      return total + (product ? product.prod_precio_unitario * inv.inv_cantidad_actual : 0);
-    }, 0);
-  };
-
-  const getLowStockItems = () => {
-    return inventory.filter(inv => inv.inv_cantidad_actual <= 10);
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="text-gray-500">Cargando inventario...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -200,89 +411,88 @@ const InventoryManagement = () => {
                 />
               </div>
               <div>
+                <Label htmlFor="prod-cantidad">Cantidad Inicial</Label>
+                <Input
+                  id="prod-cantidad"
+                  type="number"
+                  min="0"
+                  value={newProduct.prod_cantidad_disponible || 0}
+                  onChange={(e) => setNewProduct({...newProduct, prod_cantidad_disponible: parseInt(e.target.value) || 0})}
+                />
+              </div>
+              <div>
                 <Label htmlFor="prod-precio">Precio Unitario *</Label>
                 <Input
                   id="prod-precio"
                   type="number"
+                  min="0"
+                  step="0.01"
                   value={newProduct.prod_precio_unitario || ""}
-                  onChange={(e) => setNewProduct({...newProduct, prod_precio_unitario: parseFloat(e.target.value)})}
+                  onChange={(e) => setNewProduct({...newProduct, prod_precio_unitario: parseFloat(e.target.value) || 0})}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleAddProduct}>Agregar Producto</Button>
+              <Button 
+                onClick={handleAddProduct} 
+                disabled={submitting}
+                className="bg-pink-600 hover:bg-pink-700"
+              >
+                {submitting ? "Agregando..." : "Agregar Producto"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
+      {/* Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
-            <p className="text-xs text-muted-foreground">productos registrados</p>
-          </CardContent>
-        </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total Inventario</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${getTotalInventoryValue().toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">valor total en stock</p>
+            <div className="text-2xl font-bold">${metrics.valor_inventario.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {inventory.length} productos en stock
+            </p>
           </CardContent>
         </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
+            <CardTitle className="text-sm font-medium">Productos con Stock Bajo</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{getLowStockItems().length}</div>
-            <p className="text-xs text-muted-foreground">productos necesitan reposición</p>
+            <div className="text-2xl font-bold text-orange-600">{metrics.productos_bajos}</div>
+            <p className="text-xs text-muted-foreground">
+              Necesitan reabastecimiento
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Productos</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.total_productos}</div>
+            <p className="text-xs text-muted-foreground">
+              Productos registrados
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {getLowStockItems().length > 0 && (
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-red-700 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Alertas de Stock Bajo
-            </CardTitle>
-            <CardDescription>
-              Los siguientes productos necesitan reposición urgente
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {getLowStockItems().map((inv) => {
-                const product = getProductInfo(inv.prod_id);
-                return (
-                  <div key={inv.inv_id} className="flex justify-between items-center p-2 bg-white rounded">
-                    <span className="font-medium">{product?.prod_nombre}</span>
-                    <Badge variant="destructive">
-                      {inv.inv_cantidad_actual} unidades restantes
-                    </Badge>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
+      {/* Inventory Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Control de Inventario</CardTitle>
+          <CardTitle>Inventario de Productos</CardTitle>
           <CardDescription>
-            Estado actual del stock de productos
+            Gestiona el stock actual de todos los productos
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -292,25 +502,25 @@ const InventoryManagement = () => {
                 <TableHead>Producto</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead>Precio Unitario</TableHead>
-                <TableHead>Cantidad Actual</TableHead>
+                <TableHead>Stock Actual</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Última Actualización</TableHead>
+                <TableHead>Observaciones</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {inventory.map((inv) => {
-                const product = getProductInfo(inv.prod_id);
                 const stockStatus = getStockStatus(inv.inv_cantidad_actual);
                 return (
                   <TableRow key={inv.inv_id}>
                     <TableCell>
-                      <div className="font-medium">{product?.prod_nombre}</div>
+                      <div className="font-medium">{inv.prod_nombre}</div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm text-gray-500">{product?.prod_descripcion}</div>
+                      <div className="text-sm text-gray-500">{inv.prod_descripcion}</div>
                     </TableCell>
-                    <TableCell>${product?.prod_precio_unitario.toLocaleString()}</TableCell>
+                    <TableCell>${inv.prod_precio_unitario.toLocaleString()}</TableCell>
                     <TableCell>
                       <div className="font-medium">{inv.inv_cantidad_actual} unidades</div>
                     </TableCell>
@@ -321,13 +531,28 @@ const InventoryManagement = () => {
                     </TableCell>
                     <TableCell>{inv.inv_fecha_actualizacion}</TableCell>
                     <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingInventory(inv)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="text-sm text-gray-500 max-w-xs truncate">
+                        {inv.inv_observaciones || "Sin observaciones"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingInventory(inv)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteInventory(inv.inv_id, inv.prod_nombre)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -337,6 +562,7 @@ const InventoryManagement = () => {
         </CardContent>
       </Card>
 
+      {/* Edit Inventory Dialog */}
       {editingInventory && (
         <Dialog open={!!editingInventory} onOpenChange={() => setEditingInventory(null)}>
           <DialogContent>
@@ -350,7 +576,7 @@ const InventoryManagement = () => {
               <div>
                 <Label>Producto</Label>
                 <div className="p-2 bg-gray-100 rounded">
-                  {getProductInfo(editingInventory.prod_id)?.prod_nombre}
+                  {editingInventory.prod_nombre}
                 </div>
               </div>
               <div>
@@ -358,10 +584,11 @@ const InventoryManagement = () => {
                 <Input
                   id="edit-cantidad"
                   type="number"
+                  min="0"
                   value={editingInventory.inv_cantidad_actual}
                   onChange={(e) => setEditingInventory({
                     ...editingInventory, 
-                    inv_cantidad_actual: parseInt(e.target.value)
+                    inv_cantidad_actual: parseInt(e.target.value) || 0
                   })}
                 />
               </div>
@@ -378,7 +605,13 @@ const InventoryManagement = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleUpdateInventory}>Actualizar Inventario</Button>
+              <Button 
+                onClick={handleUpdateInventory}
+                disabled={submitting}
+                className="bg-pink-600 hover:bg-pink-700"
+              >
+                {submitting ? "Actualizando..." : "Actualizar Inventario"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

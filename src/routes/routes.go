@@ -61,6 +61,12 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Setup promotion routes
 		SetupPromotionRoutes(api, dbService)
+
+		// Setup inventory routes
+		SetupInventoryRoutes(api, dbService)
+
+		// Setup dashboard routes
+		SetupDashboardRoutes(api, dbService)
 	}
 
 	// Protected routes
