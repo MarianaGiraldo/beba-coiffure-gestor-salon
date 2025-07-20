@@ -58,6 +58,9 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Setup payment routes
 		SetupPaymentRoutes(api, dbService)
+
+		// Setup promotion routes
+		SetupPromotionRoutes(api, dbService)
 	}
 
 	// Protected routes

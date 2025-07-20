@@ -147,6 +147,19 @@ func (Promotion) TableName() string {
 	return "PROMOCION"
 }
 
+// PromotionWithService represents promotion data with service information from NATURAL JOIN
+// Matches the exact schema from sp_listar_promociones stored procedure
+type PromotionWithService struct {
+	ProID                  uint    `json:"pro_id" gorm:"column:pro_id"`
+	ProNombre              string  `json:"pro_nombre" gorm:"column:pro_nombre"`
+	ProDescripcion         string  `json:"pro_descripcion" gorm:"column:pro_descripcion"`
+	ProFechaInicio         string  `json:"pro_fecha_inicio" gorm:"column:pro_fecha_inicio"` // DATE returns as string from stored procedure
+	ProFechaFin            string  `json:"pro_fecha_fin" gorm:"column:pro_fecha_fin"`       // DATE returns as string from stored procedure
+	ProDescuentoPorcentaje float64 `json:"pro_descuento_porcentaje" gorm:"column:pro_descuento_porcentaje"`
+	ProUsos                int     `json:"pro_usos" gorm:"column:pro_usos"`
+	SerNombre              string  `json:"ser_nombre" gorm:"column:ser_nombre"`
+}
+
 // Views structs for dashboard metrics (used with stored procedures)
 type EmpleadosActivos struct {
 	TotalActivos int `json:"total_activos" gorm:"column:total_activos"`

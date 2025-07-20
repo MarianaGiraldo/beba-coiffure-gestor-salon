@@ -1,3 +1,6 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 USE salondb;
 
 CALL sp_insert_empleado('Feliciana', 'Canton', '+57 4843321819', 'andresciro@gmail.com', 'Estilista', 1050021.51, '123456');
@@ -190,21 +193,34 @@ INSERT INTO PRODUCTO_USADO (ser_id, prod_id, pru_cantidad_usada, pru_botellas_us
 (9, 2, 400, 2);
 
 
-CALL sp_crear_promocion('Promo 1', 'Itaque sit ratione numquam minima in impedit.', '2025-06-16', '2025-06-16', 27.6, 9, 1);
-CALL sp_crear_promocion('Promo 2', 'Ratione sint sunt soluta. Fugit laborum non alias eius.', '2025-06-16', '2025-06-16', 25.86, 2, 3);
-CALL sp_crear_promocion('Promo 3', 'Quia ullam tempore. Excepturi recusandae est.', '2025-06-16', '2025-06-16', 8.7, 3, 1);
-CALL sp_crear_promocion('Promo 4', 'Non at ipsam totam illum laborum.', '2025-06-16', '2025-06-16', 12.71, 5, 1);
-CALL sp_crear_promocion('Promo 5', 'Soluta dicta animi alias amet.', '2025-06-16', '2025-06-16', 27.47, 4, 4);
-CALL sp_crear_promocion('Promo 6', 'Laborum ipsum vero labore mollitia exercitationem.', '2025-06-16', '2025-06-16', 21.67, 6, 3);
-CALL sp_crear_promocion('Promo 7', 'Perspiciatis eaque illum accusantium quos.', '2025-06-16', '2025-06-16', 27.1, 7, 5);
-CALL sp_crear_promocion('Promo 8', 'Non velit quae quae eius.', '2025-06-16', '2025-06-16', 23.74, 2, 4);
-CALL sp_crear_promocion('Promo 9', 'Voluptatum vitae saepe natus nisi eligendi placeat.', '2025-06-16', '2025-06-16', 26.62, 5, 3);
-CALL sp_crear_promocion('Promo 10', 'Maxime dolores animi similique.', '2025-06-16', '2025-06-16', 27.04, 1, 3);
-CALL sp_crear_promocion('Promo 11', 'Repellendus exercitationem quae placeat odit labore velit.', '2025-06-16', '2025-06-16', 23.41, 6, 7);
-CALL sp_crear_promocion('Promo 12', 'Quis delectus perspiciatis excepturi at explicabo quia.', '2025-06-16', '2025-06-16', 25.06, 7, 4);
-CALL sp_crear_promocion('Promo 13', 'Sint nesciunt velit.', '2025-06-16', '2025-06-16', 11.67, 8, 2);
-CALL sp_crear_promocion('Promo 14', 'Sit corrupti voluptatibus.', '2025-06-16', '2025-06-16', 14.56, 1, 8);
-CALL sp_crear_promocion('Promo 15', 'Occaecati debitis odio a earum quis. Nemo culpa quos quod.', '2025-06-16', '2025-06-16', 10.56, 9, 8);
+-- Active promotions (July 2025 and future)
+CALL sp_crear_promocion('Descuento Coloración', 'Descuento especial en servicios de coloración para lucir un nuevo look.', '2025-07-01', '2025-09-01', 27.6, 1, 1);
+CALL sp_crear_promocion('Promo Manicura', 'Oferta especial en manicuras para mantener tus uñas perfectas.', '2025-07-15', '2025-09-15', 25.86, 2, 3);
+CALL sp_crear_promocion('Corte Especial', 'Promoción en cortes de cabello para renovar tu estilo.', '2025-07-10', '2025-08-10', 8.7, 3, 1);
+CALL sp_crear_promocion('Alisado Express', 'Descuento en servicios de alisado para cabello sedoso.', '2025-08-01', '2025-10-01', 12.71, 4, 1);
+CALL sp_crear_promocion('Pedicura Relajante', 'Oferta especial en pedicuras para el cuidado completo de tus pies.', '2025-07-05', '2025-08-05', 27.47, 5, 4);
+CALL sp_crear_promocion('Decoración Uñas', 'Promoción en decoración de uñas con diseños únicos.', '2025-08-15', '2025-10-15', 21.67, 6, 3);
+CALL sp_crear_promocion('Cejas Perfectas', 'Descuento en depilación de cejas para una mirada impecable.', '2025-09-01', '2025-11-01', 27.1, 7, 5);
+CALL sp_crear_promocion('Mascarilla Facial', 'Oferta en mascarillas faciales para una piel radiante.', '2025-07-18', '2025-08-18', 23.74, 8, 4);
+CALL sp_crear_promocion('Hidratación Facial', 'Promoción en tratamientos de hidratación facial.', '2025-08-20', '2025-10-20', 26.62, 9, 3);
+CALL sp_crear_promocion('Combo Coloración', 'Descuento especial en paquetes de coloración completa.', '2025-07-12', '2025-08-12', 27.04, 1, 3);
+CALL sp_crear_promocion('Uñas Glamour', 'Oferta en servicios completos de decoración de uñas.', '2025-09-15', '2025-11-15', 23.41, 6, 7);
+CALL sp_crear_promocion('Belleza Facial', 'Promoción en tratamientos faciales de depilación.', '2025-08-10', '2025-09-10', 25.06, 7, 4);
+CALL sp_crear_promocion('Promo Relajación', 'Descuento en servicios de relajación y cuidado facial.', '2025-07-08', '2025-08-08', 11.67, 8, 2);
+CALL sp_crear_promocion('Nuevo Look', 'Oferta especial para cambio de imagen completo.', '2025-10-01', '2025-12-01', 14.56, 1, 8);
+CALL sp_crear_promocion('Verano Radiante', 'Promoción de verano con descuentos en múltiples servicios.', '2025-07-01', '2025-08-31', 10.56, 9, 8);
+
+-- Expired promotions (before July 20, 2025)
+CALL sp_crear_promocion('Primavera Bella', 'Promoción de primavera con descuentos especiales.', '2025-03-01', '2025-05-31', 20.0, 1, 2);
+CALL sp_crear_promocion('San Valentín', 'Descuento especial para el día del amor y la amistad.', '2025-02-10', '2025-02-20', 30.0, 2, 1);
+CALL sp_crear_promocion('Día de la Madre', 'Promoción especial para celebrar a las madres.', '2025-05-01', '2025-05-15', 25.0, 8, 3);
+CALL sp_crear_promocion('Año Nuevo Look', 'Cambio de imagen para empezar el año.', '2025-01-01', '2025-01-31', 15.0, 3, 2);
+CALL sp_crear_promocion('Vacaciones Invierno', 'Descuentos especiales para las vacaciones de invierno.', '2024-12-15', '2025-01-15', 18.0, 5, 4);
+CALL sp_crear_promocion('Regreso a Clases', 'Promoción para lucir genial en el regreso a clases.', '2025-01-20', '2025-02-28', 22.0, 7, 3);
+CALL sp_crear_promocion('Abril Radiante', 'Promoción de abril para lucir espectacular.', '2025-04-01', '2025-04-30', 17.5, 9, 5);
+CALL sp_crear_promocion('Mayo Flores', 'Como las flores de mayo, luce hermosa.', '2025-05-01', '2025-05-31', 19.0, 6, 2);
+CALL sp_crear_promocion('Junio Perfecto', 'Termina el primer semestre con un look perfecto.', '2025-06-01', '2025-06-30', 24.0, 4, 6);
+CALL sp_crear_promocion('Día del Padre', 'Promoción especial para consentir a papá.', '2025-06-15', '2025-06-20', 12.0, 3, 1);
 
 INSERT INTO COMPRA_PRODUCTO (cop_fecha_compra, cop_total_compra, cop_metodo_pago, prov_id, gas_id) VALUES
 ('2025-06-16', 191890.7, 'Efectivo', 4, 1),

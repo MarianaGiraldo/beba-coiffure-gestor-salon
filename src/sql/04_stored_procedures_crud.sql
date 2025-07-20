@@ -652,8 +652,8 @@ DELIMITER $$
 
 CREATE PROCEDURE sp_listar_promociones()
 BEGIN
-    SELECT pro_id, pro_nombre, pro_descripcion, pro_fecha_inicio, pro_fecha_fin, pro_descuento_porcentaje, ser_nombre 
-    FROM PROMOCION NATURAL JOIN SERVICIO;
+    SELECT pro_id, pro_nombre, pro_descripcion, pro_fecha_inicio, pro_fecha_fin, pro_descuento_porcentaje, pro_usos, ser_nombre
+    FROM PROMOCION NATURAL JOIN SERVICIO ORDER BY pro_fecha_inicio DESC, pro_fecha_fin DESC;
 END $$
 
 DELIMITER ;

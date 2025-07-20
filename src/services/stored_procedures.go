@@ -549,8 +549,8 @@ func (s *DatabaseService) CrearPromocion(params PromocionParams) error {
 		params.Descuento, params.SerID, params.Usos).Error
 }
 
-func (s *DatabaseService) ListarPromociones() ([]models.Promotion, error) {
-	var promociones []models.Promotion
+func (s *DatabaseService) ListarPromociones() ([]models.PromotionWithService, error) {
+	var promociones []models.PromotionWithService
 	err := s.DB.Raw("CALL sp_listar_promociones()").Scan(&promociones).Error
 	return promociones, err
 }
