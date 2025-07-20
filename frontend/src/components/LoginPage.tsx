@@ -8,7 +8,7 @@ import { Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface LoginPageProps {
-  onLogin: (userType: 'admin' | 'employee' | 'client', userData: any) => void;
+  onLogin: (userType: 'admin' | 'employee' | 'cliente', userData: any) => void;
 }
 
 const LoginPage = ({ onLogin }: LoginPageProps) => {

@@ -1,20 +1,23 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, ShoppingCart } from "lucide-react";
+import { DialogTrigger } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CreatePurchaseForm from "./purchase/CreatePurchaseForm";
+import EditPurchaseForm from "./purchase/EditPurchaseForm";
+import DeleteConfirmationDialog from "./purchase/DeleteConfirmationDialog";
+import PurchaseTable from "./purchase/PurchaseTable";
 
 interface Purchase {
+  com_id?: number;
   cop_fecha_compra: string;
   proveedor: string;
   productos: string;
   cop_total_compra: number;
   cop_metodo_pago: string;
+  prov_id?: number;
+  gas_id?: number;
 }
 
 interface PurchaseDetail {
@@ -28,6 +31,24 @@ interface CreatePurchaseRequest {
   prov_id: number;
   gas_id: number;
   cop_metodo_pago: string;
+  detalles: PurchaseDetail[];
+}
+
+interface UpdatePurchaseRequest {
+  cop_fecha_compra: string;
+  prov_id: number;
+  gas_id: number;
+  cop_metodo_pago: string;
+}
+
+interface PurchaseWithDetails {
+  com_id: number;
+  cop_fecha_compra: string;
+  cop_total_compra: number;
+  cop_metodo_pago: string;
+  prov_id: number;
+  gas_id: number;
+  proveedor: string;
   detalles: PurchaseDetail[];
 }
 
@@ -67,16 +88,23 @@ const PurchaseManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [isCreatingPurchase, setIsCreatingPurchase] = useState(false);
 
-  // New purchase form state
-  const [newPurchase, setNewPurchase] = useState<CreatePurchaseRequest>({
-    cop_fecha_compra: new Date().toISOString().split('T')[0],
+  // Edit state
+  const [isEditingPurchase, setIsEditingPurchase] = useState(false);
+  const [editingPurchase, setEditingPurchase] = useState<PurchaseWithDetails | null>(null);
+  const [editPurchaseData, setEditPurchaseData] = useState<UpdatePurchaseRequest>({
+    cop_fecha_compra: '',
     prov_id: 0,
     gas_id: 0,
-    cop_metodo_pago: '',
-    detalles: []
+    cop_metodo_pago: ''
   });
 
-  // Purchase detail form state
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [purchaseToDelete, setPurchaseToDelete] = useState<number | null>(null);
+  const [showDeleteDetailConfirm, setShowDeleteDetailConfirm] = useState(false);
+  const [detailToDelete, setDetailToDelete] = useState<{purchaseId: number, prodId: number} | null>(null);
+
+  // New purchase form state
   const [newDetail, setNewDetail] = useState<PurchaseDetail>({
     prod_id: 0,
     dec_cantidad: 1,
@@ -193,11 +221,6 @@ const PurchaseManagement = () => {
       return;
     }
 
-    setNewPurchase(prev => ({
-      ...prev,
-      detalles: [...prev.detalles, { ...newDetail }]
-    }));
-
     setNewDetail({
       prod_id: 0,
       dec_cantidad: 1,
@@ -205,26 +228,7 @@ const PurchaseManagement = () => {
     });
   };
 
-  const handleRemoveDetail = (index: number) => {
-    setNewPurchase(prev => ({
-      ...prev,
-      detalles: prev.detalles.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleCreatePurchase = async () => {
-    if (!newPurchase.cop_fecha_compra || newPurchase.prov_id === 0 || 
-        newPurchase.gas_id === 0 || !newPurchase.cop_metodo_pago || 
-        newPurchase.detalles.length === 0) {
-      toast({
-        title: "Error",
-        description: "Por favor completa todos los campos requeridos",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setSubmitting(true);
+  const handleCreatePurchase = async (purchase: CreatePurchaseRequest) => {
     try {
       const token = getAuthToken();
       const response = await fetch(`${apiUrl}/api/purchases`, {
@@ -233,7 +237,7 @@ const PurchaseManagement = () => {
           'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newPurchase),
+        body: JSON.stringify(purchase),
       });
 
       if (!response.ok) {
@@ -242,13 +246,6 @@ const PurchaseManagement = () => {
       }
 
       await fetchPurchases();
-      setNewPurchase({
-        cop_fecha_compra: new Date().toISOString().split('T')[0],
-        prov_id: 0,
-        gas_id: 0,
-        cop_metodo_pago: '',
-        detalles: []
-      });
       setIsCreatingPurchase(false);
 
       toast({
@@ -262,8 +259,7 @@ const PurchaseManagement = () => {
         description: error.message || "No se pudo crear la compra",
         variant: "destructive"
       });
-    } finally {
-      setSubmitting(false);
+      throw error;
     }
   };
 
@@ -272,10 +268,282 @@ const PurchaseManagement = () => {
     return product ? product.prod_nombre : `Producto #${prodId}`;
   };
 
-  const calculateTotal = () => {
-    return newPurchase.detalles.reduce((total, detail) => 
+  const calculateEditTotal = (details: PurchaseDetail[]) => {
+    return details.reduce((total, detail) => 
       total + (detail.dec_cantidad * detail.dec_precio_unitario), 0
     );
+  };
+
+  // Fetch purchase details for editing
+  const fetchPurchaseDetails = async (purchaseId: number) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/purchases/${purchaseId}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.purchase;
+    } catch (error) {
+      console.error('Error fetching purchase details:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los detalles de la compra",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Handle edit purchase
+  const handleEditPurchase = async (purchaseIndex: number) => {
+    const purchase = purchases[purchaseIndex];
+    if (!purchase.com_id) {
+      toast({
+        title: "Error",
+        description: "ID de compra no encontrado",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const purchaseDetails = await fetchPurchaseDetails(purchase.com_id);
+    if (purchaseDetails) {
+      setEditingPurchase(purchaseDetails);
+      setEditPurchaseData({
+        cop_fecha_compra: purchaseDetails.cop_fecha_compra.split('T')[0],
+        prov_id: purchaseDetails.prov_id,
+        gas_id: purchaseDetails.gas_id,
+        cop_metodo_pago: purchaseDetails.cop_metodo_pago
+      });
+      setIsEditingPurchase(true);
+    }
+  };
+
+  // Update purchase
+  const handleUpdatePurchase = async (purchaseData: UpdatePurchaseRequest) => {
+    if (!editingPurchase) return;
+
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/purchases/${editingPurchase.com_id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(purchaseData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      await fetchPurchases();
+      setIsEditingPurchase(false);
+      setEditingPurchase(null);
+
+      toast({
+        title: "Compra actualizada",
+        description: "La compra ha sido actualizada exitosamente"
+      });
+    } catch (error: any) {
+      console.error('Error updating purchase:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar la compra",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  // Update purchase detail
+  const handleUpdatePurchaseDetail = async (detailIndex: number, updatedDetail: PurchaseDetail) => {
+    if (!editingPurchase) return;
+
+    setSubmitting(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/purchases/${editingPurchase.com_id}/details/${updatedDetail.prod_id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedDetail),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      // Update local state
+      const updatedDetails = [...editingPurchase.detalles];
+      updatedDetails[detailIndex] = updatedDetail;
+      setEditingPurchase({
+        ...editingPurchase,
+        detalles: updatedDetails,
+        cop_total_compra: calculateEditTotal(updatedDetails)
+      });
+
+      toast({
+        title: "Detalle actualizado",
+        description: "El detalle de la compra ha sido actualizado"
+      });
+    } catch (error: any) {
+      console.error('Error updating purchase detail:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el detalle",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Add new detail to existing purchase
+  const handleAddPurchaseDetail = async (purchaseId: number, newDetail: PurchaseDetail) => {
+    setSubmitting(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/purchases/${purchaseId}/details`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newDetail),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      // Update local state
+      if (editingPurchase && editingPurchase.com_id === purchaseId) {
+        const updatedDetails = [...editingPurchase.detalles, newDetail];
+        setEditingPurchase({
+          ...editingPurchase,
+          detalles: updatedDetails,
+          cop_total_compra: calculateEditTotal(updatedDetails)
+        });
+      }
+
+      toast({
+        title: "Detalle agregado",
+        description: "El nuevo detalle ha sido agregado a la compra"
+      });
+    } catch (error: any) {
+      console.error('Error adding purchase detail:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo agregar el detalle",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Delete purchase
+  const handleDeletePurchase = async () => {
+    if (!purchaseToDelete) return;
+
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/purchases/${purchaseToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      await fetchPurchases();
+      setShowDeleteConfirm(false);
+      setPurchaseToDelete(null);
+
+      toast({
+        title: "Compra eliminada",
+        description: "La compra ha sido eliminada exitosamente"
+      });
+    } catch (error: any) {
+      console.error('Error deleting purchase:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar la compra",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  // Delete purchase detail
+  const handleDeletePurchaseDetail = async () => {
+    if (!detailToDelete || !editingPurchase) return;
+
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${apiUrl}/api/purchases/${detailToDelete.purchaseId}/details/${detailToDelete.prodId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      // Update local state
+      const updatedDetails = editingPurchase.detalles.filter(detail => detail.prod_id !== detailToDelete.prodId);
+      setEditingPurchase({
+        ...editingPurchase,
+        detalles: updatedDetails,
+        cop_total_compra: calculateEditTotal(updatedDetails)
+      });
+
+      setShowDeleteDetailConfirm(false);
+      setDetailToDelete(null);
+
+      toast({
+        title: "Detalle eliminado",
+        description: "El detalle de la compra ha sido eliminado"
+      });
+    } catch (error: any) {
+      console.error('Error deleting purchase detail:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el detalle",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const handleDeleteDetailConfirm = (purchaseId: number, prodId: number) => {
+    setDetailToDelete({ purchaseId, prodId });
+    setShowDeleteDetailConfirm(true);
   };
 
   if (loading) {
@@ -293,198 +561,60 @@ const PurchaseManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Compras de Productos</h2>
           <p className="text-gray-600">Gestiona las compras realizadas a proveedores</p>
         </div>
-        <Dialog open={isCreatingPurchase} onOpenChange={setIsCreatingPurchase}>
-          <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Compra
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Crear Nueva Compra</DialogTitle>
-              <DialogDescription>
-                Registra una nueva compra de productos a proveedores
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="fecha">Fecha de Compra *</Label>
-                  <Input
-                    id="fecha"
-                    type="date"
-                    value={newPurchase.cop_fecha_compra}
-                    onChange={(e) => setNewPurchase({...newPurchase, cop_fecha_compra: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="metodo-pago">Método de Pago *</Label>
-                  <Select 
-                    value={newPurchase.cop_metodo_pago} 
-                    onValueChange={(value) => setNewPurchase({...newPurchase, cop_metodo_pago: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar método" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Efectivo">Efectivo</SelectItem>
-                      <SelectItem value="Tarjeta">Tarjeta</SelectItem>
-                      <SelectItem value="Transferencia">Transferencia</SelectItem>
-                      <SelectItem value="Cheque">Cheque</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="proveedor">Proveedor *</Label>
-                  <Select 
-                    value={newPurchase.prov_id.toString()} 
-                    onValueChange={(value) => setNewPurchase({...newPurchase, prov_id: parseInt(value)})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar proveedor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {suppliers.map((supplier) => (
-                        <SelectItem key={supplier.prov_id} value={supplier.prov_id.toString()}>
-                          {supplier.prov_nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="gasto">Gasto Asociado *</Label>
-                  <Select 
-                    value={newPurchase.gas_id.toString()} 
-                    onValueChange={(value) => setNewPurchase({...newPurchase, gas_id: parseInt(value)})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar gasto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {expenses.map((expense) => (
-                        <SelectItem key={expense.gas_id} value={expense.gas_id.toString()}>
-                          {expense.gas_descripcion} ({expense.gas_tipo})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Purchase Details Section */}
-              <div className="border-t pt-4 mt-4">
-                <h3 className="text-lg font-semibold mb-4">Detalles de Compra</h3>
-                
-                {/* Add Detail Form */}
-                <div className="grid grid-cols-4 gap-2 items-end mb-4">
-                  <div>
-                    <Label htmlFor="producto">Producto</Label>
-                    <Select 
-                      value={newDetail.prod_id.toString()} 
-                      onValueChange={(value) => setNewDetail({...newDetail, prod_id: parseInt(value)})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Producto" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.prod_id} value={product.prod_id.toString()}>
-                            {product.prod_nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="cantidad">Cantidad</Label>
-                    <Input
-                      id="cantidad"
-                      type="number"
-                      min="1"
-                      value={newDetail.dec_cantidad}
-                      onChange={(e) => setNewDetail({...newDetail, dec_cantidad: parseInt(e.target.value) || 1})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="precio">Precio Unitario</Label>
-                    <Input
-                      id="precio"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={newDetail.dec_precio_unitario}
-                      onChange={(e) => setNewDetail({...newDetail, dec_precio_unitario: parseFloat(e.target.value) || 0})}
-                    />
-                  </div>
-                  <Button 
-                    onClick={handleAddDetail}
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Details List */}
-                {newPurchase.detalles.length > 0 && (
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Producto</TableHead>
-                          <TableHead>Cantidad</TableHead>
-                          <TableHead>Precio Unit.</TableHead>
-                          <TableHead>Subtotal</TableHead>
-                          <TableHead>Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {newPurchase.detalles.map((detail, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{getProductName(detail.prod_id)}</TableCell>
-                            <TableCell>{detail.dec_cantidad}</TableCell>
-                            <TableCell>${detail.dec_precio_unitario.toLocaleString()}</TableCell>
-                            <TableCell>${(detail.dec_cantidad * detail.dec_precio_unitario).toLocaleString()}</TableCell>
-                            <TableCell>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRemoveDetail(index)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-right font-semibold">Total:</TableCell>
-                          <TableCell className="font-semibold">${calculateTotal().toLocaleString()}</TableCell>
-                          <TableCell></TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            </div>
-            <DialogFooter>
-              <Button 
-                onClick={handleCreatePurchase} 
-                disabled={submitting || newPurchase.detalles.length === 0}
-                className="bg-pink-600 hover:bg-pink-700"
-              >
-                {submitting ? "Creando..." : "Crear Compra"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          className="bg-pink-600 hover:bg-pink-700"
+          onClick={() => setIsCreatingPurchase(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nueva Compra
+        </Button>
       </div>
+
+      {/* Create Purchase Form */}
+      <CreatePurchaseForm
+        open={isCreatingPurchase}
+        onOpenChange={setIsCreatingPurchase}
+        suppliers={suppliers}
+        expenses={expenses}
+        products={products}
+        onSubmit={handleCreatePurchase}
+        submitting={submitting}
+      />
+
+      {/* Edit Purchase Form */}
+      <EditPurchaseForm
+        open={isEditingPurchase}
+        onOpenChange={setIsEditingPurchase}
+        purchase={editingPurchase}
+        suppliers={suppliers}
+        expenses={expenses}
+        products={products}
+        onSubmit={handleUpdatePurchase}
+        onUpdateDetail={handleUpdatePurchaseDetail}
+        onDeleteDetail={handleDeleteDetailConfirm}
+        onAddDetail={handleAddPurchaseDetail}
+        submitting={submitting}
+      />
+
+      {/* Delete Purchase Confirmation */}
+      <DeleteConfirmationDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Confirmar Eliminación"
+        description="¿Estás seguro de que deseas eliminar esta compra? Esta acción no se puede deshacer."
+        onConfirm={handleDeletePurchase}
+        submitting={submitting}
+      />
+
+      {/* Delete Purchase Detail Confirmation */}
+      <DeleteConfirmationDialog
+        open={showDeleteDetailConfirm}
+        onOpenChange={setShowDeleteDetailConfirm}
+        title="Confirmar Eliminación"
+        description="¿Estás seguro de que deseas eliminar este detalle de la compra? Esta acción no se puede deshacer."
+        onConfirm={handleDeletePurchaseDetail}
+        submitting={submitting}
+      />
 
       {/* Purchases Table */}
       <Card>
@@ -495,48 +625,14 @@ const PurchaseManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Proveedor</TableHead>
-                <TableHead>Productos</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Método de Pago</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {purchases.map((purchase, index) => (
-                <TableRow key={index}>
-                  <TableCell>{new Date(purchase.cop_fecha_compra).toLocaleDateString()}</TableCell>
-                  <TableCell>{purchase.proveedor}</TableCell>
-                  <TableCell className="max-w-xs truncate">{purchase.productos}</TableCell>
-                  <TableCell>${purchase.cop_total_compra.toLocaleString()}</TableCell>
-                  <TableCell>{purchase.cop_metodo_pago}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        title="Editar compra"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700"
-                        title="Eliminar compra"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <PurchaseTable
+            purchases={purchases}
+            onEdit={handleEditPurchase}
+            onDelete={(purchaseId) => {
+              setPurchaseToDelete(purchaseId);
+              setShowDeleteConfirm(true);
+            }}
+          />
         </CardContent>
       </Card>
     </div>

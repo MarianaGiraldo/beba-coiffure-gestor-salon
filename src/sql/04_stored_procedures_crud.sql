@@ -1241,6 +1241,7 @@ DELIMITER $$
 CREATE PROCEDURE sp_listar_compras()
 BEGIN
     SELECT
+        cp.com_id,
         cp.cop_fecha_compra,
         p.prov_nombre AS proveedor,
         GROUP_CONCAT(pr.prod_nombre SEPARATOR ', ') AS productos,
@@ -1250,7 +1251,8 @@ BEGIN
     INNER JOIN PROVEEDOR p ON cp.prov_id = p.prov_id
     LEFT JOIN DETALLE_COMPRA dc ON cp.com_id = dc.com_id
     LEFT JOIN PRODUCTO pr ON dc.prod_id = pr.prod_id
-    GROUP BY cp.com_id;
+    GROUP BY cp.com_id
+    ORDER BY cp.cop_fecha_compra DESC;
 END$$
 DELIMITER ;
 
@@ -1268,7 +1270,7 @@ BEGIN
     VALUES (p_com_id, p_prod_id, p_cantidad, p_precio_unitario);
 
     UPDATE COMPRA_PRODUCTO
-    SET cop_total_compra = cop_total_compra+(p_precio_unitario*dec_cantidad)
+    SET cop_total_compra = cop_total_compra+(p_precio_unitario*p_cantidad)
     WHERE com_id=p_com_id;
 END$$
 DELIMITER ;

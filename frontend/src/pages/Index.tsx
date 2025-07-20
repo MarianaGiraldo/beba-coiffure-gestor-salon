@@ -89,9 +89,15 @@ const Index = () => {
     }
   }, [isAuthenticated]);
 
-  const handleLogin = (userType: 'admin' | 'employee' | 'client', userData: any) => {
+  const handleLogin = (userType: 'admin' | 'employee' | 'cliente', userData: any) => {
     setIsAuthenticated(true);
     setCurrentUser({ ...userData, userType });
+    // Set default tab based on user type
+    if (userType === 'cliente') {
+      setActiveTab("clients");
+    } else {
+      setActiveTab("dashboard");
+    }
   };
 
   const handleLogout = () => {
@@ -122,7 +128,7 @@ const Index = () => {
                  currentUser?.userType === 'employee' ? 'Empleado' : 'Cliente'}
               </Badge>
               <span className="text-sm text-gray-600">
-                Bienvenido, {currentUser?.email}
+                Bienvenido, {currentUser?.cli_nombre || currentUser?.userType}
               </span>
               <Button onClick={handleLogout} variant="outline" size="sm">
                 <LogOut className="h-4 w-4 mr-2" />
@@ -135,31 +141,39 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-8 mb-6">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Panel
-            </TabsTrigger>
-            <TabsTrigger value="employees" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Empleados
-            </TabsTrigger>
+          <TabsList className={`grid w-full mb-6 ${currentUser?.userType === 'cliente' ? 'grid-cols-4' : 'grid-cols-8'}`}>
+            {currentUser?.userType !== 'cliente' && (
+              <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Panel
+              </TabsTrigger>
+            )}
+            {currentUser?.userType !== 'cliente' && (
+              <TabsTrigger value="employees" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Empleados
+              </TabsTrigger>
+            )}
             <TabsTrigger value="clients" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Clientes
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Inventario
-            </TabsTrigger>
+            {currentUser?.userType !== 'cliente' && (
+              <TabsTrigger value="inventory" className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Inventario
+              </TabsTrigger>
+            )}
             <TabsTrigger value="services" className="flex items-center gap-2">
               <Scissors className="h-4 w-4" />
               Servicios
             </TabsTrigger>
-            <TabsTrigger value="suppliers" className="flex items-center gap-2">
-              <Truck className="h-4 w-4" />
-              Proveedores
-            </TabsTrigger>
+            {currentUser?.userType !== 'cliente' && (
+              <TabsTrigger value="suppliers" className="flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Proveedores
+              </TabsTrigger>
+            )}
             <TabsTrigger value="promotions" className="flex items-center gap-2">
               <Gift className="h-4 w-4" />
               Promociones
@@ -170,101 +184,109 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-900">Métricas del Dashboard</h2>
-              <Button 
-                onClick={fetchDashboardMetrics} 
-                variant="outline" 
-                size="sm"
-                disabled={isLoadingMetrics}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoadingMetrics ? 'animate-spin' : ''}`} />
-                {isLoadingMetrics ? "Actualizando..." : "Actualizar"}
-              </Button>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Empleados Activos</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {isLoadingMetrics ? "..." : (dashboardMetrics.empleados_activos || 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Personal disponible</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Citas Hoy</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {isLoadingMetrics ? "..." : (dashboardMetrics.citas_hoy || 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Citas programadas</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {isLoadingMetrics ? "..." : `$${(dashboardMetrics.ingresos_mensuales || 0).toLocaleString()}`}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Mes actual</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Productos Bajos</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {isLoadingMetrics ? "..." : (dashboardMetrics.productos_bajos || 0)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Requieren reposición</p>
-                </CardContent>
-              </Card>
-            </div>
+          {currentUser?.userType !== 'cliente' && (
+            <TabsContent value="dashboard" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-900">Métricas del Dashboard</h2>
+                <Button 
+                  onClick={fetchDashboardMetrics} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={isLoadingMetrics}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoadingMetrics ? 'animate-spin' : ''}`} />
+                  {isLoadingMetrics ? "Actualizando..." : "Actualizar"}
+                </Button>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Empleados Activos</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {isLoadingMetrics ? "..." : (dashboardMetrics.empleados_activos || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Personal disponible</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Citas Hoy</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {isLoadingMetrics ? "..." : (dashboardMetrics.citas_hoy || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Citas programadas</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {isLoadingMetrics ? "..." : `$${(dashboardMetrics.ingresos_mensuales || 0).toLocaleString()}`}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Mes actual</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Productos Bajos</CardTitle>
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {isLoadingMetrics ? "..." : (dashboardMetrics.productos_bajos || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Requieren reposición</p>
+                  </CardContent>
+                </Card>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumen Financiero</CardTitle>
-                <CardDescription>Vista general de las finanzas del salón</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FinancialManagement />
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resumen Financiero</CardTitle>
+                  <CardDescription>Vista general de las finanzas del salón</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <FinancialManagement />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
-          <TabsContent value="employees">
-            <EmployeeManagement />
-          </TabsContent>
+          {currentUser?.userType !== 'cliente' && (
+            <TabsContent value="employees">
+              <EmployeeManagement />
+            </TabsContent>
+          )}
 
           <TabsContent value="clients">
             <ClientManagement />
           </TabsContent>
 
-          <TabsContent value="inventory">
-            <InventoryManagement />
-          </TabsContent>
+          {currentUser?.userType !== 'cliente' && (
+            <TabsContent value="inventory">
+              <InventoryManagement />
+            </TabsContent>
+          )}
 
           <TabsContent value="services">
             <ServiceManagement />
           </TabsContent>
 
-          <TabsContent value="suppliers">
-            <SupplierManagement />
-          </TabsContent>
+          {currentUser?.userType !== 'cliente' && (
+            <TabsContent value="suppliers">
+              <SupplierManagement />
+            </TabsContent>
+          )}
 
           <TabsContent value="promotions">
             <PromotionManagement />

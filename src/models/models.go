@@ -128,13 +128,16 @@ type DetalleCompra struct {
 func (DetalleCompra) TableName() string {
 	return "DETALLE_COMPRA"
 }
+
 type PurchaseWithProducts struct {
+	ComID          uint      `json:"com_id"`
 	CopFechaCompra time.Time `json:"cop_fecha_compra"`
 	Proveedor      string    `json:"proveedor"`
 	Productos      string    `json:"productos"`
 	CopTotalCompra float64   `json:"cop_total_compra"`
 	CopMetodoPago  string    `json:"cop_metodo_pago"`
 }
+
 // PurchaseWithDetails represents a complete purchase with its details
 type PurchaseWithDetails struct {
 	ComID          uint            `json:"com_id"`
@@ -145,7 +148,7 @@ type PurchaseWithDetails struct {
 	GasID          uint            `json:"gas_id"`
 	Proveedor      string          `json:"proveedor"`
 	Productos      string          `json:"productos"`
-	Detalles       []DetalleCompra `json:"detalles,omitempty"`
+	Detalles       []DetalleCompra `json:"detalles,omitempty" gorm:"-"`
 }
 
 // Payment represents employee salary payments (matches database schema)
