@@ -650,9 +650,10 @@ DELIMITER ;
 -- Leer promociones
 DELIMITER $$
 
-CREATE PROCEDURE sp_listar_promociones ()
+CREATE PROCEDURE sp_listar_promociones()
 BEGIN
-    SELECT * FROM PROMOCION NATURAL JOIN SERVICIO;
+    SELECT pro_id, pro_nombre, pro_descripcion, pro_fecha_inicio, pro_fecha_fin, pro_descuento_porcentaje, ser_nombre 
+    FROM PROMOCION NATURAL JOIN SERVICIO;
 END $$
 
 DELIMITER ;
