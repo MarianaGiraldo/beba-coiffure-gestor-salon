@@ -45,7 +45,6 @@ GRANT SELECT ON salondb.HISTORIAL_CITA TO 'rol_cliente';
 GRANT SELECT ON salondb.USUARIO_SISTEMA TO 'rol_cliente';
 GRANT UPDATE ON salondb.CLIENTE TO 'rol_cliente';
 GRANT UPDATE ON salondb.USUARIO_SISTEMA TO 'rol_cliente';
-GRANT EXECUTE ON PROCEDURE salondb.sp_insert_cliente TO 'rol_cliente';
 GRANT EXECUTE ON PROCEDURE salondb.sp_update_cliente TO 'rol_cliente';
 GRANT EXECUTE ON PROCEDURE salondb.sp_update_usuario TO 'rol_cliente';
 
