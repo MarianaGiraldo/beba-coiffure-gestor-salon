@@ -68,6 +68,12 @@ func SetupRoutes(r *gin.Engine) {
 		// Setup invoice routes
 		SetupInvoiceRoutes(api, dbService)
 
+		// Setup purchase routes
+		SetupPurchaseRoutes(api, dbService)
+
+		// Setup expense routes
+		SetupExpenseRoutes(api, dbService)
+
 		// Setup dashboard routes
 		SetupDashboardRoutes(api, dbService)
 	}

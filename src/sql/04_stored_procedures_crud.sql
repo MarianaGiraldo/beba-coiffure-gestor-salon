@@ -1178,6 +1178,64 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- Buscar compra por ID
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_compra_por_id (
+    IN p_com_id INT
+)
+BEGIN
+    SELECT 
+        cp.*,
+        p.prov_nombre AS proveedor
+    FROM COMPRA_PRODUCTO cp
+    INNER JOIN PROVEEDOR p ON cp.prov_id = p.prov_id
+    WHERE cp.com_id = p_com_id;
+END$$
+DELIMITER ;
+
+-- Obtener última compra insertada
+DELIMITER $$
+CREATE PROCEDURE sp_obtener_ultima_compra()
+BEGIN
+    SELECT * FROM COMPRA_PRODUCTO 
+    WHERE com_id = LAST_INSERT_ID();
+END$$
+DELIMITER ;
+
+-- Actualizar compra
+DELIMITER $$
+CREATE PROCEDURE sp_actualizar_compra (
+    IN p_com_id INT,
+    IN p_fecha DATE,
+    IN p_total DECIMAL(10,2),
+    IN p_metodo_pago VARCHAR(50),
+    IN p_prov_id INT,
+    IN p_gas_id INT
+)
+BEGIN
+    UPDATE COMPRA_PRODUCTO
+    SET cop_fecha_compra = p_fecha,
+        cop_total_compra = p_total,
+        cop_metodo_pago = p_metodo_pago,
+        prov_id = p_prov_id,
+        gas_id = p_gas_id
+    WHERE com_id = p_com_id;
+END$$
+DELIMITER ;
+
+-- Eliminar compra
+DELIMITER $$
+CREATE PROCEDURE sp_eliminar_compra (
+    IN p_com_id INT
+)
+BEGIN
+    -- First delete details
+    DELETE FROM DETALLE_COMPRA WHERE com_id = p_com_id;
+    -- Then delete the purchase
+    DELETE FROM COMPRA_PRODUCTO WHERE com_id = p_com_id;
+END$$
+DELIMITER ;
+
 -- SELECT a COMPRA con PRODUCTOS
 DELIMITER $$
 CREATE PROCEDURE sp_listar_compras()
@@ -1225,14 +1283,66 @@ CREATE PROCEDURE sp_actualizar_detalle_compra (
     IN p_precio_unitario DECIMAL(10,2)
 )
 BEGIN
+    DECLARE old_cantidad INT DEFAULT 0;
+    DECLARE old_precio DECIMAL(10,2) DEFAULT 0;
+    
+    -- Get old values for recalculation
+    SELECT dec_cantidad, dec_precio_unitario 
+    INTO old_cantidad, old_precio
+    FROM DETALLE_COMPRA 
+    WHERE com_id = p_com_id AND prod_id = p_prod_id;
+    
     UPDATE DETALLE_COMPRA
     SET dec_cantidad = p_cantidad,
         dec_precio_unitario = p_precio_unitario
     WHERE com_id = p_com_id AND prod_id = p_prod_id;
 
+    -- Recalculate total purchase amount
     UPDATE COMPRA_PRODUCTO
-    SET cop_total_compra = cop_total_compra-(old.dec_precio_unitario*old.dec_cantidad)+(p_cantidad*p_precio_unitario)
-    WHERE com_id=p_com_id;
+    SET cop_total_compra = cop_total_compra - (old_precio * old_cantidad) + (p_precio_unitario * p_cantidad)
+    WHERE com_id = p_com_id;
+END$$
+DELIMITER ;
+
+-- Eliminar DETALLE_COMPRA
+DELIMITER $$
+CREATE PROCEDURE sp_eliminar_detalle_compra (
+    IN p_com_id INT,
+    IN p_prod_id INT
+)
+BEGIN
+    DECLARE old_cantidad INT DEFAULT 0;
+    DECLARE old_precio DECIMAL(10,2) DEFAULT 0;
+    
+    -- Get old values for recalculation
+    SELECT dec_cantidad, dec_precio_unitario 
+    INTO old_cantidad, old_precio
+    FROM DETALLE_COMPRA 
+    WHERE com_id = p_com_id AND prod_id = p_prod_id;
+    
+    DELETE FROM DETALLE_COMPRA 
+    WHERE com_id = p_com_id AND prod_id = p_prod_id;
+
+    -- Recalculate total purchase amount
+    UPDATE COMPRA_PRODUCTO
+    SET cop_total_compra = cop_total_compra - (old_precio * old_cantidad)
+    WHERE com_id = p_com_id;
+END$$
+DELIMITER ;
+
+-- Listar detalles de una compra específica
+DELIMITER $$
+CREATE PROCEDURE sp_listar_detalles_compra (
+    IN p_com_id INT
+)
+BEGIN
+    SELECT 
+        dc.*,
+        pr.prod_nombre,
+        pr.prod_descripcion
+    FROM DETALLE_COMPRA dc
+    INNER JOIN PRODUCTO pr ON dc.prod_id = pr.prod_id
+    WHERE dc.com_id = p_com_id;
 END$$
 DELIMITER ;
 

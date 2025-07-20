@@ -117,6 +117,31 @@ func (Purchase) TableName() string {
 	return "COMPRA_PRODUCTO"
 }
 
+// DetalleCompra represents purchase details table (matches database schema)
+type DetalleCompra struct {
+	ComID            uint    `json:"com_id" gorm:"primaryKey;column:com_id"`
+	ProdID           uint    `json:"prod_id" gorm:"primaryKey;column:prod_id"`
+	DecCantidad      int     `json:"dec_cantidad" gorm:"not null;column:dec_cantidad"`
+	DecPrecioUnitario float64 `json:"dec_precio_unitario" gorm:"not null;column:dec_precio_unitario"`
+}
+
+func (DetalleCompra) TableName() string {
+	return "DETALLE_COMPRA"
+}
+
+// PurchaseWithDetails represents a complete purchase with its details
+type PurchaseWithDetails struct {
+	ComID          uint                `json:"com_id"`
+	CopFechaCompra time.Time           `json:"cop_fecha_compra"`
+	CopTotalCompra float64             `json:"cop_total_compra"`
+	CopMetodoPago  string              `json:"cop_metodo_pago"`
+	ProvID         uint                `json:"prov_id"`
+	GasID          uint                `json:"gas_id"`
+	Proveedor      string              `json:"proveedor"`
+	Productos      string              `json:"productos"`
+	Detalles       []DetalleCompra     `json:"detalles,omitempty"`
+}
+
 // Payment represents employee salary payments (matches database schema)
 type Payment struct {
 	PagID     uint      `json:"pag_id" gorm:"primaryKey;autoIncrement;column:pag_id"`
@@ -129,6 +154,19 @@ type Payment struct {
 
 func (Payment) TableName() string {
 	return "PAGO"
+}
+
+// GastoMensual represents monthly expenses table (matches database schema)
+type GastoMensual struct {
+	GasID          uint      `json:"gas_id" gorm:"primaryKey;autoIncrement;column:gas_id"`
+	GasDescripcion string    `json:"gas_descripcion" gorm:"column:gas_descripcion"`
+	GasFecha       time.Time `json:"gas_fecha" gorm:"not null;column:gas_fecha"`
+	GasMonto       float64   `json:"gas_monto" gorm:"not null;column:gas_monto"`
+	GasTipo        string    `json:"gas_tipo" gorm:"not null;column:gas_tipo"`
+}
+
+func (GastoMensual) TableName() string {
+	return "GASTO_MENSUAL"
 }
 
 // Promotion represents service promotions (matches database schema)

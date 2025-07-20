@@ -268,78 +268,12 @@ const FinancialManagement = () => {
       </div>
 
       <Tabs defaultValue="income" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="income">Ingresos por Servicios</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="purchases">Gastos en Productos</TabsTrigger>
           <TabsTrigger value="salaries">Pagos de Salarios</TabsTrigger>
         </TabsList>
 
         <TabsContent value="income" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Pagos de Clientes</h3>
-            <Dialog open={isAddingClientPayment} onOpenChange={setIsAddingClientPayment}>
-              <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Registrar Pago
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Registrar Pago de Cliente</DialogTitle>
-                  <DialogDescription>
-                    Registra un nuevo pago por servicios
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div>
-                    <Label htmlFor="cliente">Cliente</Label>
-                    <Input
-                      id="cliente"
-                      value={newClientPayment.cliente || ""}
-                      onChange={(e) => setNewClientPayment({...newClientPayment, cliente: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="servicio">Servicio</Label>
-                    <Input
-                      id="servicio"
-                      value={newClientPayment.servicio || ""}
-                      onChange={(e) => setNewClientPayment({...newClientPayment, servicio: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="monto">Monto</Label>
-                    <Input
-                      id="monto"
-                      type="number"
-                      value={newClientPayment.monto || ""}
-                      onChange={(e) => setNewClientPayment({...newClientPayment, monto: parseFloat(e.target.value)})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="metodo">Método de Pago</Label>
-                    <select
-                      className="w-full p-2 border rounded-md"
-                      value={newClientPayment.metodo || ""}
-                      onChange={(e) => setNewClientPayment({...newClientPayment, metodo: e.target.value})}
-                    >
-                      <option value="">Seleccionar método</option>
-                      <option value="Efectivo">Efectivo</option>
-                      <option value="Tarjeta">Tarjeta</option>
-                      <option value="Transferencia">Transferencia</option>
-                      <option value="Nequi">Nequi</option>
-                      <option value="Daviplata">Daviplata</option>
-                    </select>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button onClick={handleAddClientPayment}>Registrar Pago</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-
           <Card>
             <CardContent>
               <Table>

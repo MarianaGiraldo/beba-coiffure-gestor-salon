@@ -740,3 +740,97 @@ func (s *DatabaseService) ActualizarDetalleFactura(facID, serID uint) error {
 func (s *DatabaseService) EliminarDetalleFactura(facID uint) error {
 	return s.DB.Exec("CALL sp_eliminar_detalle_factura(?)", facID).Error
 }
+
+// ============= PURCHASE PROCEDURES =============
+
+func (s *DatabaseService) InsertarCompra(fecha string, total float64, metodoPago string, provID, gasID uint) error {
+	return s.DB.Exec("CALL sp_insertar_compra(?, ?, ?, ?, ?)",
+		fecha, total, metodoPago, provID, gasID).Error
+}
+
+func (s *DatabaseService) BuscarCompraPorID(comID uint) (*models.PurchaseWithDetails, error) {
+	var compra models.PurchaseWithDetails
+	err := s.DB.Raw("CALL sp_buscar_compra_por_id(?)", comID).Scan(&compra).Error
+	if err != nil {
+		return nil, err
+	}
+	return &compra, nil
+}
+
+func (s *DatabaseService) ObtenerUltimaCompra() (*models.Purchase, error) {
+	var compra models.Purchase
+	err := s.DB.Raw("CALL sp_obtener_ultima_compra()").Scan(&compra).Error
+	if err != nil {
+		return nil, err
+	}
+	return &compra, nil
+}
+
+func (s *DatabaseService) ActualizarCompra(comID uint, fecha string, total float64, metodoPago string, provID, gasID uint) error {
+	return s.DB.Exec("CALL sp_actualizar_compra(?, ?, ?, ?, ?, ?)",
+		comID, fecha, total, metodoPago, provID, gasID).Error
+}
+
+func (s *DatabaseService) EliminarCompra(comID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_compra(?)", comID).Error
+}
+
+func (s *DatabaseService) ListarCompras() ([]models.PurchaseWithDetails, error) {
+	var compras []models.PurchaseWithDetails
+	err := s.DB.Raw("CALL sp_listar_compras()").Scan(&compras).Error
+	return compras, err
+}
+
+// ============= PURCHASE DETAIL PROCEDURES =============
+
+func (s *DatabaseService) InsertarDetalleCompra(comID, prodID uint, cantidad int, precioUnitario float64) error {
+	return s.DB.Exec("CALL sp_insertar_detalle_compra(?, ?, ?, ?)",
+		comID, prodID, cantidad, precioUnitario).Error
+}
+
+func (s *DatabaseService) ActualizarDetalleCompra(comID, prodID uint, cantidad int, precioUnitario float64) error {
+	return s.DB.Exec("CALL sp_actualizar_detalle_compra(?, ?, ?, ?)",
+		comID, prodID, cantidad, precioUnitario).Error
+}
+
+func (s *DatabaseService) EliminarDetalleCompra(comID, prodID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_detalle_compra(?, ?)",
+		comID, prodID).Error
+}
+
+func (s *DatabaseService) ListarDetallesCompra(comID uint) ([]models.DetalleCompra, error) {
+	var detalles []models.DetalleCompra
+	err := s.DB.Raw("CALL sp_listar_detalles_compra(?)", comID).Scan(&detalles).Error
+	return detalles, err
+}
+
+// ============= EXPENSE PROCEDURES (GASTO_MENSUAL) =============
+
+func (s *DatabaseService) InsertarGasto(descripcion string, fecha string, monto float64, tipo string) error {
+	return s.DB.Exec("CALL sp_insertar_gasto(?, ?, ?, ?)",
+		descripcion, fecha, monto, tipo).Error
+}
+
+func (s *DatabaseService) ListarGastos() ([]models.GastoMensual, error) {
+	var gastos []models.GastoMensual
+	err := s.DB.Raw("CALL sp_listar_gastos()").Scan(&gastos).Error
+	return gastos, err
+}
+
+func (s *DatabaseService) BuscarGastoPorID(gasID uint) (*models.GastoMensual, error) {
+	var gasto models.GastoMensual
+	err := s.DB.Raw("CALL sp_buscar_gasto_por_id(?)", gasID).Scan(&gasto).Error
+	if err != nil {
+		return nil, err
+	}
+	return &gasto, nil
+}
+
+func (s *DatabaseService) ActualizarGasto(gasID uint, descripcion string, fecha string, monto float64, tipo string) error {
+	return s.DB.Exec("CALL sp_actualizar_gasto(?, ?, ?, ?, ?)",
+		gasID, descripcion, fecha, monto, tipo).Error
+}
+
+func (s *DatabaseService) EliminarGasto(gasID uint) error {
+	return s.DB.Exec("CALL sp_eliminar_gasto(?)", gasID).Error
+}
