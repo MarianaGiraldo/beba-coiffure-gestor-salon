@@ -6,8 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, AlertTriangle, Package } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Edit, Trash2, AlertTriangle, Package, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PurchaseManagement from "./PurchaseManagement";
 
 interface Product {
   prod_id: number;
@@ -377,245 +379,267 @@ const InventoryManagement = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Gestión de Inventario</h2>
-          <p className="text-gray-600">Administra productos y control de stock</p>
+          <p className="text-gray-600">Administra productos, control de stock y compras</p>
         </div>
-        <Dialog open={isAddingProduct} onOpenChange={setIsAddingProduct}>
-          <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Producto
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Agregar Nuevo Producto</DialogTitle>
-              <DialogDescription>
-                Registra un nuevo producto en el inventario
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div>
-                <Label htmlFor="prod-nombre">Nombre del Producto *</Label>
-                <Input
-                  id="prod-nombre"
-                  value={newProduct.prod_nombre || ""}
-                  onChange={(e) => setNewProduct({...newProduct, prod_nombre: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="prod-descripcion">Descripción</Label>
-                <Input
-                  id="prod-descripcion"
-                  value={newProduct.prod_descripcion || ""}
-                  onChange={(e) => setNewProduct({...newProduct, prod_descripcion: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="prod-cantidad">Cantidad Inicial</Label>
-                <Input
-                  id="prod-cantidad"
-                  type="number"
-                  min="0"
-                  value={newProduct.prod_cantidad_disponible || 0}
-                  onChange={(e) => setNewProduct({...newProduct, prod_cantidad_disponible: parseInt(e.target.value) || 0})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="prod-precio">Precio Unitario *</Label>
-                <Input
-                  id="prod-precio"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newProduct.prod_precio_unitario || ""}
-                  onChange={(e) => setNewProduct({...newProduct, prod_precio_unitario: parseFloat(e.target.value) || 0})}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button 
-                onClick={handleAddProduct} 
-                disabled={submitting}
-                className="bg-pink-600 hover:bg-pink-700"
-              >
-                {submitting ? "Agregando..." : "Agregar Producto"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total Inventario</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${metrics.valor_inventario.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              {inventory.length} productos en stock
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Productos con Stock Bajo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{metrics.productos_bajos}</div>
-            <p className="text-xs text-muted-foreground">
-              Necesitan reabastecimiento
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Productos</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.total_productos}</div>
-            <p className="text-xs text-muted-foreground">
-              Productos registrados
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="inventory" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="inventory">
+            <Package className="h-4 w-4 mr-2" />
+            Inventario
+          </TabsTrigger>
+          <TabsTrigger value="purchases">
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Compras
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Inventory Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Inventario de Productos</CardTitle>
-          <CardDescription>
-            Gestiona el stock actual de todos los productos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Producto</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Precio Unitario</TableHead>
-                <TableHead>Stock Actual</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Última Actualización</TableHead>
-                <TableHead>Observaciones</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inventory.map((inv) => {
-                const stockStatus = getStockStatus(inv.inv_cantidad_actual);
-                return (
-                  <TableRow key={inv.inv_id}>
-                    <TableCell>
-                      <div className="font-medium">{inv.prod_nombre}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-gray-500">{inv.prod_descripcion}</div>
-                    </TableCell>
-                    <TableCell>${inv.prod_precio_unitario.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{inv.inv_cantidad_actual} unidades</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={stockStatus.color}>
-                        {stockStatus.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{inv.inv_fecha_actualizacion}</TableCell>
-                    <TableCell>
-                      <div className="text-sm text-gray-500 max-w-xs truncate">
-                        {inv.inv_observaciones || "Sin observaciones"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingInventory(inv)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteInventory(inv.inv_id, inv.prod_nombre)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Edit Inventory Dialog */}
-      {editingInventory && (
-        <Dialog open={!!editingInventory} onOpenChange={() => setEditingInventory(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Actualizar Inventario</DialogTitle>
-              <DialogDescription>
-                Modifica la cantidad y observaciones del producto
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div>
-                <Label>Producto</Label>
-                <div className="p-2 bg-gray-100 rounded">
-                  {editingInventory.prod_nombre}
+        <TabsContent value="inventory" className="space-y-6">
+          <div className="flex justify-end">
+            <Dialog open={isAddingProduct} onOpenChange={setIsAddingProduct}>
+              <DialogTrigger asChild>
+                <Button className="bg-pink-600 hover:bg-pink-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo Producto
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Agregar Nuevo Producto</DialogTitle>
+                  <DialogDescription>
+                    Registra un nuevo producto en el inventario
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div>
+                    <Label htmlFor="prod-nombre">Nombre del Producto *</Label>
+                    <Input
+                      id="prod-nombre"
+                      value={newProduct.prod_nombre || ""}
+                      onChange={(e) => setNewProduct({...newProduct, prod_nombre: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="prod-descripcion">Descripción</Label>
+                    <Input
+                      id="prod-descripcion"
+                      value={newProduct.prod_descripcion || ""}
+                      onChange={(e) => setNewProduct({...newProduct, prod_descripcion: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="prod-cantidad">Cantidad Inicial</Label>
+                    <Input
+                      id="prod-cantidad"
+                      type="number"
+                      min="0"
+                      value={newProduct.prod_cantidad_disponible || 0}
+                      onChange={(e) => setNewProduct({...newProduct, prod_cantidad_disponible: parseInt(e.target.value) || 0})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="prod-precio">Precio Unitario *</Label>
+                    <Input
+                      id="prod-precio"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProduct.prod_precio_unitario || ""}
+                      onChange={(e) => setNewProduct({...newProduct, prod_precio_unitario: parseFloat(e.target.value) || 0})}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="edit-cantidad">Cantidad Actual</Label>
-                <Input
-                  id="edit-cantidad"
-                  type="number"
-                  min="0"
-                  value={editingInventory.inv_cantidad_actual}
-                  onChange={(e) => setEditingInventory({
-                    ...editingInventory, 
-                    inv_cantidad_actual: parseInt(e.target.value) || 0
+                <DialogFooter>
+                  <Button 
+                    onClick={handleAddProduct} 
+                    disabled={submitting}
+                    className="bg-pink-600 hover:bg-pink-700"
+                  >
+                    {submitting ? "Agregando..." : "Agregar Producto"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Metrics Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Valor Total Inventario</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">${metrics.valor_inventario.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  {inventory.length} productos en stock
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Productos con Stock Bajo</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{metrics.productos_bajos}</div>
+                <p className="text-xs text-muted-foreground">
+                  Necesitan reabastecimiento
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Productos</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.total_productos}</div>
+                <p className="text-xs text-muted-foreground">
+                  Productos registrados
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Inventory Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventario de Productos</CardTitle>
+              <CardDescription>
+                Gestiona el stock actual de todos los productos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Producto</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead>Precio Unitario</TableHead>
+                    <TableHead>Stock Actual</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Última Actualización</TableHead>
+                    <TableHead>Observaciones</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inventory.map((inv) => {
+                    const stockStatus = getStockStatus(inv.inv_cantidad_actual);
+                    return (
+                      <TableRow key={inv.inv_id}>
+                        <TableCell>
+                          <div className="font-medium">{inv.prod_nombre}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-gray-500">{inv.prod_descripcion}</div>
+                        </TableCell>
+                        <TableCell>${inv.prod_precio_unitario.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <div className="font-medium">{inv.inv_cantidad_actual} unidades</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={stockStatus.color}>
+                            {stockStatus.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{inv.inv_fecha_actualizacion}</TableCell>
+                        <TableCell>
+                          <div className="text-sm text-gray-500 max-w-xs truncate">
+                            {inv.inv_observaciones || "Sin observaciones"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingInventory(inv)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteInventory(inv.inv_id, inv.prod_nombre)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
                   })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-observaciones">Observaciones</Label>
-                <Input
-                  id="edit-observaciones"
-                  value={editingInventory.inv_observaciones}
-                  onChange={(e) => setEditingInventory({
-                    ...editingInventory, 
-                    inv_observaciones: e.target.value
-                  })}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button 
-                onClick={handleUpdateInventory}
-                disabled={submitting}
-                className="bg-pink-600 hover:bg-pink-700"
-              >
-                {submitting ? "Actualizando..." : "Actualizar Inventario"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Edit Inventory Dialog */}
+          {editingInventory && (
+            <Dialog open={!!editingInventory} onOpenChange={() => setEditingInventory(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Actualizar Inventario</DialogTitle>
+                  <DialogDescription>
+                    Modifica la cantidad y observaciones del producto
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div>
+                    <Label>Producto</Label>
+                    <div className="p-2 bg-gray-100 rounded">
+                      {editingInventory.prod_nombre}
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-cantidad">Cantidad Actual</Label>
+                    <Input
+                      id="edit-cantidad"
+                      type="number"
+                      min="0"
+                      value={editingInventory.inv_cantidad_actual}
+                      onChange={(e) => setEditingInventory({
+                        ...editingInventory, 
+                        inv_cantidad_actual: parseInt(e.target.value) || 0
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-observaciones">Observaciones</Label>
+                    <Input
+                      id="edit-observaciones"
+                      value={editingInventory.inv_observaciones}
+                      onChange={(e) => setEditingInventory({
+                        ...editingInventory, 
+                        inv_observaciones: e.target.value
+                      })}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button 
+                    onClick={handleUpdateInventory}
+                    disabled={submitting}
+                    className="bg-pink-600 hover:bg-pink-700"
+                  >
+                    {submitting ? "Actualizando..." : "Actualizar Inventario"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </TabsContent>
+
+        <TabsContent value="purchases">
+          <PurchaseManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
