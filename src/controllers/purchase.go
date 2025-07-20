@@ -112,9 +112,9 @@ func (pmc *PurchaseManagementController) CreatePurchase(c *gin.Context) {
 
 	// Calculate total from details
 	var total float64
-	for _, detalle := range req.Detalles {
-		total += detalle.DecPrecioUnitario * float64(detalle.DecCantidad)
-	}
+	// for _, detalle := range req.Detalles {
+	// 	total += detalle.DecPrecioUnitario * float64(detalle.DecCantidad)
+	// }
 
 	// Create the purchase first
 	err = pmc.dbService.InsertarCompra(

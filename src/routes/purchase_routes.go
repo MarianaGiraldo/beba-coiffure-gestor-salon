@@ -24,7 +24,7 @@ func SetupPurchaseRoutes(api *gin.RouterGroup, dbService *services.DatabaseServi
 	protectedPurchases.Use(middleware.AuthMiddleware())
 	{
 		// General purchase routes (accessible to authenticated users)
-		protectedPurchases.GET("", purchaseController.GetPurchases)    // Get all purchases
+		api.GET("/purchases", purchaseController.GetPurchases)    // Get all purchases
 		protectedPurchases.GET("/:id", purchaseController.GetPurchase) // Get purchase by ID
 
 		// Admin only routes for purchase management

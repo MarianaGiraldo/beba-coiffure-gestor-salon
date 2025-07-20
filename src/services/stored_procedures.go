@@ -727,8 +727,8 @@ func (s *DatabaseService) EliminarCompra(comID uint) error {
 	return s.DB.Exec("CALL sp_eliminar_compra(?)", comID).Error
 }
 
-func (s *DatabaseService) ListarCompras() ([]models.PurchaseWithDetails, error) {
-	var compras []models.PurchaseWithDetails
+func (s *DatabaseService) ListarCompras() ([]models.PurchaseWithProducts, error) {
+	var compras []models.PurchaseWithProducts
 	err := s.DB.Raw("CALL sp_listar_compras()").Scan(&compras).Error
 	return compras, err
 }

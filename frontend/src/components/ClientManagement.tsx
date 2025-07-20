@@ -77,7 +77,7 @@ const ClientManagement = () => {
 
     // Set up interval to update appointment status every 5 minutes
     const statusUpdateInterval = setInterval(() => {
-      setAppointments(prevAppointments => 
+      setAppointments(prevAppointments =>
         updateAppointmentStatusBasedOnDate(prevAppointments)
       );
     }, 5 * 60 * 1000); // 5 minutes
@@ -466,10 +466,11 @@ const ClientManagement = () => {
         // If appointment is today, we can check time too for more precision
         else if (appointmentDate.getTime() === today.getTime()) {
           const currentTime = new Date();
-
           // If appointment time has passed today, mark as completed
           if (appointmentDateTime < currentTime) {
             return { ...appointment, estado: "Completada" as const };
+          } else {
+            return { ...appointment, estado: "Programada" as const };
           }
         }
       }
@@ -480,41 +481,7 @@ const ClientManagement = () => {
 
   // Function to get appointment status with automatic date-based updates
   const getAppointmentStatusWithDateCheck = (appointment: Appointment): "Programada" | "Completada" | "Cancelada" => {
-    // If manually set to Cancelada, keep it
-    if (appointment.estado === "Cancelada") {
-      return "Cancelada";
-    }
-    
-    const today = new Date();
-    const appointmentDate = new Date(appointment.cit_fecha);
-    
-    // If appointment date is in the past, it should be completed
-    if (appointmentDate < today) {
-      return "Completada";
-    }
-    
-    // If appointment is today, check time
-    if (appointmentDate.toDateString() === today.toDateString()) {
-      const currentTime = new Date();
-      const appointmentDateTime = new Date(`${appointment.cit_fecha}T${appointment.cit_hora}`);
-      
-      // If appointment time has passed today, mark as completed
-      if (appointmentDateTime < currentTime) {
-        return "Completada";
-      }
-    }
-    
-    // Otherwise, keep original status or default to Programada
-    return appointment.estado === "Completada" ? "Completada" : "Programada";
-  };
-
-  // Function to check if appointment can be modified (not in the past)
-  const canModifyAppointment = (appointment: Appointment): boolean => {
-    const today = new Date();
-    const appointmentDateTime = new Date(`${appointment.cit_fecha}T${appointment.cit_hora}`);
-    
-    // Can modify if appointment is in the future
-    return appointmentDateTime > today;
+    return appointment.estado
   };
 
   // Function to get relative date description
@@ -523,7 +490,7 @@ const ClientManagement = () => {
     const appointment = new Date(appointmentDate);
     const diffTime = appointment.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
       return `Hace ${Math.abs(diffDays)} día(s)`;
     } else if (diffDays === 0) {
@@ -558,10 +525,10 @@ const ClientManagement = () => {
   // Function to get row styling based on urgency
   const getRowStyling = (appointmentDate: string, appointmentTime: string): string => {
     const urgency = getAppointmentUrgency(appointmentDate, appointmentTime);
-    
+
     switch (urgency) {
       case "overdue":
-        return "border-l-4 border-red-400";
+        return "bg-green-50 border-l-4 border-green-400";
       case "today":
         return "bg-blue-50 border-l-4 border-blue-400";
       case "tomorrow":

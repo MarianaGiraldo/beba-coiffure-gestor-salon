@@ -122,10 +122,11 @@ CREATE TABLE IF NOT EXISTS salondb.`PRODUCTO` (
 DROP TABLE IF EXISTS salondb.`PRODUCTO_USADO` ;
 
 CREATE TABLE IF NOT EXISTS salondb.`PRODUCTO_USADO` (
-  `ser_id` INT PRIMARY KEY NOT NULL COMMENT 'Códgo que sirve como identificador único del servicio realizado en el que se utilizó el producto',
+  `ser_id` INT NOT NULL COMMENT 'Códgo que sirve como identificador único del servicio realizado en el que se utilizó el producto',
   `prod_id` INT NOT NULL COMMENT 'Código que sirve como identificador único del producto utilizado',
   `pru_cantidad_usada` SMALLINT UNSIGNED NOT NULL COMMENT 'Cantidad utilizada del producto durante el servicio',
-  `pru_botellas_usadas` SMALLINT UNSIGNED NOT NULL
+  `pru_botellas_usadas` SMALLINT UNSIGNED NOT NULL,
+  PRIMARY KEY (`ser_id`, `prod_id`)
   );
 
 
@@ -149,8 +150,9 @@ CREATE TABLE IF NOT EXISTS salondb.`FACTURA_SERVICIO` (
 DROP TABLE IF EXISTS salondb.`DETALLE_FACTURA_SERVICIO` ;
 
 CREATE TABLE IF NOT EXISTS salondb.`DETALLE_FACTURA_SERVICIO` (
-  `fac_id` INT PRIMARY KEY NOT NULL COMMENT 'Identificador único de la factura',
-  `ser_id` INT NOT NULL COMMENT 'Identificador único del servicio'
+  `fac_id` INT NOT NULL COMMENT 'Identificador único de la factura',
+  `ser_id` INT NOT NULL COMMENT 'Identificador único del servicio',
+  PRIMARY KEY (`fac_id`, `ser_id`)
   );
 
 
@@ -218,10 +220,11 @@ CREATE TABLE IF NOT EXISTS salondb.`COMPRA_PRODUCTO` (
 DROP TABLE IF EXISTS salondb.`DETALLE_COMPRA` ;
 
 CREATE TABLE IF NOT EXISTS salondb.`DETALLE_COMPRA` (
-  `com_id` INT PRIMARY KEY NOT NULL COMMENT 'Identificador único de la compra',
+  `com_id` INT NOT NULL COMMENT 'Identificador único de la compra',
   `prod_id` INT NOT NULL COMMENT 'Identificador único de producto comprado',
   `dec_cantidad` INT NOT NULL COMMENT 'Cantidad de producto comprado',
-  `dec_precio_unitario` DECIMAL(10,2) NOT NULL COMMENT 'Precio unitario del producto'
+  `dec_precio_unitario` DECIMAL(10,2) NOT NULL COMMENT 'Precio unitario del producto',
+  PRIMARY KEY (`com_id`, `prod_id`)
   );
 
 

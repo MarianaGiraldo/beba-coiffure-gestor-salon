@@ -470,9 +470,9 @@ const InvoiceManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
+                      {/* <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4" />
-                      </Button>
+                      </Button> */}
                       <Button
                         variant="outline"
                         size="sm"
