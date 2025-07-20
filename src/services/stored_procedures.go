@@ -676,6 +676,19 @@ func (s *DatabaseService) ObtenerUltimaFactura() (*models.FacturaServicio, error
 	return &factura, nil
 }
 
+func (s *DatabaseService) RecalcularTotalFactura(facID uint) error {
+	return s.DB.Exec(`
+		UPDATE FACTURA_SERVICIO f
+		SET fac_total = (
+			SELECT COALESCE(SUM(s.ser_precio_unitario), 0)
+			FROM DETALLE_FACTURA_SERVICIO dfs
+			JOIN SERVICIO s ON dfs.ser_id = s.ser_id
+			WHERE dfs.fac_id = ?
+		)
+		WHERE fac_id = ?
+	`, facID, facID).Error
+}
+
 func (s *DatabaseService) ListarFacturas() ([]models.FacturaServicio, error) {
 	var facturas []models.FacturaServicio
 	err := s.DB.Raw("CALL sp_listar_facturas()").Scan(&facturas).Error

@@ -11,17 +11,18 @@ import (
 )
 
 const (
-	ErrInvalidInvoiceID       = "Invalid invoice ID"
-	ErrFailedCreateInvoice    = "Failed to create invoice"
-	ErrFailedRetrieveInvoice  = "Failed to retrieve invoice"
-	ErrFailedRetrieveInvoices = "Failed to retrieve invoices"
-	ErrFailedUpdateInvoice    = "Failed to update invoice"
-	ErrFailedDeleteInvoice    = "Failed to delete invoice"
-	ErrInvoiceNotFound        = "Invoice not found"
-	ErrFailedRetrieveClient   = "Failed to retrieve client information"
-	ErrFailedRetrieveDetails  = "Failed to retrieve invoice details"
-	ErrFailedAddService       = "Failed to add service to invoice"
-	ErrFailedRemoveService    = "Failed to remove service from invoice"
+	ErrInvalidInvoiceID             = "Invalid invoice ID"
+	ErrFailedCreateInvoice          = "Failed to create invoice"
+	ErrFailedRetrieveInvoice        = "Failed to retrieve invoice"
+	ErrFailedRetrieveInvoices       = "Failed to retrieve invoices"
+	ErrFailedUpdateInvoice          = "Failed to update invoice"
+	ErrFailedDeleteInvoice          = "Failed to delete invoice"
+	ErrInvoiceNotFound              = "Invoice not found"
+	ErrFailedRetrieveClientForInv   = "Failed to retrieve client information"
+	ErrFailedRetrieveServicesForInv = "Failed to retrieve services information"
+	ErrFailedRetrieveDetails        = "Failed to retrieve invoice details"
+	ErrFailedAddService             = "Failed to add service to invoice"
+	ErrFailedRemoveService          = "Failed to remove service from invoice"
 )
 
 type InvoiceController struct {
@@ -53,7 +54,7 @@ type InvoiceDetailResponse struct {
 	Servicios string  `json:"servicios"` // Comma-separated service names
 }
 
-// CreateInvoice creates a new invoice with its details in a transaction-like process
+// CreateInvoice creates a new invoice with its details
 func (ic *InvoiceController) CreateInvoice(c *gin.Context) {
 	var req CreateInvoiceRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -61,7 +62,7 @@ func (ic *InvoiceController) CreateInvoice(c *gin.Context) {
 		return
 	}
 
-	// First, create the invoice with initial total of 0 (will be updated by trigger)
+	// First, create the invoice with initial total of 0 (will be updated by stored procedure)
 	err := ic.dbService.InsertarFacturaSinTotal(req.Fecha, req.Hora, req.CliID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedCreateInvoice})
@@ -75,7 +76,7 @@ func (ic *InvoiceController) CreateInvoice(c *gin.Context) {
 		return
 	}
 
-	// Add each service to the invoice details
+	// Add each service to the invoice details (stored procedure will calculate total)
 	for _, servicioID := range req.Servicios {
 		err = ic.dbService.InsertarDetalleFactura(createdInvoice.FacID, servicioID)
 		if err != nil {
@@ -86,7 +87,7 @@ func (ic *InvoiceController) CreateInvoice(c *gin.Context) {
 		}
 	}
 
-	// Get the updated invoice (total should be calculated by trigger)
+	// Get the updated invoice (total should be calculated by stored procedure)
 	updatedInvoice, err := ic.dbService.BuscarFacturaPorID(createdInvoice.FacID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedRetrieveInvoice})
@@ -161,7 +162,7 @@ func (ic *InvoiceController) buildInvoiceDetailResponse(factura *models.FacturaS
 	// Get client information
 	clientes, err := ic.dbService.GetClientes()
 	if err != nil {
-		return nil, fmt.Errorf(ErrFailedRetrieveClient)
+		return nil, fmt.Errorf(ErrFailedRetrieveClientForInv)
 	}
 
 	var clienteName string
@@ -181,7 +182,7 @@ func (ic *InvoiceController) buildInvoiceDetailResponse(factura *models.FacturaS
 	// Get service information
 	servicios, err := ic.dbService.ListarServicios()
 	if err != nil {
-		return nil, fmt.Errorf(ErrFailedRetrieveServices)
+		return nil, fmt.Errorf(ErrFailedRetrieveServicesForInv)
 	}
 
 	// Build services string
@@ -257,13 +258,13 @@ func (ic *InvoiceController) getAllRequiredData() ([]models.FacturaServicio, []m
 	// Get all clients
 	clientes, err := ic.dbService.GetClientes()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf(ErrFailedRetrieveClient)
+		return nil, nil, nil, fmt.Errorf(ErrFailedRetrieveClientForInv)
 	}
 
 	// Get all services
 	servicios, err := ic.dbService.ListarServicios()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf(ErrFailedRetrieveServices)
+		return nil, nil, nil, fmt.Errorf(ErrFailedRetrieveServicesForInv)
 	}
 
 	return facturas, clientes, servicios, nil
@@ -321,6 +322,7 @@ func (ic *InvoiceController) AddServiceToInvoice(c *gin.Context) {
 		return
 	}
 
+	// The stored procedure will automatically calculate the new total
 	err = ic.dbService.InsertarDetalleFactura(uint(id), req.SerID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedAddService})
@@ -386,6 +388,7 @@ func (ic *InvoiceController) RemoveServiceFromInvoice(c *gin.Context) {
 		return
 	}
 
+	// The stored procedure will automatically recalculate the total
 	err = ic.dbService.EliminarDetalleFactura(uint(id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedRemoveService})

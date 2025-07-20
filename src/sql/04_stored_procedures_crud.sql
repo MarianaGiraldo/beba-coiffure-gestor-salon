@@ -154,7 +154,7 @@ BEGIN
   VALUES (p_nombre, p_descripcion, p_cantidad, p_precio);
 
   SET @last_id = LAST_INSERT_ID();
-  
+
   INSERT INTO INVENTARIO(inv_fecha_actualizacion, prod_id, inv_cantidad_actual, inv_observaciones)
   VALUES (CURDATE(), @last_id, p_cantidad, NULL);
 END;
@@ -175,7 +175,7 @@ CREATE PROCEDURE sp_update_producto(
 BEGIN
   UPDATE INVENTARIO
   SET inv_cantidad_actual = p_cantidad WHERE p_id=prod_id;
-  
+
   UPDATE PRODUCTO
   SET prod_nombre = p_nombre, prod_descripcion = p_descripcion, prod_cantidad_disponible = p_cantidad,
       prod_precio_unitario = p_precio
@@ -199,8 +199,8 @@ DELIMITER //
 
 CREATE PROCEDURE BuscarClientePorID(IN p_cli_id INT)
 BEGIN
-  SELECT * 
-  FROM CLIENTE 
+  SELECT *
+  FROM CLIENTE
   WHERE cli_id = p_cli_id;
 END;
 //
@@ -212,8 +212,8 @@ DELIMITER //
 
 CREATE PROCEDURE BuscarEmpleadoPorID(IN p_emp_id INT)
 BEGIN
-  SELECT * 
-  FROM EMPLEADO 
+  SELECT *
+  FROM EMPLEADO
   WHERE emp_id = p_emp_id;
 END;
 //
@@ -225,7 +225,7 @@ DELIMITER //
 
 CREATE PROCEDURE BuscarUsuario(IN p_usuario VARCHAR(100))
 BEGIN
-  SELECT * 
+  SELECT *
   FROM USUARIO_SISTEMA
   WHERE usu_nombre_usuario = p_usuario;
 END;
@@ -290,7 +290,7 @@ CREATE PROCEDURE ObtenerDatosUsuario(
 )
 BEGIN
   IF p_rol = 'empleado' THEN
-    SELECT 
+    SELECT
       u.usu_id,
       u.usu_nombre_usuario,
       u.usu_rol,
@@ -307,7 +307,7 @@ BEGIN
       AND u.usu_rol = 'empleado';
 
   ELSEIF p_rol = 'cliente' THEN
-    SELECT 
+    SELECT
       u.usu_id,
       u.usu_nombre_usuario,
       u.usu_rol,
@@ -574,7 +574,7 @@ CREATE PROCEDURE ObtenerPagosPorEmpleado(
   IN p_emp_id INT
 )
 BEGIN
-  SELECT 
+  SELECT
     e.emp_id,
     CONCAT(e.emp_nombre, ' ', e.emp_apellido) AS empleado,
     p.pag_id,
@@ -1003,15 +1003,26 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Insertar detalle de factura
+-- Insertar detalle de factura con recálculo automático del total
 DELIMITER $$
 CREATE PROCEDURE sp_insertar_detalle_factura (
     IN p_fac_id INT,
     IN p_ser_id INT
 )
 BEGIN
+    -- Insert the detail
     INSERT INTO DETALLE_FACTURA_SERVICIO (fac_id, ser_id)
     VALUES (p_fac_id, p_ser_id);
+    
+    -- Recalculate and update the invoice total
+    UPDATE FACTURA_SERVICIO 
+    SET fac_total = (
+        SELECT COALESCE(SUM(s.ser_precio_unitario), 0)
+        FROM DETALLE_FACTURA_SERVICIO dfs
+        JOIN SERVICIO s ON dfs.ser_id = s.ser_id
+        WHERE dfs.fac_id = p_fac_id
+    )
+    WHERE fac_id = p_fac_id;
 END$$
 DELIMITER ;
 
@@ -1033,26 +1044,48 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Actualizar detalle de factura (solo ser_id según estructura)
+-- Actualizar detalle de factura con recálculo automático del total
 DELIMITER $$
 CREATE PROCEDURE sp_actualizar_detalle_factura (
     IN p_fac_id INT,
     IN p_ser_id INT
 )
 BEGIN
+    -- Update the detail
     UPDATE DETALLE_FACTURA_SERVICIO
     SET ser_id = p_ser_id
+    WHERE fac_id = p_fac_id;
+    
+    -- Recalculate and update the invoice total
+    UPDATE FACTURA_SERVICIO 
+    SET fac_total = (
+        SELECT COALESCE(SUM(s.ser_precio_unitario), 0)
+        FROM DETALLE_FACTURA_SERVICIO dfs
+        JOIN SERVICIO s ON dfs.ser_id = s.ser_id
+        WHERE dfs.fac_id = p_fac_id
+    )
     WHERE fac_id = p_fac_id;
 END$$
 DELIMITER ;
 
--- Eliminar detalle de factura
+-- Eliminar detalle de factura con recálculo automático del total
 DELIMITER $$
 CREATE PROCEDURE sp_eliminar_detalle_factura (
     IN p_fac_id INT
 )
 BEGIN
+    -- Delete the detail
     DELETE FROM DETALLE_FACTURA_SERVICIO WHERE fac_id = p_fac_id;
+    
+    -- Recalculate and update the invoice total
+    UPDATE FACTURA_SERVICIO 
+    SET fac_total = (
+        SELECT COALESCE(SUM(s.ser_precio_unitario), 0)
+        FROM DETALLE_FACTURA_SERVICIO dfs
+        JOIN SERVICIO s ON dfs.ser_id = s.ser_id
+        WHERE dfs.fac_id = p_fac_id
+    )
+    WHERE fac_id = p_fac_id;
 END$$
 DELIMITER ;
 
@@ -1126,7 +1159,7 @@ DELIMITER ;
 
 
 -- Insertar COMPRA_PRODUCTO
-  
+
 DELIMITER ;
 
 DELIMITER $$
@@ -1175,8 +1208,8 @@ CREATE PROCEDURE sp_insertar_detalle_compra (
 BEGIN
     INSERT INTO DETALLE_COMPRA (com_id, prod_id, dec_cantidad, dec_precio_unitario)
     VALUES (p_com_id, p_prod_id, p_cantidad, p_precio_unitario);
-    
-    UPDATE COMPRA_PRODUCTO 
+
+    UPDATE COMPRA_PRODUCTO
     SET cop_total_compra = cop_total_compra+(p_precio_unitario*dec_cantidad)
     WHERE com_id=p_com_id;
 END$$
@@ -1196,14 +1229,14 @@ BEGIN
     SET dec_cantidad = p_cantidad,
         dec_precio_unitario = p_precio_unitario
     WHERE com_id = p_com_id AND prod_id = p_prod_id;
-    
-    UPDATE COMPRA_PRODUCTO 
+
+    UPDATE COMPRA_PRODUCTO
     SET cop_total_compra = cop_total_compra-(old.dec_precio_unitario*old.dec_cantidad)+(p_cantidad*p_precio_unitario)
     WHERE com_id=p_com_id;
 END$$
 DELIMITER ;
 
 -- Log CRUD stored procedures completion
-INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
+INSERT IGNORE INTO salondb.db_initialization_log (script_name, status)
 VALUES ('04_stored_procedures_crud.sql', 'SUCCESS');
 

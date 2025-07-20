@@ -165,21 +165,22 @@ DROP TRIGGER IF EXISTS trg_after_insert_usuario_sistema;
 -- CALL insertar_usuario_sistema('florenciogalan', '^c2m2Bnf$&', 'cliente', NULL, 15);
 
 
-CALL sp_insertar_detalle_factura(1, 6);
-CALL sp_insertar_detalle_factura(2, 5);
-CALL sp_insertar_detalle_factura(3, 3);
-CALL sp_insertar_detalle_factura(4, 2);
-CALL sp_insertar_detalle_factura(5, 4);
-CALL sp_insertar_detalle_factura(6, 3);
-CALL sp_insertar_detalle_factura(7, 1);
-CALL sp_insertar_detalle_factura(8, 5);
-CALL sp_insertar_detalle_factura(9, 1);
-CALL sp_insertar_detalle_factura(10, 3);
-CALL sp_insertar_detalle_factura(11, 2);
-CALL sp_insertar_detalle_factura(12, 7);
-CALL sp_insertar_detalle_factura(13, 1);
-CALL sp_insertar_detalle_factura(14, 2);
-CALL sp_insertar_detalle_factura(15, 4);
+-- Insert invoice details using stored procedures that automatically calculate totals
+-- CALL sp_insertar_detalle_factura(1, 6);
+-- CALL sp_insertar_detalle_factura(2, 5);
+-- CALL sp_insertar_detalle_factura(3, 3);
+-- CALL sp_insertar_detalle_factura(4, 2);
+-- CALL sp_insertar_detalle_factura(5, 4);
+-- CALL sp_insertar_detalle_factura(6, 3);
+-- CALL sp_insertar_detalle_factura(7, 1);
+-- CALL sp_insertar_detalle_factura(8, 5);
+-- CALL sp_insertar_detalle_factura(9, 1);
+-- CALL sp_insertar_detalle_factura(10, 3);
+-- CALL sp_insertar_detalle_factura(11, 2);
+-- CALL sp_insertar_detalle_factura(12, 7);
+-- CALL sp_insertar_detalle_factura(13, 1);
+-- CALL sp_insertar_detalle_factura(14, 2);
+-- CALL sp_insertar_detalle_factura(15, 4);
 
 INSERT INTO PRODUCTO_USADO (ser_id, prod_id, pru_cantidad_usada, pru_botellas_usadas) VALUES
 (1, 9, 300, 3),

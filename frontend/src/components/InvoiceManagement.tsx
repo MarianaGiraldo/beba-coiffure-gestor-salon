@@ -20,7 +20,7 @@ interface Client {
 interface Service {
   ser_id: number;
   ser_nombre: string;
-  ser_precio: number;
+  ser_precio_unitario: number;
 }
 
 interface Invoice {
@@ -42,13 +42,15 @@ interface CreateInvoiceRequest {
 
 const InvoiceManagement = () => {
   const { toast } = useToast();
-  
+  // API URL is configured through Docker environment variables
+  // Fallback for local development outside Docker
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [isAddingInvoice, setIsAddingInvoice] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [newInvoice, setNewInvoice] = useState<CreateInvoiceRequest>({
     cli_id: 0,
     fecha: new Date().toISOString().split('T')[0],
@@ -56,10 +58,27 @@ const InvoiceManagement = () => {
     servicios: []
   });
 
+  // Get authentication token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('authToken') || null;
+  };
+
+
   // Fetch data from API
   const fetchInvoices = async () => {
     try {
-      const response = await fetch('/api/invoices/details');
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${apiUrl}/api/invoices/details`, {
+        headers
+      });
       const data = await response.json();
       if (response.ok) {
         setInvoices(data.invoices || []);
@@ -77,7 +96,18 @@ const InvoiceManagement = () => {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch('/api/clients');
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${apiUrl}/api/clients`, {
+        headers
+      });
       const data = await response.json();
       if (response.ok) {
         setClients(data.clients || []);
@@ -95,7 +125,18 @@ const InvoiceManagement = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('/api/services');
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${apiUrl}/api/services`, {
+        headers
+      });
       const data = await response.json();
       if (response.ok) {
         setServices(data.services || []);
@@ -129,22 +170,29 @@ const InvoiceManagement = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/invoices', {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${apiUrl}/api/invoices`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(newInvoice),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         toast({
           title: "Factura creada",
           description: "La factura ha sido creada exitosamente"
         });
-        
+
         // Reset form and close dialog
         setNewInvoice({
           cli_id: 0,
@@ -153,7 +201,7 @@ const InvoiceManagement = () => {
           servicios: []
         });
         setIsAddingInvoice(false);
-        
+
         // Refresh invoices list
         fetchInvoices();
       } else {
@@ -176,7 +224,16 @@ const InvoiceManagement = () => {
     }
 
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`, {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${apiUrl}/api/invoices/${invoiceId}`, {
         method: 'DELETE',
       });
 
@@ -208,9 +265,11 @@ const InvoiceManagement = () => {
   };
 
   const calculateSelectedServicesTotal = () => {
+    console.log("Calculating total for services:", newInvoice.servicios);
+    console.log("Available services:", services);
     return newInvoice.servicios.reduce((total, serviceId) => {
       const service = services.find(s => s.ser_id === serviceId);
-      return total + (service?.ser_precio || 0);
+      return total + (service?.ser_precio_unitario || 0);
     }, 0);
   };
 
@@ -262,7 +321,7 @@ const InvoiceManagement = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="fecha">Fecha</Label>
                   <Input
@@ -296,7 +355,7 @@ const InvoiceManagement = () => {
                             checked={newInvoice.servicios.includes(service.ser_id)}
                             onCheckedChange={() => handleServiceToggle(service.ser_id)}
                           />
-                          <Label 
+                          <Label
                             htmlFor={`service-${service.ser_id}`}
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
@@ -304,13 +363,13 @@ const InvoiceManagement = () => {
                           </Label>
                         </div>
                         <Badge variant="outline">
-                          ${service.ser_precio?.toLocaleString()}
+                          ${service.ser_precio_unitario?.toLocaleString()}
                         </Badge>
                       </div>
                     ))}
                   </div>
                 </div>
-                
+
                 {newInvoice.servicios.length > 0 && (
                   <div className="mt-4 p-3 bg-pink-50 rounded-md">
                     <div className="text-sm">
@@ -347,7 +406,7 @@ const InvoiceManagement = () => {
             <p className="text-xs text-muted-foreground">facturas emitidas</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Facturación Total</CardTitle>
@@ -414,8 +473,8 @@ const InvoiceManagement = () => {
                       <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handleDeleteInvoice(invoice.fac_id)}
                       >
@@ -427,7 +486,7 @@ const InvoiceManagement = () => {
               ))}
             </TableBody>
           </Table>
-          
+
           {invoices.length === 0 && (
             <div className="text-center py-8">
               <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
