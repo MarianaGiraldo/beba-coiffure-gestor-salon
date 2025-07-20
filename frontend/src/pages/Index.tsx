@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, Package, Scissors, DollarSign, Truck, Gift, LogOut } from "lucide-react";
+import { Users, Calendar, Package, Scissors, DollarSign, Truck, Gift, LogOut, Receipt } from "lucide-react";
 import EmployeeManagement from "@/components/EmployeeManagement";
 import ClientManagement from "@/components/ClientManagement";
 import InventoryManagement from "@/components/InventoryManagement";
@@ -12,6 +12,7 @@ import ServiceManagement from "@/components/ServiceManagement";
 import FinancialManagement from "@/components/FinancialManagement";
 import SupplierManagement from "@/components/SupplierManagement";
 import PromotionManagement from "@/components/PromotionManagement";
+import InvoiceManagement from "@/components/InvoiceManagement";
 import LoginPage from "@/components/LoginPage";
 
 const Index = () => {
@@ -65,7 +66,7 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-8 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Panel
@@ -93,6 +94,10 @@ const Index = () => {
             <TabsTrigger value="promotions" className="flex items-center gap-2">
               <Gift className="h-4 w-4" />
               Promociones
+            </TabsTrigger>
+            <TabsTrigger value="invoices" className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Facturas
             </TabsTrigger>
           </TabsList>
 
@@ -173,6 +178,10 @@ const Index = () => {
 
           <TabsContent value="promotions">
             <PromotionManagement />
+          </TabsContent>
+
+          <TabsContent value="invoices">
+            <InvoiceManagement />
           </TabsContent>
         </Tabs>
       </main>
