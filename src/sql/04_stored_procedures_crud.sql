@@ -1034,6 +1034,74 @@ BEGIN
 END$$
 DELIMITER ;
 
+
+-- Crear un nuevo gasto mensual
+DELIMITER $$
+CREATE PROCEDURE sp_insertar_gasto (
+    IN p_descripcion TEXT,
+    IN p_fecha DATE,
+    IN p_monto DECIMAL(10,2),
+    IN p_tipo VARCHAR(50)
+)
+BEGIN
+    INSERT INTO GASTO_MENSUAL (gas_descripcion, gas_fecha, gas_monto, gas_tipo)
+    VALUES (p_descripcion, p_fecha, p_monto, p_tipo);
+END$$
+DELIMITER ;
+
+-- Listar todos los gastos ordenados del más reciente al más antiguo
+DELIMITER $$
+CREATE PROCEDURE sp_listar_gastos()
+BEGIN
+    SELECT *
+    FROM GASTO_MENSUAL
+    ORDER BY gas_fecha DESC;
+END$$
+DELIMITER ;
+
+-- Buscar gasto por ID
+DELIMITER $$
+CREATE PROCEDURE sp_buscar_gasto_por_id (
+    IN p_gas_id INT
+)
+BEGIN
+    SELECT *
+    FROM GASTO_MENSUAL
+    WHERE gas_id = p_gas_id;
+END$$
+DELIMITER ;
+
+-- Actualizar un gasto mensual
+DELIMITER $$
+CREATE PROCEDURE sp_actualizar_gasto (
+    IN p_gas_id INT,
+    IN p_descripcion TEXT,
+    IN p_fecha DATE,
+    IN p_monto DECIMAL(10,2),
+    IN p_tipo VARCHAR(50)
+)
+BEGIN
+    UPDATE GASTO_MENSUAL
+    SET
+        gas_descripcion = p_descripcion,
+        gas_fecha = p_fecha,
+        gas_monto = p_monto,
+        gas_tipo = p_tipo
+    WHERE gas_id = p_gas_id;
+END$$
+DELIMITER ;
+
+-- Eliminar un gasto mensual
+DELIMITER $$
+CREATE PROCEDURE sp_eliminar_gasto (
+    IN p_gas_id INT
+)
+BEGIN
+    DELETE FROM GASTO_MENSUAL
+    WHERE gas_id = p_gas_id;
+END$$
+DELIMITER ;
+
 -- Log CRUD stored procedures completion
 INSERT IGNORE INTO salondb.db_initialization_log (script_name, status) 
 VALUES ('04_stored_procedures_crud.sql', 'SUCCESS');
