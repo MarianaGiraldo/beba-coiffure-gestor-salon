@@ -107,7 +107,11 @@ CREATE TRIGGER trg_update_factura
 AFTER UPDATE ON FACTURA_SERVICIO
 FOR EACH ROW
 BEGIN
-  UPDATE DETALLE_FACTURA_SERVICIO SET fac_id = NEW.fac_id WHERE fac_id = OLD.fac_id;
+  IF OLD.fac_id <> NEW.fac_id THEN
+    UPDATE DETALLE_FACTURA_SERVICIO 
+    SET fac_id = NEW.fac_id 
+    WHERE fac_id = OLD.fac_id;
+  END IF;
 END;
 //
 
