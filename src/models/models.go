@@ -119,9 +119,9 @@ func (Purchase) TableName() string {
 
 // DetalleCompra represents purchase details table (matches database schema)
 type DetalleCompra struct {
-	ComID            uint    `json:"com_id" gorm:"primaryKey;column:com_id"`
-	ProdID           uint    `json:"prod_id" gorm:"primaryKey;column:prod_id"`
-	DecCantidad      int     `json:"dec_cantidad" gorm:"not null;column:dec_cantidad"`
+	ComID             uint    `json:"com_id" gorm:"primaryKey;column:com_id"`
+	ProdID            uint    `json:"prod_id" gorm:"primaryKey;column:prod_id"`
+	DecCantidad       int     `json:"dec_cantidad" gorm:"not null;column:dec_cantidad"`
 	DecPrecioUnitario float64 `json:"dec_precio_unitario" gorm:"not null;column:dec_precio_unitario"`
 }
 
@@ -131,15 +131,15 @@ func (DetalleCompra) TableName() string {
 
 // PurchaseWithDetails represents a complete purchase with its details
 type PurchaseWithDetails struct {
-	ComID          uint                `json:"com_id"`
-	CopFechaCompra time.Time           `json:"cop_fecha_compra"`
-	CopTotalCompra float64             `json:"cop_total_compra"`
-	CopMetodoPago  string              `json:"cop_metodo_pago"`
-	ProvID         uint                `json:"prov_id"`
-	GasID          uint                `json:"gas_id"`
-	Proveedor      string              `json:"proveedor"`
-	Productos      string              `json:"productos"`
-	Detalles       []DetalleCompra     `json:"detalles,omitempty"`
+	ComID          uint            `json:"com_id"`
+	CopFechaCompra time.Time       `json:"cop_fecha_compra"`
+	CopTotalCompra float64         `json:"cop_total_compra"`
+	CopMetodoPago  string          `json:"cop_metodo_pago"`
+	ProvID         uint            `json:"prov_id"`
+	GasID          uint            `json:"gas_id"`
+	Proveedor      string          `json:"proveedor"`
+	Productos      string          `json:"productos"`
+	Detalles       []DetalleCompra `json:"detalles,omitempty"`
 }
 
 // Payment represents employee salary payments (matches database schema)

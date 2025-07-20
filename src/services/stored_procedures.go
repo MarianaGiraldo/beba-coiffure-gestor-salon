@@ -237,54 +237,6 @@ func (s *DatabaseService) GetDashboardMetrics() (map[string]interface{}, error) 
 		metrics["productos_bajos"] = prodBajos.ProductosBajos
 	}
 
-	// Get total products
-	totalProd, err := s.GetTotalProductos()
-	if err != nil {
-		metrics["total_productos"] = 0
-	} else {
-		metrics["total_productos"] = totalProd.TotalProductos
-	}
-
-	// Get inventory value
-	valorInv, err := s.GetValorInventario()
-	if err != nil {
-		metrics["valor_inventario"] = 0.0
-	} else {
-		metrics["valor_inventario"] = valorInv.ValorTotal
-	}
-
-	// Get total services
-	totalServ, err := s.GetServiciosTotales()
-	if err != nil {
-		metrics["servicios_totales"] = 0
-	} else {
-		metrics["servicios_totales"] = totalServ.TotalServicios
-	}
-
-	// Get average service price
-	precioPromedio, err := s.GetPrecioPromedioServicios()
-	if err != nil {
-		metrics["precio_promedio_servicios"] = 0.0
-	} else {
-		metrics["precio_promedio_servicios"] = precioPromedio.PrecioPromedio
-	}
-
-	// Get premium service
-	servPremium, err := s.GetServicioPremium()
-	if err != nil {
-		metrics["servicio_premium"] = nil
-	} else {
-		metrics["servicio_premium"] = servPremium
-	}
-
-	// Get total suppliers
-	totalProv, err := s.GetTotalProveedores()
-	if err != nil {
-		metrics["total_proveedores"] = 0
-	} else {
-		metrics["total_proveedores"] = totalProv.TotalProveedores
-	}
-
 	return metrics, nil
 }
 

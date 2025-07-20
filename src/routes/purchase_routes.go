@@ -24,8 +24,8 @@ func SetupPurchaseRoutes(api *gin.RouterGroup, dbService *services.DatabaseServi
 	protectedPurchases.Use(middleware.AuthMiddleware())
 	{
 		// General purchase routes (accessible to authenticated users)
-		protectedPurchases.GET("", purchaseController.GetPurchases)     // Get all purchases
-		protectedPurchases.GET("/:id", purchaseController.GetPurchase)  // Get purchase by ID
+		protectedPurchases.GET("", purchaseController.GetPurchases)    // Get all purchases
+		protectedPurchases.GET("/:id", purchaseController.GetPurchase) // Get purchase by ID
 
 		// Admin only routes for purchase management
 		adminPurchases := protectedPurchases.Group("")
@@ -36,9 +36,9 @@ func SetupPurchaseRoutes(api *gin.RouterGroup, dbService *services.DatabaseServi
 			adminPurchases.DELETE("/:id", purchaseController.DeletePurchase) // Delete purchase
 
 			// Purchase detail management routes
-			adminPurchases.GET("/:id/details", purchaseController.GetPurchaseDetails)            // Get purchase details
-			adminPurchases.POST("/:id/details", purchaseController.AddPurchaseDetail)            // Add detail to purchase
-			adminPurchases.PUT("/:id/details/:prodId", purchaseController.UpdatePurchaseDetail)  // Update purchase detail
+			adminPurchases.GET("/:id/details", purchaseController.GetPurchaseDetails)              // Get purchase details
+			adminPurchases.POST("/:id/details", purchaseController.AddPurchaseDetail)              // Add detail to purchase
+			adminPurchases.PUT("/:id/details/:prodId", purchaseController.UpdatePurchaseDetail)    // Update purchase detail
 			adminPurchases.DELETE("/:id/details/:prodId", purchaseController.DeletePurchaseDetail) // Delete purchase detail
 		}
 

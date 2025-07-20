@@ -18,7 +18,7 @@ func SetupDashboardRoutes(api *gin.RouterGroup, dbService *services.DatabaseServ
 	protectedDashboard.Use(middleware.AuthMiddleware())
 	{
 		// Dashboard metrics endpoints
-		protectedDashboard.GET("/metrics", dashboardController.GetDashboardMetrics)         // All metrics
+		protectedDashboard.GET("", dashboardController.GetDashboardMetrics)         // All metrics
 		protectedDashboard.GET("/employees", dashboardController.GetEmployeesMetrics)       // Employee metrics
 		protectedDashboard.GET("/appointments", dashboardController.GetAppointmentsMetrics) // Appointment metrics
 		protectedDashboard.GET("/financial", dashboardController.GetFinancialMetrics)       // Financial metrics

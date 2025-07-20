@@ -33,16 +33,16 @@ func NewPurchaseManagementController(dbService *services.DatabaseService) *Purch
 }
 
 type PurchaseRequest struct {
-	CopFechaCompra string  `json:"cop_fecha_compra" binding:"required"`
-	CopMetodoPago  string  `json:"cop_metodo_pago" binding:"required"`
-	ProvID         uint    `json:"prov_id" binding:"required"`
-	GasID          uint    `json:"gas_id" binding:"required"`
+	CopFechaCompra string                  `json:"cop_fecha_compra" binding:"required"`
+	CopMetodoPago  string                  `json:"cop_metodo_pago" binding:"required"`
+	ProvID         uint                    `json:"prov_id" binding:"required"`
+	GasID          uint                    `json:"gas_id" binding:"required"`
 	Detalles       []PurchaseDetailRequest `json:"detalles" binding:"required,min=1"`
 }
 
 type PurchaseDetailRequest struct {
-	ProdID           uint    `json:"prod_id" binding:"required"`
-	DecCantidad      int     `json:"dec_cantidad" binding:"required,min=1"`
+	ProdID            uint    `json:"prod_id" binding:"required"`
+	DecCantidad       int     `json:"dec_cantidad" binding:"required,min=1"`
 	DecPrecioUnitario float64 `json:"dec_precio_unitario" binding:"required,min=0"`
 }
 

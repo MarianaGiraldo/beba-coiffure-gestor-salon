@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, TrendingUp, TrendingDown, Receipt } from "lucide-react";
+import { Plus, DollarSign, TrendingDown, Receipt, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ClientPayment {
@@ -35,81 +35,310 @@ interface EmployeePayment {
   pag_monto: number;
   pag_metodo: string;
   empleado: string;
+  emp_nombre?: string;
+  emp_apellido?: string;
+  emp_id?: number;
+}
+
+interface Expense {
+  gas_id: number;
+  gas_descripcion: string;
+  gas_fecha: string;
+  gas_monto: number;
+  gas_tipo: string;
 }
 
 const FinancialManagement = () => {
   const { toast } = useToast();
   
-  const [clientPayments, setClientPayments] = useState<ClientPayment[]>([
-    {
-      pag_cli_id: 1,
-      fecha: "2024-01-20",
-      monto: 80000,
-      metodo: "Efectivo",
-      servicio: "Coloración Completa",
-      cliente: "Ana Martínez"
-    },
-    {
-      pag_cli_id: 2,
-      fecha: "2024-01-20",
-      monto: 25000,
-      metodo: "Tarjeta",
-      servicio: "Corte de Cabello",
-      cliente: "Sofía López"
-    },
-    {
-      pag_cli_id: 3,
-      fecha: "2024-01-19",
-      monto: 45000,
-      metodo: "Nequi",
-      servicio: "Tratamiento Facial",
-      cliente: "Carmen Torres"
+  // API URL configuration
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  
+  // State management
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [employeePayments, setEmployeePayments] = useState<EmployeePayment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [newExpense, setNewExpense] = useState<Partial<Expense>>({});
+  const [newPayment, setNewPayment] = useState<Partial<EmployeePayment>>({});
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [isAddingPayment, setIsAddingPayment] = useState(false);
+
+  // Get authentication token from localStorage
+  const getAuthToken = () => {
+    return localStorage.getItem('authToken') || null;
+  };
+
+  // Load data when component mounts
+  useEffect(() => {
+    fetchExpenses();
+    fetchEmployeePayments();
+  }, []);
+
+  // Fetch expenses from API
+  const fetchExpenses = async () => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/expenses`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setExpenses(data.expenses || []);
+      } else {
+        throw new Error('Failed to fetch expenses');
+      }
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los gastos",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  const [purchases, setPurchases] = useState<Purchase[]>([
-    {
-      com_id: 1,
-      cop_fecha_compra: "2024-01-18",
-      cop_total_compra: 450000,
-      cop_metodo_pago: "Transferencia",
-      proveedor: "Distribuidora Beauty Pro",
-      productos: "Shampoo, Acondicionador, Tintes"
-    },
-    {
-      com_id: 2,
-      cop_fecha_compra: "2024-01-15",
-      cop_total_compra: 200000,
-      cop_metodo_pago: "Efectivo",
-      proveedor: "Suministros Estética",
-      productos: "Esmaltes, Lima de uñas"
+  // Fetch employee payments from API
+  const fetchEmployeePayments = async () => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/payments/with-employee`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Transform the data to match our interface
+        const payments = (data.payments || []).map((payment: any) => ({
+          pag_id: payment.pag_id,
+          pag_fecha: payment.pag_fecha,
+          pag_monto: payment.pag_monto,
+          pag_metodo: payment.pag_metodo,
+          empleado: payment.emp_nombre && payment.emp_apellido 
+            ? `${payment.emp_nombre} ${payment.emp_apellido}` 
+            : 'N/A',
+          emp_nombre: payment.emp_nombre,
+          emp_apellido: payment.emp_apellido
+        }));
+        setEmployeePayments(payments);
+      } else {
+        throw new Error('Failed to fetch employee payments');
+      }
+    } catch (error) {
+      console.error('Error fetching employee payments:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los pagos de empleados",
+        variant: "destructive"
+      });
     }
-  ]);
+  };
 
-  const [employeePayments, setEmployeePayments] = useState<EmployeePayment[]>([
-    {
-      pag_id: 1,
-      pag_fecha: "2024-01-15",
-      pag_monto: 1500000,
-      pag_metodo: "Transferencia",
-      empleado: "María González"
-    },
-    {
-      pag_id: 2,
-      pag_fecha: "2024-01-15",
-      pag_monto: 1200000,
-      pag_metodo: "Transferencia",
-      empleado: "Carlos Rodríguez"
+  // Create expense
+  const createExpense = async (expense: Partial<Expense>) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/expenses`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          gas_descripcion: expense.gas_descripcion,
+          gas_fecha: expense.gas_fecha || new Date().toISOString().split('T')[0],
+          gas_monto: expense.gas_monto,
+          gas_tipo: expense.gas_tipo,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchExpenses();
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create expense');
+      }
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo crear el gasto",
+        variant: "destructive"
+      });
+      return false;
     }
-  ]);
+  };
 
-  const [newClientPayment, setNewClientPayment] = useState<Partial<ClientPayment>>({});
-  const [newPurchase, setNewPurchase] = useState<Partial<Purchase>>({});
-  const [isAddingClientPayment, setIsAddingClientPayment] = useState(false);
-  const [isAddingPurchase, setIsAddingPurchase] = useState(false);
+  // Create payment
+  const createPayment = async (payment: Partial<EmployeePayment>) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
 
-  const handleAddClientPayment = () => {
-    if (!newClientPayment.monto || !newClientPayment.metodo || !newClientPayment.servicio || !newClientPayment.cliente) {
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/payments`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          pag_fecha: payment.pag_fecha || new Date().toISOString().split('T')[0],
+          pag_monto: payment.pag_monto,
+          pag_metodo: payment.pag_metodo,
+          gas_id: 1, // Default expense ID - might need to be configurable
+          emp_id: payment.emp_id || 1, // This should be selected from a dropdown
+        }),
+      });
+
+      if (response.ok) {
+        await fetchEmployeePayments();
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create payment');
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo crear el pago",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Delete expense
+  const deleteExpense = async (id: number) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/expenses/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (response.ok) {
+        await fetchExpenses();
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete expense');
+      }
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el gasto",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Delete payment
+  const deletePayment = async (id: number) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/payments/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (response.ok) {
+        await fetchEmployeePayments();
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete payment');
+      }
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el pago",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // Handler functions
+  const handleAddExpense = async () => {
+    if (!newExpense.gas_descripcion || !newExpense.gas_monto || !newExpense.gas_tipo) {
+      toast({
+        title: "Error",
+        description: "Por favor completa todos los campos del gasto",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newExpense.gas_monto <= 0) {
+      toast({
+        title: "Error",
+        description: "El monto debe ser mayor a 0",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const success = await createExpense(newExpense);
+    if (success) {
+      setNewExpense({});
+      setIsAddingExpense(false);
+      toast({
+        title: "Gasto registrado",
+        description: "El gasto ha sido registrado exitosamente"
+      });
+    }
+  };
+
+  const handleAddPayment = async () => {
+    if (!newPayment.pag_monto || !newPayment.pag_metodo) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos del pago",
@@ -118,66 +347,53 @@ const FinancialManagement = () => {
       return;
     }
 
-    const payment: ClientPayment = {
-      pag_cli_id: Math.max(...clientPayments.map(p => p.pag_cli_id), 0) + 1,
-      fecha: new Date().toISOString().split('T')[0],
-      monto: newClientPayment.monto || 0,
-      metodo: newClientPayment.metodo || "",
-      servicio: newClientPayment.servicio || "",
-      cliente: newClientPayment.cliente || ""
-    };
-
-    setClientPayments([...clientPayments, payment]);
-    setNewClientPayment({});
-    setIsAddingClientPayment(false);
-    toast({
-      title: "Pago registrado",
-      description: "El pago del cliente ha sido registrado exitosamente"
-    });
-  };
-
-  const handleAddPurchase = () => {
-    if (!newPurchase.cop_total_compra || !newPurchase.cop_metodo_pago || !newPurchase.proveedor) {
+    if (newPayment.pag_monto <= 0) {
       toast({
         title: "Error",
-        description: "Por favor completa todos los campos de la compra",
+        description: "El monto debe ser mayor a 0",
         variant: "destructive"
       });
       return;
     }
 
-    const purchase: Purchase = {
-      com_id: Math.max(...purchases.map(p => p.com_id), 0) + 1,
-      cop_fecha_compra: new Date().toISOString().split('T')[0],
-      cop_total_compra: newPurchase.cop_total_compra || 0,
-      cop_metodo_pago: newPurchase.cop_metodo_pago || "",
-      proveedor: newPurchase.proveedor || "",
-      productos: newPurchase.productos || ""
-    };
-
-    setPurchases([...purchases, purchase]);
-    setNewPurchase({});
-    setIsAddingPurchase(false);
-    toast({
-      title: "Compra registrada",
-      description: "La compra ha sido registrada exitosamente"
-    });
+    const success = await createPayment(newPayment);
+    if (success) {
+      setNewPayment({});
+      setIsAddingPayment(false);
+      toast({
+        title: "Pago registrado",
+        description: "El pago ha sido registrado exitosamente"
+      });
+    }
   };
 
-  const getTotalIncome = () => {
-    return clientPayments.reduce((total, payment) => total + payment.monto, 0);
+  const handleDeleteExpense = async (id: number) => {
+    const success = await deleteExpense(id);
+    if (success) {
+      toast({
+        title: "Gasto eliminado",
+        description: "El gasto ha sido eliminado exitosamente"
+      });
+    }
   };
 
-  const getTotalPurchases = () => {
-    return purchases.reduce((total, purchase) => total + purchase.cop_total_compra, 0);
+  const handleDeletePayment = async (id: number) => {
+    const success = await deletePayment(id);
+    if (success) {
+      toast({
+        title: "Pago eliminado",
+        description: "El pago ha sido eliminado exitosamente"
+      });
+    }
+  };
+
+  // Utility functions
+  const getTotalExpenses = () => {
+    return expenses.reduce((total, expense) => total + expense.gas_monto, 0);
   };
 
   const getTotalSalaries = () => {
     return employeePayments.reduce((total, payment) => total + payment.pag_monto, 0);
-  };
-
-  const getNetProfit = () => {
-    return getTotalIncome() - getTotalPurchases() - getTotalSalaries();
   };
 
   const getPaymentMethodColor = (method: string) => {
@@ -191,54 +407,36 @@ const FinancialManagement = () => {
     return colors[method] || "bg-gray-100 text-gray-700";
   };
 
-  const getCurrentMonthData = () => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    
-    const monthlyIncome = clientPayments
-      .filter(p => new Date(p.fecha).getMonth() === currentMonth && new Date(p.fecha).getFullYear() === currentYear)
-      .reduce((sum, p) => sum + p.monto, 0);
-    
-    const monthlyExpenses = purchases
-      .filter(p => new Date(p.cop_fecha_compra).getMonth() === currentMonth && new Date(p.cop_fecha_compra).getFullYear() === currentYear)
-      .reduce((sum, p) => sum + p.cop_total_compra, 0);
-
-    const monthlySalaries = employeePayments
-      .filter(p => new Date(p.pag_fecha).getMonth() === currentMonth && new Date(p.pag_fecha).getFullYear() === currentYear)
-      .reduce((sum, p) => sum + p.pag_monto, 0);
-
-    return {
-      income: monthlyIncome,
-      expenses: monthlyExpenses,
-      salaries: monthlySalaries,
-      profit: monthlyIncome - monthlyExpenses - monthlySalaries
-    };
-  };
-
-  const monthlyData = getCurrentMonthData();
-
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
+      {/* Header with refresh button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-gray-900">Gestión Financiera</h2>
+        <Button 
+          onClick={() => {
+            fetchExpenses();
+            fetchEmployeePayments();
+          }} 
+          variant="outline" 
+          size="sm"
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          {loading ? "Actualizando..." : "Actualizar"}
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos del Mes</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">${monthlyData.income.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">pagos de clientes</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gastos en Productos</CardTitle>
+            <CardTitle className="text-sm font-medium">Gastos Generales</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">${monthlyData.expenses.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">compras del mes</p>
+            <div className="text-2xl font-bold text-red-600">${getTotalExpenses().toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Total de gastos registrados</p>
           </CardContent>
         </Card>
 
@@ -248,154 +446,151 @@ const FinancialManagement = () => {
             <DollarSign className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">${monthlyData.salaries.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">pagos de empleados</p>
+            <div className="text-2xl font-bold text-blue-600">${getTotalSalaries().toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Pagos a empleados</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Utilidad Neta</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-medium">Total Egresos</CardTitle>
+            <Receipt className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${monthlyData.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${monthlyData.profit.toLocaleString()}
+            <div className="text-2xl font-bold text-purple-600">
+              ${(getTotalExpenses() + getTotalSalaries()).toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">ganancia del mes</p>
+            <p className="text-xs text-muted-foreground">Gastos + Salarios</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="income" className="w-full">
+      <Tabs defaultValue="expenses" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="purchases">Gastos en Productos</TabsTrigger>
+          <TabsTrigger value="expenses">Gastos Generales</TabsTrigger>
           <TabsTrigger value="salaries">Pagos de Salarios</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="income" className="space-y-4">
+        <TabsContent value="expenses" className="space-y-4">
           <Card>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Servicio</TableHead>
-                    <TableHead>Monto</TableHead>
-                    <TableHead>Método</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {clientPayments.map((payment) => (
-                    <TableRow key={payment.pag_cli_id}>
-                      <TableCell>{payment.fecha}</TableCell>
-                      <TableCell>{payment.cliente}</TableCell>
-                      <TableCell>{payment.servicio}</TableCell>
-                      <TableCell>${payment.monto.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge className={getPaymentMethodColor(payment.metodo)}>
-                          {payment.metodo}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="purchases" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Compras de Productos</h3>
-            <Dialog open={isAddingPurchase} onOpenChange={setIsAddingPurchase}>
-              <DialogTrigger asChild>
-                <Button className="bg-red-600 hover:bg-red-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Registrar Compra
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Registrar Compra de Productos</DialogTitle>
-                  <DialogDescription>
-                    Registra una nueva compra a proveedor
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div>
-                    <Label htmlFor="proveedor">Proveedor</Label>
-                    <Input
-                      id="proveedor"
-                      value={newPurchase.proveedor || ""}
-                      onChange={(e) => setNewPurchase({...newPurchase, proveedor: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="productos">Productos</Label>
-                    <Input
-                      id="productos"
-                      value={newPurchase.productos || ""}
-                      onChange={(e) => setNewPurchase({...newPurchase, productos: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="total">Total de la Compra</Label>
-                    <Input
-                      id="total"
-                      type="number"
-                      value={newPurchase.cop_total_compra || ""}
-                      onChange={(e) => setNewPurchase({...newPurchase, cop_total_compra: parseFloat(e.target.value)})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="metodo-pago">Método de Pago</Label>
-                    <select
-                      className="w-full p-2 border rounded-md"
-                      value={newPurchase.cop_metodo_pago || ""}
-                      onChange={(e) => setNewPurchase({...newPurchase, cop_metodo_pago: e.target.value})}
-                    >
-                      <option value="">Seleccionar método</option>
-                      <option value="Efectivo">Efectivo</option>
-                      <option value="Transferencia">Transferencia</option>
-                      <option value="Tarjeta">Tarjeta</option>
-                    </select>
-                  </div>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Gastos Generales</CardTitle>
+                  <CardDescription>Registro de gastos y egresos del salón</CardDescription>
                 </div>
-                <DialogFooter>
-                  <Button onClick={handleAddPurchase}>Registrar Compra</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <Card>
+                <Dialog open={isAddingExpense} onOpenChange={setIsAddingExpense}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nuevo Gasto
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Registrar Nuevo Gasto</DialogTitle>
+                      <DialogDescription>
+                        Ingresa los detalles del gasto a registrar.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="descripcion" className="text-right">
+                          Descripción
+                        </Label>
+                        <Input
+                          id="descripcion"
+                          placeholder="Descripción del gasto"
+                          className="col-span-3"
+                          value={newExpense.gas_descripcion || ""}
+                          onChange={(e) => setNewExpense({...newExpense, gas_descripcion: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="monto" className="text-right">
+                          Monto
+                        </Label>
+                        <Input
+                          id="monto"
+                          type="number"
+                          placeholder="0"
+                          className="col-span-3"
+                          value={newExpense.gas_monto || ""}
+                          onChange={(e) => setNewExpense({...newExpense, gas_monto: parseFloat(e.target.value)})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="tipo" className="text-right">
+                          Tipo
+                        </Label>
+                        <Input
+                          id="tipo"
+                          placeholder="Tipo de gasto"
+                          className="col-span-3"
+                          value={newExpense.gas_tipo || ""}
+                          onChange={(e) => setNewExpense({...newExpense, gas_tipo: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="fecha" className="text-right">
+                          Fecha
+                        </Label>
+                        <Input
+                          id="fecha"
+                          type="date"
+                          className="col-span-3"
+                          value={newExpense.gas_fecha || new Date().toISOString().split('T')[0]}
+                          onChange={(e) => setNewExpense({...newExpense, gas_fecha: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleAddExpense}>Registrar Gasto</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Fecha</TableHead>
-                    <TableHead>Proveedor</TableHead>
-                    <TableHead>Productos</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Método</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Monto</TableHead>
+                    <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {purchases.map((purchase) => (
-                    <TableRow key={purchase.com_id}>
-                      <TableCell>{purchase.cop_fecha_compra}</TableCell>
-                      <TableCell>{purchase.proveedor}</TableCell>
-                      <TableCell>{purchase.productos}</TableCell>
-                      <TableCell>${purchase.cop_total_compra.toLocaleString()}</TableCell>
+                  {expenses.map((expense) => (
+                    <TableRow key={expense.gas_id}>
+                      <TableCell>{expense.gas_fecha}</TableCell>
+                      <TableCell>{expense.gas_descripcion}</TableCell>
                       <TableCell>
-                        <Badge className={getPaymentMethodColor(purchase.cop_metodo_pago)}>
-                          {purchase.cop_metodo_pago}
+                        <Badge variant="outline" className="bg-gray-100 text-gray-700">
+                          {expense.gas_tipo}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">${expense.gas_monto.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteExpense(expense.gas_id)}
+                        >
+                          Eliminar
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {expenses.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        {loading ? "Cargando gastos..." : "No hay gastos registrados"}
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -403,11 +598,86 @@ const FinancialManagement = () => {
         </TabsContent>
 
         <TabsContent value="salaries" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Pagos de Salarios</h3>
-          </div>
-
           <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Pagos de Salarios</CardTitle>
+                  <CardDescription>Registro de pagos a empleados</CardDescription>
+                </div>
+                <Dialog open={isAddingPayment} onOpenChange={setIsAddingPayment}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nuevo Pago
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Registrar Pago de Salario</DialogTitle>
+                      <DialogDescription>
+                        Ingresa los detalles del pago a empleado.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="monto-pago" className="text-right">
+                          Monto
+                        </Label>
+                        <Input
+                          id="monto-pago"
+                          type="number"
+                          placeholder="0"
+                          className="col-span-3"
+                          value={newPayment.pag_monto || ""}
+                          onChange={(e) => setNewPayment({...newPayment, pag_monto: parseFloat(e.target.value)})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="metodo-pago" className="text-right">
+                          Método
+                        </Label>
+                        <Input
+                          id="metodo-pago"
+                          placeholder="Método de pago"
+                          className="col-span-3"
+                          value={newPayment.pag_metodo || ""}
+                          onChange={(e) => setNewPayment({...newPayment, pag_metodo: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="fecha-pago" className="text-right">
+                          Fecha
+                        </Label>
+                        <Input
+                          id="fecha-pago"
+                          type="date"
+                          className="col-span-3"
+                          value={newPayment.pag_fecha || new Date().toISOString().split('T')[0]}
+                          onChange={(e) => setNewPayment({...newPayment, pag_fecha: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="emp-id" className="text-right">
+                          ID Empleado
+                        </Label>
+                        <Input
+                          id="emp-id"
+                          type="number"
+                          placeholder="ID del empleado"
+                          className="col-span-3"
+                          value={newPayment.emp_id || ""}
+                          onChange={(e) => setNewPayment({...newPayment, emp_id: parseInt(e.target.value)})}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={handleAddPayment}>Registrar Pago</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
@@ -416,6 +686,7 @@ const FinancialManagement = () => {
                     <TableHead>Empleado</TableHead>
                     <TableHead>Monto</TableHead>
                     <TableHead>Método</TableHead>
+                    <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -423,14 +694,30 @@ const FinancialManagement = () => {
                     <TableRow key={payment.pag_id}>
                       <TableCell>{payment.pag_fecha}</TableCell>
                       <TableCell>{payment.empleado}</TableCell>
-                      <TableCell>${payment.pag_monto.toLocaleString()}</TableCell>
+                      <TableCell className="font-medium">${payment.pag_monto.toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge className={getPaymentMethodColor(payment.pag_metodo)}>
                           {payment.pag_metodo}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeletePayment(payment.pag_id)}
+                        >
+                          Eliminar
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
+                  {employeePayments.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-4">
+                        {loading ? "Cargando pagos..." : "No hay pagos registrados"}
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
