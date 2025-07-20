@@ -50,8 +50,14 @@ func SetupRoutes(r *gin.Engine) {
 		// Setup service routes
 		SetupServiceRoutes(api, dbService)
 
+		// Setup supplier routes
+		SetupSupplierRoutes(api, dbService)
+
 		// Setup appointment routes
 		SetupAppointmentRoutes(api, dbService)
+
+		// Setup payment routes
+		SetupPaymentRoutes(api, dbService)
 	}
 
 	// Protected routes

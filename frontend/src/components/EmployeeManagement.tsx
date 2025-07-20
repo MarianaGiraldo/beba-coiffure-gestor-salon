@@ -27,6 +27,9 @@ interface Payment {
   pag_monto: number;
   pag_metodo: string;
   emp_id: number;
+  emp_nombre?: string;
+  emp_apellido?: string;
+  emp_puesto?: string;
 }
 
 const EmployeeManagement = () => {
@@ -35,15 +38,7 @@ const EmployeeManagement = () => {
   // Fallback for local development outside Docker
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([
-    {
-      pag_id: 1,
-      pag_fecha: "2024-01-15",
-      pag_monto: 1500000,
-      pag_metodo: "Transferencia",
-      emp_id: 1
-    }
-  ]);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
   const [newEmployee, setNewEmployee] = useState<Partial<Employee>>({});
   const [newPayment, setNewPayment] = useState<Partial<Payment>>({});
@@ -53,9 +48,10 @@ const EmployeeManagement = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Load employees when component mounts
+  // Load employees and payments when component mounts
   useEffect(() => {
     fetchEmployees();
+    fetchPayments();
   }, []);
 
   // Get authentication token from localStorage
@@ -221,6 +217,115 @@ const EmployeeManagement = () => {
     }
   };
 
+  // API function to fetch payments with employee information
+  const fetchPayments = async () => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/payments/with-employee`, {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPayments(data.payments || []);
+      } else {
+        throw new Error('Failed to fetch payments');
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los pagos",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // API function to create payment
+  const createPayment = async (payment: Partial<Payment>) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/payments`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          pag_fecha: payment.pag_fecha || new Date().toISOString().split('T')[0],
+          pag_monto: payment.pag_monto,
+          pag_metodo: payment.pag_metodo,
+          gas_id: 1, // Default expense ID - this might need to be configurable
+          emp_id: payment.emp_id,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchPayments(); // Refresh the payments list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create payment');
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo crear el pago",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  // API function to delete payment
+  const deletePayment = async (id: number) => {
+    try {
+      const token = getAuthToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${apiUrl}/api/payments/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (response.ok) {
+        await fetchPayments(); // Refresh the payments list
+        return true;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete payment');
+      }
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "No se pudo eliminar el pago",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const handleAddEmployee = async () => {
     if (!newEmployee.emp_nombre || !newEmployee.emp_apellido || !newEmployee.emp_puesto || !newEmployee.emp_correo || !newEmployee.emp_password) {
       toast({
@@ -251,7 +356,7 @@ const EmployeeManagement = () => {
     }
   };
 
-  const handleAddPayment = () => {
+  const handleAddPayment = async () => {
     if (!newPayment.emp_id || !newPayment.pag_monto || !newPayment.pag_metodo) {
       toast({
         title: "Error",
@@ -261,21 +366,24 @@ const EmployeeManagement = () => {
       return;
     }
 
-    const payment: Payment = {
-      pag_id: Math.max(...payments.map(p => p.pag_id), 0) + 1,
-      pag_fecha: new Date().toISOString().split('T')[0],
-      pag_monto: newPayment.pag_monto || 0,
-      pag_metodo: newPayment.pag_metodo || "",
-      emp_id: newPayment.emp_id || 0
-    };
+    if (newPayment.pag_monto <= 0) {
+      toast({
+        title: "Error",
+        description: "El monto del pago debe ser mayor a 0",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    setPayments([...payments, payment]);
-    setNewPayment({});
-    setIsAddingPayment(false);
-    toast({
-      title: "Pago registrado",
-      description: "El pago de salario ha sido registrado exitosamente"
-    });
+    const success = await createPayment(newPayment);
+    if (success) {
+      setNewPayment({});
+      setIsAddingPayment(false);
+      toast({
+        title: "Pago registrado",
+        description: "El pago de salario ha sido registrado exitosamente"
+      });
+    }
   };
 
   const handleUpdateEmployee = async () => {
@@ -321,8 +429,25 @@ const EmployeeManagement = () => {
     }
   };
 
-  const getEmployeeName = (empId: number) => {
-    const employee = employees.find(e => e.emp_id === empId);
+  const handleDeletePayment = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este pago?')) {
+      const success = await deletePayment(id);
+      if (success) {
+        toast({
+          title: "Pago eliminado",
+          description: "El pago ha sido eliminado exitosamente"
+        });
+      }
+    }
+  };
+
+  const getEmployeeName = (payment: Payment) => {
+    // If payment has employee name, use it
+    if (payment.emp_nombre && payment.emp_apellido) {
+      return `${payment.emp_nombre} ${payment.emp_apellido}`;
+    }
+    // Fallback to searching in employees array
+    const employee = employees.find(e => e.emp_id === payment.emp_id);
     return employee ? `${employee.emp_nombre} ${employee.emp_apellido}` : "Empleado desconocido";
   };
 
@@ -570,16 +695,26 @@ const EmployeeManagement = () => {
                   <TableHead>Fecha</TableHead>
                   <TableHead>Monto</TableHead>
                   <TableHead>Método</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payments.map((payment) => (
                   <TableRow key={payment.pag_id}>
-                    <TableCell>{getEmployeeName(payment.emp_id)}</TableCell>
+                    <TableCell>{getEmployeeName(payment)}</TableCell>
                     <TableCell>{payment.pag_fecha}</TableCell>
                     <TableCell>${payment.pag_monto.toLocaleString()}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{payment.pag_metodo}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeletePayment(payment.pag_id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
