@@ -13,9 +13,9 @@ func SetupDashboardRoutes(api *gin.RouterGroup, dbService *services.DatabaseServ
 	// Initialize dashboard controller
 	dashboardController := controllers.NewDashboardController(dbService)
 
-	// Protected dashboard routes (authenticated users only)
+	// Protected dashboard routes (authenticated admins or employees only)
 	protectedDashboard := api.Group("/dashboard")
-	protectedDashboard.Use(middleware.AuthMiddleware())
+	protectedDashboard.Use(middleware.AuthMiddleware(), middleware.EmployeeOrAdminMiddleware())
 	{
 		// Dashboard metrics endpoints
 		protectedDashboard.GET("", dashboardController.GetDashboardMetrics)         // All metrics

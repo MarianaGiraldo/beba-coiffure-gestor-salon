@@ -340,43 +340,6 @@ func (s *DatabaseService) CrearUsuarioConRolDirecto(username, password, role str
 	return nil
 }
 
-// CrearUsuarioSistemaConRol creates a user in the USUARIO_SISTEMA table only (not MySQL users)
-// This is useful when you only need application-level users without MySQL database users
-func (s *DatabaseService) CrearUsuarioSistemaConRol(username, password, role string, empID, cliID *uint) error {
-	// Validate the role
-	if role != "admin" && role != "empleado" && role != "cliente" {
-		return fmt.Errorf("rol no válido. Use: admin, empleado o cliente")
-	}
-
-	// Validate that either emp_id or cli_id is provided based on role
-	if role == "empleado" && empID == nil {
-		return fmt.Errorf("emp_id es requerido para el rol empleado")
-	}
-	if role == "cliente" && cliID == nil {
-		return fmt.Errorf("cli_id es requerido para el rol cliente")
-	}
-
-	// Check if username already exists
-	var existingUser models.UsuarioSistema
-	if err := s.DB.Where("usu_nombre_usuario = ?", username).First(&existingUser).Error; err == nil {
-		return fmt.Errorf("el nombre de usuario ya existe")
-	}
-
-	// Create user in USUARIO_SISTEMA table
-	user := models.UsuarioSistema{
-		UsuNombreUsuario: username,
-		UsuContrasena:    password,
-		UsuRol:           role,
-		EmpID:            empID,
-		CliID:            cliID,
-	}
-
-	if err := s.DB.Create(&user).Error; err != nil {
-		return fmt.Errorf("error creating user in USUARIO_SISTEMA: %v", err)
-	}
-
-	return nil
-}
 
 func (s *DatabaseService) ObtenerDatosUsuario(username, role string) (map[string]interface{}, error) {
 	var result map[string]interface{}
@@ -576,6 +539,12 @@ func (s *DatabaseService) EliminarCita(citID uint) error {
 	return s.DB.Exec("CALL sp_eliminar_cita(?)", citID).Error
 }
 
+func (s *DatabaseService) VerCitasCliente(cliID uint) ([]models.CitaConDetalles, error) {
+	var citas []models.CitaConDetalles
+	err := s.DB.Raw("CALL sp_ver_citas_cliente(?)", cliID).Scan(&citas).Error
+	return citas, err
+}
+
 // ============= SERVICE PROCEDURES =============
 
 func (s *DatabaseService) InsertarServicio(nombre, descripcion, categoria string, precioUnitario float64, duracionEstimada int) error {
@@ -691,6 +660,12 @@ func (s *DatabaseService) ActualizarDetalleFactura(facID, serID uint) error {
 
 func (s *DatabaseService) EliminarDetalleFactura(facID uint) error {
 	return s.DB.Exec("CALL sp_eliminar_detalle_factura(?)", facID).Error
+}
+
+func (s *DatabaseService) ListarFacturasCliente(cliID uint) ([]models.InvoiceDetailResponse, error) {
+	var facturas []models.InvoiceDetailResponse
+	err := s.DB.Raw("CALL sp_listar_facturas_cliente(?)", cliID).Scan(&facturas).Error
+	return facturas, err
 }
 
 // ============= PURCHASE PROCEDURES =============

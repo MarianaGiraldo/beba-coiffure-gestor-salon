@@ -23,13 +23,15 @@ func SetupAppointmentRoutes(api *gin.RouterGroup, dbService *services.DatabaseSe
 	protectedAppointments := api.Group("/appointments")
 	protectedAppointments.Use(middleware.AuthMiddleware())
 	{
+		// Routes accessible by all authenticated users (for creating appointments)
+		protectedAppointments.POST("", appointmentController.CreateAppointment) // Create appointment (clients can book their own)
+
 		// Admin and employee routes for appointment management
 		adminAppointments := protectedAppointments.Group("")
-		adminAppointments.Use(middleware.AdminOnlyMiddleware())
+		adminAppointments.Use(middleware.EmployeeOrAdminMiddleware())
 		{
 			adminAppointments.GET("", appointmentController.GetAppointments)                            // Get all appointments
 			adminAppointments.GET("/:id", appointmentController.GetAppointment)                         // Get appointment by ID
-			adminAppointments.POST("", appointmentController.CreateAppointment)                         // Create appointment
 			adminAppointments.PUT("/:id", appointmentController.UpdateAppointment)                      // Update appointment
 			adminAppointments.DELETE("/:id", appointmentController.DeleteAppointment)                   // Delete appointment
 			adminAppointments.GET("/employee/:emp_id", appointmentController.GetAppointmentsByEmployee) // Get appointments by employee
@@ -37,15 +39,12 @@ func SetupAppointmentRoutes(api *gin.RouterGroup, dbService *services.DatabaseSe
 			adminAppointments.GET("/date/:date", appointmentController.GetAppointmentsByDate)           // Get appointments by date (YYYY-MM-DD)
 		}
 
-		// Client routes (for their own appointments) - Future implementation
-		// clientAppointments := protectedAppointments.Group("/my")
-		// {
-		//     // These routes will be accessible to clients for their own appointments
-		//     // clientAppointments.GET("", appointmentController.GetMyAppointments)      // Get client's own appointments
-		//     // clientAppointments.POST("", appointmentController.BookAppointment)      // Book new appointment
-		//     // clientAppointments.PUT("/:id", appointmentController.UpdateMyAppointment) // Update own appointment
-		//     // clientAppointments.DELETE("/:id", appointmentController.CancelMyAppointment) // Cancel own appointment
-		// }
+		// Client routes (for their own appointments)
+		clientAppointments := protectedAppointments.Group("/my")
+		clientAppointments.Use(middleware.ClientOnlyMiddleware())
+		{
+			clientAppointments.GET("", appointmentController.GetMyAppointments) // Get client's own appointments
+		}
 
 		// Employee routes (for their assigned appointments) - Future implementation
 		// employeeAppointments := protectedAppointments.Group("/employee")

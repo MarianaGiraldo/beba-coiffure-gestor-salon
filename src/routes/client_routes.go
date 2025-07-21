@@ -25,19 +25,19 @@ func SetupClientRoutes(api *gin.RouterGroup, dbService *services.DatabaseService
 		adminClients := protectedClients.Group("")
 		adminClients.Use(middleware.AdminOnlyMiddleware())
 		{
-			adminClients.GET("", clientController.GetClients)         // Get all clients
-			adminClients.POST("", clientController.CreateClient)      // Create client (admin)
+			adminClients.GET("", clientController.GetClients)          // Get all clients
+			adminClients.POST("", clientController.CreateClient)       // Create client (admin)
 			adminClients.PUT("/:id", clientController.UpdateClient)    // Update client
 			adminClients.DELETE("/:id", clientController.DeleteClient) // Delete client
 		}
 
-		// Client profile routes (for authenticated clients) - TODO: Implement
-		// profileClients := protectedClients.Group("/profile")
-		// {
-		//     // These routes will be accessible to the client themselves
-		//     // profileClients.GET("/", clientController.GetProfile)     // Get own profile
-		//     // profileClients.PUT("/", clientController.UpdateProfile)  // Update own profile
-		//     // profileClients.DELETE("/", clientController.DeleteProfile) // Delete own account
-		// }
+		// Client profile routes (for authenticated clients)
+		profileClients := protectedClients.Group("/profile")
+		profileClients.Use(middleware.ClientOnlyMiddleware())
+		{
+			// These routes will be accessible to the client themselves
+			profileClients.GET("", clientController.GetProfile)    // Get own profile
+			profileClients.PUT("", clientController.UpdateProfile) // Update own profile
+		}
 	}
 }

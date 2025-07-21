@@ -24,13 +24,13 @@ func SetupExpenseRoutes(api *gin.RouterGroup, dbService *services.DatabaseServic
 	protectedExpenses.Use(middleware.AuthMiddleware())
 	{
 		// General expense routes (accessible to authenticated users)
-		protectedExpenses.GET("", expenseController.GetExpenses)    // Get all expenses
-		protectedExpenses.GET("/:id", expenseController.GetExpense) // Get expense by ID
-
+		
 		// Admin only routes for expense management
 		adminExpenses := protectedExpenses.Group("")
-		adminExpenses.Use(middleware.AdminOnlyMiddleware())
+		adminExpenses.Use(middleware.EmployeeOrAdminMiddleware())
 		{
+			protectedExpenses.GET("", expenseController.GetExpenses)    // Get all expenses
+			protectedExpenses.GET("/:id", expenseController.GetExpense) // Get expense by ID
 			adminExpenses.POST("", expenseController.CreateExpense)       // Create expense
 			adminExpenses.PUT("/:id", expenseController.UpdateExpense)    // Update expense
 			adminExpenses.DELETE("/:id", expenseController.DeleteExpense) // Delete expense

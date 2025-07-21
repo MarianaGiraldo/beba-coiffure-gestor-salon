@@ -19,7 +19,14 @@ interface Service {
   ser_duracion_estimada: number; // in minutes
 }
 
-const ServiceManagement = () => {
+interface ServiceManagementProps {
+  currentUser?: {
+    userType: string;
+    email: string;
+  } | null;
+}
+
+const ServiceManagement = ({ currentUser }: ServiceManagementProps) => {
   const { toast } = useToast();
   // API URL is configured through Docker environment variables
   // Fallback for local development outside Docker
@@ -290,6 +297,10 @@ const ServiceManagement = () => {
     );
   };
 
+  const isClientUser = () => {
+    return currentUser?.userType === 'cliente';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -297,13 +308,14 @@ const ServiceManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Gestión de Servicios</h2>
           <p className="text-gray-600">Administra los servicios del salón</p>
         </div>
-        <Dialog open={isAddingService} onOpenChange={setIsAddingService}>
-          <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Servicio
-            </Button>
-          </DialogTrigger>
+        {!isClientUser() && (
+          <Dialog open={isAddingService} onOpenChange={setIsAddingService}>
+            <DialogTrigger asChild>
+              <Button className="bg-pink-600 hover:bg-pink-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Servicio
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Servicio</DialogTitle>
@@ -369,6 +381,7 @@ const ServiceManagement = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -431,7 +444,7 @@ const ServiceManagement = () => {
                       <TableHead>Descripción</TableHead>
                       <TableHead>Duración</TableHead>
                       <TableHead>Precio</TableHead>
-                      <TableHead>Acciones</TableHead>
+                      {!isClientUser() && <TableHead>Acciones</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -451,24 +464,26 @@ const ServiceManagement = () => {
                         <TableCell>
                           <div className="font-medium">${service.ser_precio_unitario.toLocaleString()}</div>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setEditingService(service)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDeleteService(service.ser_id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        {!isClientUser() && (
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingService(service)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteService(service.ser_id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -479,7 +494,7 @@ const ServiceManagement = () => {
         })}
       </div>
 
-      {editingService && (
+      {editingService && !isClientUser() && (
         <Dialog open={!!editingService} onOpenChange={() => setEditingService(null)}>
           <DialogContent>
             <DialogHeader>

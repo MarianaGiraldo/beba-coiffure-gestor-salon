@@ -51,5 +51,12 @@ func SetupInvoiceRoutes(api *gin.RouterGroup, dbService *services.DatabaseServic
 			employeeInvoices.GET("/:id/details", invoiceController.GetInvoiceDetails)     // View invoice details
 			employeeInvoices.GET("/details", invoiceController.GetAllInvoicesWithDetails) // View all invoices with details
 		}
+
+		// Client routes (only their own invoices, read-only)
+		clientInvoices := protectedInvoices.Group("/client")
+		clientInvoices.Use(middleware.ClientOnlyMiddleware())
+		{
+			clientInvoices.GET("/my-invoices", invoiceController.GetMyInvoices) // Get client's own invoices only
+		}
 	}
 }

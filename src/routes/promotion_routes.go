@@ -17,11 +17,11 @@ func SetupPromotionRoutes(api *gin.RouterGroup, dbService *services.DatabaseServ
 	protectedPromotions := api.Group("/promotions")
 	protectedPromotions.Use(middleware.AuthMiddleware())
 	{
+		protectedPromotions.GET("", promotionController.GetPromotions)          // Get all promotions
 		// Admin only routes for promotion management
 		adminPromotions := protectedPromotions.Group("")
 		adminPromotions.Use(middleware.AdminOnlyMiddleware())
 		{
-			adminPromotions.GET("", promotionController.GetPromotions)          // Get all promotions
 			adminPromotions.GET("/:id", promotionController.GetPromotionByID)   // Get promotion by ID
 			adminPromotions.POST("", promotionController.CreatePromotion)       // Create promotion
 			adminPromotions.PUT("/:id", promotionController.UpdatePromotion)    // Update promotion

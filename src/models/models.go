@@ -264,6 +264,22 @@ func (Cita) TableName() string {
 	return "CITA"
 }
 
+// CitaConDetalles represents appointments with employee and service details
+type CitaConDetalles struct {
+	CitID             uint    `json:"cit_id" gorm:"column:cit_id"`
+	CitFecha          string  `json:"cit_fecha" gorm:"column:cit_fecha"`
+	CitHora           string  `json:"cit_hora" gorm:"column:cit_hora"`
+	EmpID             uint    `json:"emp_id" gorm:"column:emp_id"`
+	SerID             uint    `json:"ser_id" gorm:"column:ser_id"`
+	CliID             uint    `json:"cli_id" gorm:"column:cli_id"`
+	EmpNombre         string  `json:"emp_nombre" gorm:"column:emp_nombre"`
+	EmpApellido       string  `json:"emp_apellido" gorm:"column:emp_apellido"`
+	EmpPuesto         string  `json:"emp_puesto" gorm:"column:emp_puesto"`
+	SerNombre         string  `json:"ser_nombre" gorm:"column:ser_nombre"`
+	SerDescripcion    string  `json:"ser_descripcion" gorm:"column:ser_descripcion"`
+	SerPrecioUnitario float64 `json:"ser_precio_unitario" gorm:"column:ser_precio_unitario"`
+}
+
 // FacturaServicio represents service invoices table (matches database schema exactly)
 type FacturaServicio struct {
 	FacID    uint      `json:"fac_id" gorm:"primaryKey;autoIncrement;column:fac_id"`
@@ -285,6 +301,17 @@ type DetalleFacturaServicio struct {
 
 func (DetalleFacturaServicio) TableName() string {
 	return "DETALLE_FACTURA_SERVICIO"
+}
+
+// InvoiceDetailResponse represents the complete invoice with details for client queries
+type InvoiceDetailResponse struct {
+	FacID     uint    `json:"fac_id" gorm:"column:fac_id"`
+	FacTotal  float64 `json:"fac_total" gorm:"column:fac_total"`
+	FacFecha  string  `json:"fac_fecha" gorm:"column:fac_fecha"`
+	FacHora   string  `json:"fac_hora" gorm:"column:fac_hora"`
+	CliID     uint    `json:"cli_id" gorm:"column:cli_id"`
+	CliNombre string  `json:"cli_nombre" gorm:"column:cli_nombre"`
+	Servicios string  `json:"servicios" gorm:"column:servicios"`
 }
 
 // HistorialCita represents appointment history table (matches database schema exactly)

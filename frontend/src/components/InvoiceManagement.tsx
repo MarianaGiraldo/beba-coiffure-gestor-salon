@@ -40,11 +40,23 @@ interface CreateInvoiceRequest {
   servicios: number[];
 }
 
-const InvoiceManagement = () => {
+interface InvoiceManagementProps {
+  currentUser?: {
+    userType: string;
+    [key: string]: any;
+  };
+}
+
+const InvoiceManagement = ({ currentUser }: InvoiceManagementProps) => {
   const { toast } = useToast();
   // API URL is configured through Docker environment variables
   // Fallback for local development outside Docker
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+  // Helper function to check if user is a client
+  const isClientUser = () => {
+    return currentUser?.userType === 'cliente';
+  };
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -76,7 +88,13 @@ const InvoiceManagement = () => {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      const response = await fetch(`${apiUrl}/api/invoices/details`, {
+
+      // Use different endpoint for client users
+      const endpoint = isClientUser() 
+        ? `${apiUrl}/api/invoices/client/my-invoices`
+        : `${apiUrl}/api/invoices/details`;
+
+      const response = await fetch(endpoint, {
         headers
       });
       const data = await response.json();
@@ -154,8 +172,11 @@ const InvoiceManagement = () => {
 
   useEffect(() => {
     fetchInvoices();
-    fetchClients();
-    fetchServices();
+    // Only fetch clients and services for non-client users who can create invoices
+    if (!isClientUser()) {
+      fetchClients();
+      fetchServices();
+    }
   }, []);
 
   const handleAddInvoice = async () => {
@@ -287,13 +308,14 @@ const InvoiceManagement = () => {
           <h2 className="text-2xl font-bold">Gestión de Facturas</h2>
           <p className="text-muted-foreground">Administra las facturas de servicios</p>
         </div>
-        <Dialog open={isAddingInvoice} onOpenChange={setIsAddingInvoice}>
-          <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Factura
-            </Button>
-          </DialogTrigger>
+        {!isClientUser() && (
+          <Dialog open={isAddingInvoice} onOpenChange={setIsAddingInvoice}>
+            <DialogTrigger asChild>
+              <Button className="bg-pink-600 hover:bg-pink-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Factura
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Crear Nueva Factura</DialogTitle>
@@ -392,6 +414,7 @@ const InvoiceManagement = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -452,7 +475,7 @@ const InvoiceManagement = () => {
                 <TableHead>Hora</TableHead>
                 <TableHead>Servicios</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Acciones</TableHead>
+                {!isClientUser() && <TableHead>Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -468,20 +491,22 @@ const InvoiceManagement = () => {
                   <TableCell className="font-bold text-green-600">
                     ${invoice.fac_total.toLocaleString()}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      {/* <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button> */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteInvoice(invoice.fac_id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {!isClientUser() && (
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {/* <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button> */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteInvoice(invoice.fac_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

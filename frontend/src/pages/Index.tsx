@@ -46,6 +46,10 @@ const Index = () => {
 
   // Fetch dashboard metrics from API
   const fetchDashboardMetrics = async () => {
+    if (currentUser?.userType === 'cliente') {
+      // Skip fetching metrics for clients
+      return;
+    }
     setIsLoadingMetrics(true);
     try {
       const token = getAuthToken();
@@ -91,19 +95,27 @@ const Index = () => {
 
   const handleLogin = (userType: 'admin' | 'employee' | 'cliente', userData: any) => {
     setIsAuthenticated(true);
-    setCurrentUser({ ...userData, userType });
     // Set default tab based on user type
     if (userType === 'cliente') {
+      userData.name = userData.cli_nombre || userData.nombre || "Cliente";
+      userData.email = userData.cli_email || userData.email || "";
       setActiveTab("clients");
     } else {
       setActiveTab("dashboard");
     }
+    setCurrentUser({ userType, ...userData });
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('authToken');
     setIsAuthenticated(false);
     setCurrentUser(null);
     setActiveTab("dashboard");
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión correctamente.",
+      variant: "default"
+    });
   };
 
   if (!isAuthenticated) {
@@ -124,11 +136,11 @@ const Index = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Badge variant="secondary" className="bg-pink-100 text-pink-700">
-                {currentUser?.userType === 'admin' ? 'Administrador' : 
+                {currentUser?.userType === 'admin' ? 'Administrador' :
                  currentUser?.userType === 'employee' ? 'Empleado' : 'Cliente'}
               </Badge>
               <span className="text-sm text-gray-600">
-                Bienvenido, {currentUser?.cli_nombre || currentUser?.userType}
+                Bienvenido, {currentUser?.nombre || currentUser?.userType}
               </span>
               <Button onClick={handleLogout} variant="outline" size="sm">
                 <LogOut className="h-4 w-4 mr-2" />
@@ -188,9 +200,9 @@ const Index = () => {
             <TabsContent value="dashboard" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-900">Métricas del Dashboard</h2>
-                <Button 
-                  onClick={fetchDashboardMetrics} 
-                  variant="outline" 
+                <Button
+                  onClick={fetchDashboardMetrics}
+                  variant="outline"
                   size="sm"
                   disabled={isLoadingMetrics}
                   className="flex items-center gap-2"
@@ -269,7 +281,7 @@ const Index = () => {
           )}
 
           <TabsContent value="clients">
-            <ClientManagement />
+            <ClientManagement currentUser={currentUser} />
           </TabsContent>
 
           {currentUser?.userType !== 'cliente' && (
@@ -279,7 +291,7 @@ const Index = () => {
           )}
 
           <TabsContent value="services">
-            <ServiceManagement />
+            <ServiceManagement currentUser={currentUser} />
           </TabsContent>
 
           {currentUser?.userType !== 'cliente' && (
@@ -289,11 +301,11 @@ const Index = () => {
           )}
 
           <TabsContent value="promotions">
-            <PromotionManagement />
+            <PromotionManagement currentUser={currentUser} />
           </TabsContent>
 
           <TabsContent value="invoices">
-            <InvoiceManagement />
+            <InvoiceManagement currentUser={currentUser} />
           </TabsContent>
         </Tabs>
       </main>

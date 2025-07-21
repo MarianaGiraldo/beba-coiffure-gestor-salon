@@ -19,7 +19,7 @@ func SetupInventoryRoutes(api *gin.RouterGroup, dbService *services.DatabaseServ
 	{
 		// Admin only routes for inventory management
 		adminInventory := protectedInventory.Group("")
-		adminInventory.Use(middleware.AdminOnlyMiddleware())
+		adminInventory.Use(middleware.EmployeeOrAdminMiddleware())
 		{
 			// Inventory endpoints
 			adminInventory.GET("", inventoryController.GetInventoryComplete)   // Get all inventory with product info

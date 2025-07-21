@@ -85,6 +85,24 @@ func EmployeeOrAdminMiddleware() gin.HandlerFunc {
 	}
 }
 
+func ClientOnlyMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userType, exists := c.Get("user_type")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			c.Abort()
+			return
+		}
+
+		if userType != "client" && userType != "cliente" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Only clients can access their profile"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
 func GenerateJWT(userID uint, email, userType, role string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 

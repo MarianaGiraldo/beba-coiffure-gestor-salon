@@ -37,12 +37,18 @@ func SetupRoutes(r *gin.Engine) {
 			auth.POST("/register", authController.Register)
 		}
 		protectedEmployees := api.Group("/employees")
-		protectedEmployees.Use(middleware.AuthMiddleware(), middleware.AdminOnlyMiddleware())
-		// Employee routes directly in API group
-		protectedEmployees.GET("", employeeController.GetEmployees)
-		protectedEmployees.POST("", employeeController.CreateEmployee)
-		protectedEmployees.PUT("/:id", employeeController.UpdateEmployee)
-		protectedEmployees.DELETE("/:id", employeeController.DeleteEmployee)
+		protectedEmployees.Use(middleware.AuthMiddleware())
+		{
+			protectedEmployees.GET("", employeeController.GetEmployees)
+			adminEmployees := protectedEmployees.Group("")
+			adminEmployees.Use(middleware.AdminOnlyMiddleware())
+			{
+				// Employee routes directly in API group
+				adminEmployees.POST("", employeeController.CreateEmployee)
+				adminEmployees.PUT("/:id", employeeController.UpdateEmployee)
+				adminEmployees.DELETE("/:id", employeeController.DeleteEmployee)
+			}
+		}
 
 		// Setup client routes from separate file
 		SetupClientRoutes(api, dbService)

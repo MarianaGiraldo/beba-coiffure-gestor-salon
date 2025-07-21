@@ -397,3 +397,31 @@ func (ic *InvoiceController) RemoveServiceFromInvoice(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Service removed from invoice successfully"})
 }
+
+// GetMyInvoices returns invoices for the authenticated client user
+func (ic *InvoiceController) GetMyInvoices(c *gin.Context) {
+	// Get client ID from JWT token
+	clientID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Client ID not found in token"})
+		return
+	}
+
+	cliID, ok := clientID.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid client ID format"})
+		return
+	}
+
+	// Get client invoices using the new stored procedure
+	invoices, err := ic.dbService.ListarFacturasCliente(cliID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedRetrieveInvoices})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"invoices": invoices,
+		"total":    len(invoices),
+	})
+}

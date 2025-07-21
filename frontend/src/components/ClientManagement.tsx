@@ -48,7 +48,26 @@ interface Appointment {
   estado: "Programada" | "Completada" | "Cancelada";
 }
 
-const ClientManagement = () => {
+// Extended appointment interface for client view with employee and service details
+interface AppointmentWithDetails extends Appointment {
+  empleado?: {
+    emp_nombre: string;
+    emp_apellido: string;
+  };
+  servicio?: {
+    ser_nombre: string;
+    ser_precio_unitario: number;
+  };
+}
+
+interface ClientManagementProps {
+  currentUser?: {
+    userType: string;
+    email: string;
+  } | null;
+}
+
+const ClientManagement = ({ currentUser }: ClientManagementProps) => {
   const { toast } = useToast();
   // API URL is configured through Docker environment variables
   // Fallback for local development outside Docker
@@ -56,7 +75,7 @@ const ClientManagement = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<(Appointment | AppointmentWithDetails)[]>([]);
 
   const [newClient, setNewClient] = useState<Partial<Client>>({});
   const [newAppointment, setNewAppointment] = useState<Partial<Appointment>>({});
@@ -71,6 +90,8 @@ const ClientManagement = () => {
   useEffect(() => {
     testClientEndpoint(); // Test connectivity first
     fetchClients();
+    
+    // Only fetch employees and services if user needs them (for appointments)
     fetchEmployees();
     fetchServices();
     fetchAppointments();
@@ -87,6 +108,26 @@ const ClientManagement = () => {
       clearInterval(statusUpdateInterval);
     };
   }, []);
+
+  // Preselect current client when opening appointment dialog
+  useEffect(() => {
+    if (isAddingAppointment && currentUser?.userType === 'cliente') {
+      if (clients.length > 0) {
+        // Find the current client by email from the fetched clients
+        const currentClient = clients.find(client => client.cli_correo === currentUser.email);
+        if (currentClient && !newAppointment.cli_id) {
+          setNewAppointment(prev => ({
+            ...prev,
+            cli_id: currentClient.cli_id
+          }));
+        }
+      } else {
+        // If no clients are loaded yet, we'll create a temporary representation
+        // The actual client ID will be resolved on the backend using the JWT token
+        console.log('Client list not loaded yet, will use JWT token for client identification');
+      }
+    }
+  }, [isAddingAppointment, clients, currentUser, newAppointment.cli_id]);
 
   // Test function to check API connectivity
   const testClientEndpoint = async () => {
@@ -120,13 +161,26 @@ const ClientManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/api/clients`, {
+      // If current user is a client, fetch only their profile
+      const endpoint = currentUser?.userType === 'cliente' 
+        ? `${apiUrl}/api/clients/profile`
+        : `${apiUrl}/api/clients`;
+
+      const response = await fetch(endpoint, {
         headers,
       });
 
       if (response.ok) {
         const data = await response.json();
-        setClients(data.clients || []);
+        
+        // Handle different response structures
+        if (currentUser?.userType === 'cliente') {
+          // For client profile endpoint, data.client contains single client
+          setClients(data.client ? [data.client] : []);
+        } else {
+          // For admin/employee endpoint, data.clients contains array of clients
+          setClients(data.clients || []);
+        }
       } else {
         if (response.status === 401) {
           toast({
@@ -282,7 +336,12 @@ const ClientManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/api/clients/${client.cli_id}`, {
+      // Use different endpoint for client profile updates
+      const endpoint = currentUser?.userType === 'cliente' 
+        ? `${apiUrl}/api/clients/profile`
+        : `${apiUrl}/api/clients/${client.cli_id}`;
+
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers,
         body: JSON.stringify({
@@ -373,7 +432,10 @@ const ClientManagement = () => {
   };
 
   const handleAddAppointment = async () => {
-    if (!newAppointment.cli_id || !newAppointment.emp_id || !newAppointment.ser_id || !newAppointment.cit_fecha || !newAppointment.cit_hora) {
+    // For client users, we don't require cli_id to be set since it will be resolved from JWT
+    const isClientUser = currentUser?.userType === 'cliente';
+    
+    if ((!isClientUser && !newAppointment.cli_id) || !newAppointment.emp_id || !newAppointment.ser_id || !newAppointment.cit_fecha || !newAppointment.cit_hora) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos de la cita",
@@ -447,7 +509,7 @@ const ClientManagement = () => {
   };
 
   // Function to update appointment status based on date comparison
-  const updateAppointmentStatusBasedOnDate = (appointments: Appointment[]) => {
+  const updateAppointmentStatusBasedOnDate = (appointments: (Appointment | AppointmentWithDetails)[]) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate date comparison
 
@@ -487,9 +549,15 @@ const ClientManagement = () => {
   // Function to get relative date description
   const getRelativeDateDescription = (appointmentDate: string): string => {
     const today = new Date();
-    const appointment = new Date(appointmentDate);
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate date comparison
+    
+    // Handle both ISO format (2025-07-21T00:00:00Z) and simple date format (2025-07-21)
+    const appointmentDateOnly = appointmentDate.includes('T') ? appointmentDate.split('T')[0] : appointmentDate;
+    const appointment = new Date(appointmentDateOnly + 'T00:00:00');
+    appointment.setHours(0, 0, 0, 0);
+    
     const diffTime = appointment.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
       return `Hace ${Math.abs(diffDays)} día(s)`;
@@ -505,15 +573,20 @@ const ClientManagement = () => {
   // Function to get appointment urgency level
   const getAppointmentUrgency = (appointmentDate: string, appointmentTime: string): "overdue" | "today" | "tomorrow" | "upcoming" | "future" => {
     const today = new Date();
-    // Create appointment date in UTC-5 timezone by adding the offset
-    const appointment = new Date(`${appointmentDate}T00:00:00-05:00`);
-    const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}-05:00`);
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate date comparison
+    
+    // Handle both ISO format (2025-07-21T00:00:00Z) and simple date format (2025-07-21)
+    const appointmentDateOnly = appointmentDate.includes('T') ? appointmentDate.split('T')[0] : appointmentDate;
+    const appointment = new Date(appointmentDateOnly + 'T00:00:00');
+    appointment.setHours(0, 0, 0, 0);
+    
+    const appointmentDateTime = new Date(`${appointmentDateOnly}T${appointmentTime}`);
 
-    if (appointmentDateTime < today) {
+    if (appointmentDateTime < new Date()) {
       return "overdue";
-    } else if (appointment.toDateString() === today.toDateString()) {
+    } else if (appointment.getTime() === today.getTime()) {
       return "today";
-    } else if (appointment.getTime() - today.getTime() <= 24 * 60 * 60 * 1000) {
+    } else if (appointment.getTime() - today.getTime() === 24 * 60 * 60 * 1000) {
       return "tomorrow";
     } else if (appointment.getTime() - today.getTime() <= 7 * 24 * 60 * 60 * 1000) {
       return "upcoming";
@@ -528,7 +601,7 @@ const ClientManagement = () => {
 
     switch (urgency) {
       case "overdue":
-        return "bg-green-50 border-l-4 border-green-400";
+        return "bg-orange-50 border-l-4 border-orange-400";
       case "today":
         return "bg-blue-50 border-l-4 border-blue-400";
       case "tomorrow":
@@ -552,7 +625,10 @@ const ClientManagement = () => {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${apiUrl}/api/appointments`, {
+      // Use different endpoint based on user role
+      const endpoint = isClientUser() ? `${apiUrl}/api/appointments/my` : `${apiUrl}/api/appointments`;
+      
+      const response = await fetch(endpoint, {
         headers,
       });
 
@@ -585,16 +661,23 @@ const ClientManagement = () => {
         headers.Authorization = `Bearer ${token}`;
       }
 
+      // For client users, if cli_id is not set, the backend will resolve it from JWT
+      const appointmentData: any = {
+        cit_fecha: appointment.cit_fecha,
+        cit_hora: appointment.cit_hora,
+        emp_id: appointment.emp_id,
+        ser_id: appointment.ser_id,
+      };
+
+      // Only include cli_id if it's set (for admin/employee users or when client data is available)
+      if (appointment.cli_id) {
+        appointmentData.cli_id = appointment.cli_id;
+      }
+
       const response = await fetch(`${apiUrl}/api/appointments`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          cit_fecha: appointment.cit_fecha,
-          cit_hora: appointment.cit_hora,
-          emp_id: appointment.emp_id,
-          ser_id: appointment.ser_id,
-          cli_id: appointment.cli_id,
-        }),
+        body: JSON.stringify(appointmentData),
       });
 
       if (response.ok) {
@@ -636,13 +719,39 @@ const ClientManagement = () => {
     return service ? service.ser_nombre : "Servicio desconocido";
   };
 
+  // Enhanced functions for appointments with details (for client users)
+  const getAppointmentEmployeeName = (appointment: Appointment | AppointmentWithDetails) => {
+    if ('empleado' in appointment && appointment.empleado) {
+      return `${appointment.empleado.emp_nombre} ${appointment.empleado.emp_apellido}`;
+    }
+    return getEmployeeName(appointment.emp_id);
+  };
+
+  const getAppointmentServiceName = (appointment: Appointment | AppointmentWithDetails) => {
+    if ('servicio' in appointment && appointment.servicio) {
+      return appointment.servicio.ser_nombre;
+    }
+    return getServiceName(appointment.ser_id);
+  };
+
+  const getAppointmentServicePrice = (appointment: Appointment | AppointmentWithDetails) => {
+    if ('servicio' in appointment && appointment.servicio) {
+      return appointment.servicio.ser_precio_unitario;
+    }
+    const service = services.find(s => s.ser_id === appointment.ser_id);
+    return service ? service.ser_precio_unitario : 0;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Programada": return "bg-blue-100 text-blue-700";
-      case "Completada": return "bg-green-100 text-green-700";
+      case "Completada": return "bg-orange-100 text-orange-700";
       case "Cancelada": return "bg-red-100 text-red-700";
       default: return "bg-gray-100 text-gray-700";
     }
+  };
+  const isClientUser = () => {
+    return currentUser?.userType === 'cliente';
   };
 
   return (
@@ -661,14 +770,15 @@ const ClientManagement = () => {
         </TabsList>
 
         <TabsContent value="clients" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
-              <DialogTrigger asChild>
-                <Button className="bg-pink-600 hover:bg-pink-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Cliente
-                </Button>
-              </DialogTrigger>
+          {currentUser?.userType !== 'cliente' && (
+            <div className="flex justify-end">
+              <Dialog open={isAddingClient} onOpenChange={setIsAddingClient}>
+                <DialogTrigger asChild>
+                  <Button className="bg-pink-600 hover:bg-pink-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nuevo Cliente
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
@@ -744,7 +854,8 @@ const ClientManagement = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </div>
+            </div>
+          )}
 
           <Card>
             <CardHeader>
@@ -792,13 +903,15 @@ const ClientManagement = () => {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteClient(client.cli_id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              {currentUser?.userType !== 'cliente' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteClient(client.cli_id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -849,13 +962,13 @@ const ClientManagement = () => {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Vencidas</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">Completadas</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  {appointments.filter(apt => getAppointmentUrgency(apt.cit_fecha, apt.cit_hora) === "overdue" && getAppointmentStatusWithDateCheck(apt) === "Programada").length}
+                <div className="text-2xl font-bold text-orange-600">
+                  {appointments.filter(apt => getAppointmentStatusWithDateCheck(apt) === "Completada").length}
                 </div>
-                <p className="text-xs text-gray-500">sin completar</p>
+                <p className="text-xs text-gray-500">citas realizadas</p>
               </CardContent>
             </Card>
           </div>
@@ -879,17 +992,39 @@ const ClientManagement = () => {
                   <div>
                     <Label htmlFor="cliente">Cliente</Label>
                     <select
-                      className="w-full p-2 border rounded-md"
+                      className={`w-full p-2 border rounded-md ${currentUser?.userType === 'cliente' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                       value={newAppointment.cli_id || ""}
+                      disabled={currentUser?.userType === 'cliente'}
                       onChange={(e) => setNewAppointment({...newAppointment, cli_id: parseInt(e.target.value)})}
                     >
-                      <option value="">Seleccionar cliente</option>
-                      {clients.map(client => (
-                        <option key={client.cli_id} value={client.cli_id}>
-                          {client.cli_nombre} {client.cli_apellido}
-                        </option>
-                      ))}
+                      {currentUser?.userType === 'cliente' ? (
+                        // For client users, show their profile if available, otherwise show placeholder
+                        clients.length > 0 ? (
+                          clients.filter(client => client.cli_correo === currentUser.email).map(client => (
+                            <option key={client.cli_id} value={client.cli_id}>
+                              {client.cli_nombre} {client.cli_apellido}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="">Tu perfil (se seleccionará automáticamente)</option>
+                        )
+                      ) : (
+                        // For admin/employee users, show all clients
+                        <>
+                          <option value="">Seleccionar cliente</option>
+                          {clients.map(client => (
+                            <option key={client.cli_id} value={client.cli_id}>
+                              {client.cli_nombre} {client.cli_apellido}
+                            </option>
+                          ))}
+                        </>
+                      )}
                     </select>
+                    {currentUser?.userType === 'cliente' && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Se seleccionará automáticamente tu perfil como cliente
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="empleado">Empleado</Label>
@@ -961,7 +1096,7 @@ const ClientManagement = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cliente</TableHead>
+                    {!isClientUser() && <TableHead>Cliente</TableHead>}
                     <TableHead>Empleado</TableHead>
                     <TableHead>Servicio</TableHead>
                     <TableHead>Fecha y Hora</TableHead>
@@ -971,9 +1106,19 @@ const ClientManagement = () => {
                 <TableBody>
                   {appointments.map((appointment) => (
                     <TableRow key={appointment.cit_id} className={getRowStyling(appointment.cit_fecha, appointment.cit_hora)}>
-                      <TableCell>{getClientName(appointment.cli_id)}</TableCell>
-                      <TableCell>{getEmployeeName(appointment.emp_id)}</TableCell>
-                      <TableCell>{getServiceName(appointment.ser_id)}</TableCell>
+                      {/* Hide client column for client users since they only see their own appointments */}
+                      {!isClientUser() && <TableCell>{getClientName(appointment.cli_id)}</TableCell>}
+                      <TableCell>{getAppointmentEmployeeName(appointment)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span>{getAppointmentServiceName(appointment)}</span>
+                          {isClientUser() && (
+                            <span className="text-sm text-gray-500">
+                              ${getAppointmentServicePrice(appointment).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">

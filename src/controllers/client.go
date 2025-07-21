@@ -20,6 +20,11 @@ const (
 	ErrFailedUpdateClient    = "Failed to update client"
 	ErrFailedDeleteClient    = "Failed to delete client"
 	ErrInvalidClientID       = "Invalid client ID"
+	ErrFailedHashPassword    = "Failed to hash password"
+	ErrUserNotAuthenticated  = "User not authenticated"
+	ErrClientProfileNotFound = "Client profile not found"
+	ErrEmailAlreadyInUse     = "Email already in use"
+	ErrFailedUpdateProfile   = "Failed to update profile"
 )
 
 type ClientController struct {
@@ -77,14 +82,14 @@ func (cc *ClientController) CreateClient(c *gin.Context) {
 	if client.CliPassword != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(client.CliPassword), bcrypt.DefaultCost)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedHashPassword})
 			return
 		}
 		client.CliPassword = string(hashedPassword)
 	}
 
 	if err := cc.dbService.InsertCliente(client); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create client"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedCreateClient})
 		return
 	}
 
@@ -106,7 +111,7 @@ func (cc *ClientController) UpdateClient(c *gin.Context) {
 	// Convert string to uint
 	var clientID uint
 	if _, err := fmt.Sscanf(id, "%d", &clientID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid client ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": ErrInvalidClientID})
 		return
 	}
 	client.CliID = clientID // Set ID for update
@@ -115,14 +120,14 @@ func (cc *ClientController) UpdateClient(c *gin.Context) {
 	if client.CliPassword != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(client.CliPassword), bcrypt.DefaultCost)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedHashPassword})
 			return
 		}
 		client.CliPassword = string(hashedPassword)
 	}
 
 	if err := cc.dbService.UpdateCliente(client); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update client"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedUpdateClient})
 		return
 	}
 
@@ -140,14 +145,100 @@ func (cc *ClientController) DeleteClient(c *gin.Context) {
 	// Convert string to uint
 	var clientID uint
 	if _, err := fmt.Sscanf(id, "%d", &clientID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid client ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": ErrInvalidClientID})
 		return
 	}
 
 	if err := cc.dbService.DeleteCliente(clientID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete client"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedDeleteClient})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Client deleted successfully"})
+}
+
+// GetProfile gets the authenticated client's own profile
+func (cc *ClientController) GetProfile(c *gin.Context) {
+	// Get user information from context (set by AuthMiddleware)
+	userEmail, exists := c.Get("user_email")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": ErrUserNotAuthenticated})
+		return
+	}
+
+	// Get client by email
+	client, err := cc.dbService.BuscarClientePorCorreo(userEmail.(string))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": ErrClientProfileNotFound})
+		return
+	}
+
+	// Remove password from response
+	client.CliPassword = ""
+
+	c.JSON(http.StatusOK, gin.H{
+		"client": client,
+	})
+}
+
+// UpdateProfile updates the authenticated client's own profile
+func (cc *ClientController) UpdateProfile(c *gin.Context) {
+	// Get user information from context (set by AuthMiddleware)
+	userEmail, exists := c.Get("user_email")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": ErrUserNotAuthenticated})
+		return
+	}
+
+	// Get current client data
+	currentClient, err := cc.dbService.BuscarClientePorCorreo(userEmail.(string))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": ErrClientProfileNotFound})
+		return
+	}
+
+	// Bind new client data from request
+	var updateData models.Client
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Ensure client can only update their own profile
+	updateData.CliID = currentClient.CliID
+
+	// Validate email hasn't changed (or if it has, ensure it's not taken)
+	if updateData.CliCorreo != currentClient.CliCorreo {
+		// Check if new email already exists
+		_, err := cc.dbService.BuscarClientePorCorreo(updateData.CliCorreo)
+		if err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": ErrEmailAlreadyInUse})
+			return
+		}
+	}
+
+	// Hash password if provided
+	if updateData.CliPassword != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updateData.CliPassword), bcrypt.DefaultCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedHashPassword})
+			return
+		}
+		updateData.CliPassword = string(hashedPassword)
+	} else {
+		// If no password provided, keep current password (don't update it)
+		updateData.CliPassword = currentClient.CliPassword
+	}
+
+	if err := cc.dbService.UpdateCliente(updateData); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedUpdateProfile})
+		return
+	}
+
+	// Remove password from response
+	updateData.CliPassword = ""
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Profile updated successfully",
+		"client":  updateData,
+	})
 }

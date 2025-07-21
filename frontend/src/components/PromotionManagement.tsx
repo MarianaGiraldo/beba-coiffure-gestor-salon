@@ -32,10 +32,22 @@ interface Service {
   ser_duracion_estimada?: number;
 }
 
-const PromotionManagement = () => {
+interface PromotionManagementProps {
+  currentUser?: {
+    userType: string;
+    [key: string]: any;
+  };
+}
+
+const PromotionManagement = ({ currentUser }: PromotionManagementProps) => {
   const { toast } = useToast();
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-  
+
+  // Helper function to check if user is a client
+  const isClientUser = () => {
+    return currentUser?.userType === 'cliente';
+  };
+
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [newPromotion, setNewPromotion] = useState<Partial<Promotion & { ser_id: number }>>({});
@@ -193,7 +205,7 @@ const PromotionManagement = () => {
     // Create date in UTC-5 timezone (Colombia/Bogota)
     const now = new Date();
     const today = new Date(now.getTime());
-    
+
     const start = new Date(startDate );
     const end = new Date(endDate );
     console.log("Start:", startDate, start, "End:", endDate, end, "Today:", today);
@@ -203,7 +215,7 @@ const PromotionManagement = () => {
   };
 
   const handleAddPromotion = async () => {
-    if (!newPromotion.pro_nombre || !newPromotion.pro_fecha_inicio || !newPromotion.pro_fecha_fin || 
+    if (!newPromotion.pro_nombre || !newPromotion.pro_fecha_inicio || !newPromotion.pro_fecha_fin ||
         !newPromotion.pro_descuento_porcentaje || !newPromotion.ser_id) {
       toast({
         title: "Error",
@@ -267,7 +279,7 @@ const PromotionManagement = () => {
     if (!editingPromotion) return;
 
     // Validate required fields
-    if (!editingPromotion.pro_nombre || !editingPromotion.pro_fecha_inicio || !editingPromotion.pro_fecha_fin || 
+    if (!editingPromotion.pro_nombre || !editingPromotion.pro_fecha_inicio || !editingPromotion.pro_fecha_fin ||
         !editingPromotion.pro_descuento_porcentaje || !editingPromotion.ser_id) {
       toast({
         title: "Error",
@@ -370,7 +382,7 @@ const PromotionManagement = () => {
 
   const getMostUsedPromotion = () => {
     if (promotions.length === 0) return null;
-    return promotions.reduce((max, promo) => 
+    return promotions.reduce((max, promo) =>
       promo.pro_usos > max.pro_usos ? promo : max
     );
   };
@@ -382,13 +394,14 @@ const PromotionManagement = () => {
           <h1 className="text-3xl font-bold tracking-tight">Gestión de Promociones</h1>
           <p className="text-muted-foreground">Administra las promociones y descuentos del salón</p>
         </div>
-        <Dialog open={isAddingPromotion} onOpenChange={setIsAddingPromotion}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva Promoción
-            </Button>
-          </DialogTrigger>
+        {!isClientUser() && (
+          <Dialog open={isAddingPromotion} onOpenChange={setIsAddingPromotion}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva Promoción
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Crear Nueva Promoción</DialogTitle>
@@ -477,8 +490,8 @@ const PromotionManagement = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 onClick={handleAddPromotion}
                 disabled={submitting}
               >
@@ -487,6 +500,7 @@ const PromotionManagement = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -545,7 +559,7 @@ const PromotionManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {promotions.length > 0 
+              {promotions.length > 0
                 ? (promotions.reduce((sum, p) => sum + p.pro_descuento_porcentaje, 0) / promotions.length).toFixed(1)
                 : 0}%
             </div>
@@ -576,7 +590,7 @@ const PromotionManagement = () => {
                   <TableHead>Período</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Usos</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  {!isClientUser() && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -597,28 +611,30 @@ const PromotionManagement = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{promotion.pro_usos}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Find the service ID for this promotion
-                              const serviceId = services.find(s => s.ser_nombre === promotion.ser_nombre)?.ser_id || 1;
-                              setEditingPromotion({...promotion, ser_id: serviceId});
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeletePromotion(promotion.pro_id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      {!isClientUser() && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Find the service ID for this promotion
+                                const serviceId = services.find(s => s.ser_nombre === promotion.ser_nombre)?.ser_id || 1;
+                                setEditingPromotion({...promotion, ser_id: serviceId});
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeletePromotion(promotion.pro_id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
@@ -628,7 +644,7 @@ const PromotionManagement = () => {
         </CardContent>
       </Card>
 
-      {editingPromotion && (
+      {editingPromotion && !isClientUser() && (
         <Dialog open={!!editingPromotion} onOpenChange={() => setEditingPromotion(null)}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
@@ -699,8 +715,8 @@ const PromotionManagement = () => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit_ser_id">Servicio</Label>
-                <Select 
-                  value={editingPromotion.ser_id?.toString() || ""} 
+                <Select
+                  value={editingPromotion.ser_id?.toString() || ""}
                   onValueChange={(value) => setEditingPromotion({...editingPromotion, ser_id: parseInt(value)})}
                 >
                   <SelectTrigger>
@@ -717,8 +733,8 @@ const PromotionManagement = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 onClick={handleUpdatePromotion}
                 disabled={submitting}
               >

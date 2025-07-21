@@ -40,7 +40,7 @@ type AppointmentRequest struct {
 	CitHora  string `json:"cit_hora" binding:"required"`  // Format: HH:MM
 	EmpID    uint   `json:"emp_id" binding:"required"`
 	SerID    uint   `json:"ser_id" binding:"required"`
-	CliID    uint   `json:"cli_id" binding:"required"`
+	CliID    uint   `json:"cli_id"` // Optional - will be resolved from JWT if not provided
 }
 
 type AppointmentResponse struct {
@@ -116,6 +116,29 @@ func (ac *AppointmentController) CreateAppointment(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// If cli_id is not provided, resolve it from JWT token (for client users)
+	if req.CliID == 0 {
+		userEmail, exists := c.Get("user_email")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			return
+		}
+
+		userType, _ := c.Get("user_type")
+		if userType == "client" || userType == "cliente" {
+			// Find client by email
+			client, err := ac.dbService.BuscarClientePorCorreo(userEmail.(string))
+			if err != nil {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Client profile not found"})
+				return
+			}
+			req.CliID = client.CliID
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Client ID is required for non-client users"})
+			return
+		}
 	}
 
 	// Validate date format
@@ -294,6 +317,42 @@ func (ac *AppointmentController) GetAppointmentsByClient(c *gin.Context) {
 		"appointments": appointments,
 		"total":        len(appointments),
 		"client_id":    cliID,
+	})
+}
+
+// GetMyAppointments returns appointments for the authenticated client
+func (ac *AppointmentController) GetMyAppointments(c *gin.Context) {
+	// Get user information from context (set by AuthMiddleware)
+	userEmail, exists := c.Get("user_email")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userType, _ := c.Get("user_type")
+	if userType != "client" && userType != "cliente" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only clients can access their appointments"})
+		return
+	}
+
+	// Get client by email
+	client, err := ac.dbService.BuscarClientePorCorreo(userEmail.(string))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Client profile not found"})
+		return
+	}
+
+	// Get client's appointments with details
+	citas, err := ac.dbService.VerCitasCliente(client.CliID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": ErrFailedRetrieveAppointments})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"appointments": citas,
+		"total":        len(citas),
+		"client_id":    client.CliID,
 	})
 }
 

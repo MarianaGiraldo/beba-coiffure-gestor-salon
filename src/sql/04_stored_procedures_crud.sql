@@ -852,6 +852,21 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- Obtener citas de un cliente específico (para clientes)
+DELIMITER $$
+CREATE PROCEDURE sp_ver_citas_cliente(IN p_cli_id INT)
+BEGIN
+    SELECT c.cit_id, c.cit_fecha, c.cit_hora, c.emp_id, c.ser_id, c.cli_id,
+           e.emp_nombre, e.emp_apellido, e.emp_puesto,
+           s.ser_nombre, s.ser_descripcion, s.ser_precio_unitario
+    FROM CITA c
+    JOIN EMPLEADO e ON c.emp_id = e.emp_id
+    JOIN SERVICIO s ON c.ser_id = s.ser_id
+    WHERE c.cli_id = p_cli_id
+    ORDER BY c.cit_fecha DESC, c.cit_hora DESC;
+END$$
+DELIMITER ;
+
 -- Insertar Servicio
 DELIMITER $$
 CREATE PROCEDURE sp_insertar_servicio (
@@ -1086,6 +1101,30 @@ BEGIN
         WHERE dfs.fac_id = p_fac_id
     )
     WHERE fac_id = p_fac_id;
+END$$
+DELIMITER ;
+
+-- Listar facturas de un cliente específico con servicios concatenados
+DELIMITER $$
+CREATE PROCEDURE sp_listar_facturas_cliente (
+    IN p_cli_id INT
+)
+BEGIN
+    SELECT 
+        fs.fac_id,
+        fs.fac_total,
+        fs.fac_fecha,
+        fs.fac_hora,
+        fs.cli_id,
+        CONCAT(c.cli_nombre, ' ', c.cli_apellido) AS cli_nombre,
+        COALESCE(GROUP_CONCAT(s.ser_nombre SEPARATOR ', '), '') AS servicios
+    FROM FACTURA_SERVICIO fs
+    INNER JOIN CLIENTE c ON fs.cli_id = c.cli_id
+    LEFT JOIN DETALLE_FACTURA_SERVICIO dfs ON fs.fac_id = dfs.fac_id
+    LEFT JOIN SERVICIO s ON dfs.ser_id = s.ser_id
+    WHERE fs.cli_id = p_cli_id
+    GROUP BY fs.fac_id, fs.fac_total, fs.fac_fecha, fs.fac_hora, fs.cli_id, c.cli_nombre, c.cli_apellido
+    ORDER BY fs.fac_fecha DESC, fs.fac_hora DESC;
 END$$
 DELIMITER ;
 
