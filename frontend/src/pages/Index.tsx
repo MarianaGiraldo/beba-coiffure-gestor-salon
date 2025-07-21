@@ -106,16 +106,35 @@ const Index = () => {
     setCurrentUser({ userType, ...userData });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    setActiveTab("dashboard");
-    toast({
-      title: "Sesión cerrada",
-      description: "Has cerrado sesión correctamente.",
-      variant: "default"
-    });
+  const handleLogout = async () => {
+    try {
+      const token = getAuthToken();
+      
+      // Call the logout endpoint if we have a token
+      if (token) {
+        await fetch(`${apiUrl}/api/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Continue with logout even if API call fails
+    } finally {
+      // Always clear local state regardless of API call result
+      localStorage.removeItem('authToken');
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setActiveTab("dashboard");
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión correctamente.",
+        variant: "default"
+      });
+    }
   };
 
   if (!isAuthenticated) {
@@ -140,7 +159,7 @@ const Index = () => {
                  currentUser?.userType === 'employee' ? 'Empleado' : 'Cliente'}
               </Badge>
               <span className="text-sm text-gray-600">
-                Bienvenido, {currentUser?.nombre || currentUser?.userType}
+                Hola, {currentUser?.name || currentUser?.userType}
               </span>
               <Button onClick={handleLogout} variant="outline" size="sm">
                 <LogOut className="h-4 w-4 mr-2" />

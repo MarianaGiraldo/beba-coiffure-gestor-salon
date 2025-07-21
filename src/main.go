@@ -2,9 +2,12 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
 	"salon/config"
 	"salon/routes"
 	"salon/services"
+	"syscall"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -15,6 +18,14 @@ func main() {
 	if err := config.LoadConfig(); err != nil {
 		log.Fatal("Failed to load configuration:", err)
 	}
+
+	// Initialize UserConnectionService after config is loaded
+	userConnService := services.NewUserConnectionService(
+		config.AppConfig.DBHost,
+		config.AppConfig.DBPort,
+		config.AppConfig.DBName,
+	)
+	config.AppConfig.UserConnectionService = userConnService
 
 	// Initialize database
 	if err := services.InitializeDatabase(); err != nil {
@@ -39,6 +50,18 @@ func main() {
 
 	// Setup routes
 	routes.SetupRoutes(r)
+
+	// Graceful shutdown handler
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		log.Println("Shutting down gracefully...")
+		if userConnService, ok := config.AppConfig.UserConnectionService.(*services.UserConnectionService); ok {
+			userConnService.CloseAllUserConnections()
+		}
+		os.Exit(0)
+	}()
 
 	// Start server
 	serverAddr := config.AppConfig.ServerHost + ":" + config.AppConfig.ServerPort

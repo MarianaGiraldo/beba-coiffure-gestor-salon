@@ -35,6 +35,8 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			auth.POST("/login", authController.Login)
 			auth.POST("/register", authController.Register)
+			auth.POST("/logout", authController.Logout)
+			auth.GET("/connections", middleware.AuthMiddleware(), authController.GetConnectionsInfo)
 		}
 		protectedEmployees := api.Group("/employees")
 		protectedEmployees.Use(middleware.AuthMiddleware())

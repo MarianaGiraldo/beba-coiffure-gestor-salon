@@ -124,7 +124,7 @@ const ClientManagement = ({ currentUser }: ClientManagementProps) => {
       } else {
         // If no clients are loaded yet, we'll create a temporary representation
         // The actual client ID will be resolved on the backend using the JWT token
-        console.log('Client list not loaded yet, will use JWT token for client identification');
+        // console.log('Client list not loaded yet, will use JWT token for client identification');
       }
     }
   }, [isAddingAppointment, clients, currentUser, newAppointment.cli_id]);
@@ -135,7 +135,6 @@ const ClientManagement = ({ currentUser }: ClientManagementProps) => {
       const response = await fetch(`${apiUrl}/api/clients/test`);
       if (response.ok) {
         const data = await response.json();
-        console.log('Client test endpoint response:', data);
       }
     } catch (error) {
       console.error('Client test endpoint error:', error);

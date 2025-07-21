@@ -208,7 +208,6 @@ const PromotionManagement = ({ currentUser }: PromotionManagementProps) => {
 
     const start = new Date(startDate );
     const end = new Date(endDate );
-    console.log("Start:", startDate, start, "End:", endDate, end, "Today:", today);
     if (today < start) return "Programada";
     if (today > end) return "Expirada";
     return "Activa";

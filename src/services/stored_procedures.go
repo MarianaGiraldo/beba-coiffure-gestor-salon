@@ -2,17 +2,37 @@ package services
 
 import (
 	"fmt"
+	"log"
 	"salon/models"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type DatabaseService struct {
-	DB *gorm.DB
+	DB             *gorm.DB
+	ConnectionType string // Track what type of connection this is (admin, user_email, etc.)
 }
 
 func NewDatabaseService(db *gorm.DB) *DatabaseService {
-	return &DatabaseService{DB: db}
+	return &DatabaseService{
+		DB:             db,
+		ConnectionType: "admin", // Default to admin connection
+	}
+}
+
+// NewDatabaseServiceWithType creates a DatabaseService with a specific connection type for logging
+func NewDatabaseServiceWithType(db *gorm.DB, connectionType string) *DatabaseService {
+	log.Printf("[DB_SERVICE] Creating DatabaseService with connection type: %s", connectionType)
+	return &DatabaseService{
+		DB:             db,
+		ConnectionType: connectionType,
+	}
+}
+
+// logOperation logs database operations with connection info
+func (s *DatabaseService) logOperation(operation, details string) {
+	log.Printf("[DB_OPERATION] Connection: %s | Operation: %s | Details: %s", s.ConnectionType, operation, details)
 }
 
 // ============= EMPLOYEE PROCEDURES =============
@@ -24,12 +44,21 @@ func (s *DatabaseService) GetEmpleados() ([]models.Employee, error) {
 }
 
 func (s *DatabaseService) InsertEmpleado(emp models.Employee) error {
-	err := s.DB.Exec("CALL sp_insert_empleado(?, ?, ?, ?, ?, ?, ?)",
-		emp.EmpNombre, emp.EmpApellido, emp.EmpTelefono,
-		emp.EmpCorreo, emp.EmpPuesto, emp.EmpSalario, emp.EmpPassword).Error
+	// Hash password for database storage
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(emp.EmpPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
+
+	// Store hashed password in the database
+	err = s.DB.Exec("CALL sp_insert_empleado(?, ?, ?, ?, ?, ?, ?)",
+		emp.EmpNombre, emp.EmpApellido, emp.EmpTelefono,
+		emp.EmpCorreo, emp.EmpPuesto, emp.EmpSalario, string(hashedPassword)).Error
+	if err != nil {
+		return err
+	}
+
+	// Create MySQL user with PLAIN password
 	return s.CrearUsuarioConRolDirecto(emp.EmpCorreo, emp.EmpPassword, "empleado")
 }
 
@@ -52,11 +81,20 @@ func (s *DatabaseService) GetClientes() ([]models.Client, error) {
 }
 
 func (s *DatabaseService) InsertCliente(cli models.Client) error {
-	err := s.DB.Exec("CALL sp_insert_cliente(?, ?, ?, ?, ?)",
-		cli.CliNombre, cli.CliApellido, cli.CliTelefono, cli.CliCorreo, cli.CliPassword).Error
+	// Hash password for database storage
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(cli.CliPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
+
+	// Store hashed password in the database
+	err = s.DB.Exec("CALL sp_insert_cliente(?, ?, ?, ?, ?)",
+		cli.CliNombre, cli.CliApellido, cli.CliTelefono, cli.CliCorreo, string(hashedPassword)).Error
+	if err != nil {
+		return err
+	}
+
+	// Create MySQL user with PLAIN password
 	return s.CrearUsuarioConRolDirecto(cli.CliCorreo, cli.CliPassword, "cliente")
 }
 
@@ -243,29 +281,38 @@ func (s *DatabaseService) GetDashboardMetrics() (map[string]interface{}, error) 
 // ============= SEARCH/LOOKUP PROCEDURES =============
 
 func (s *DatabaseService) BuscarClientePorID(id uint) (*models.Client, error) {
+	s.logOperation("BuscarClientePorID", fmt.Sprintf("Searching for client ID: %d", id))
 	var client models.Client
 	err := s.DB.Raw("CALL BuscarClientePorID(?)", id).Scan(&client).Error
 	if err != nil {
+		s.logOperation("BuscarClientePorID", fmt.Sprintf("Error searching client ID %d: %v", id, err))
 		return nil, err
 	}
+	s.logOperation("BuscarClientePorID", fmt.Sprintf("Successfully found client ID: %d", id))
 	return &client, nil
 }
 
 func (s *DatabaseService) BuscarEmpleadoPorID(id uint) (*models.Employee, error) {
+	s.logOperation("BuscarEmpleadoPorID", fmt.Sprintf("Searching for employee ID: %d", id))
 	var employee models.Employee
 	err := s.DB.Raw("CALL BuscarEmpleadoPorID(?)", id).Scan(&employee).Error
 	if err != nil {
+		s.logOperation("BuscarEmpleadoPorID", fmt.Sprintf("Error searching employee ID %d: %v", id, err))
 		return nil, err
 	}
+	s.logOperation("BuscarEmpleadoPorID", fmt.Sprintf("Successfully found employee ID: %d", id))
 	return &employee, nil
 }
 
 func (s *DatabaseService) BuscarUsuario(username string) (*models.UsuarioSistema, error) {
+	s.logOperation("BuscarUsuario", fmt.Sprintf("Searching for user: %s", username))
 	var user models.UsuarioSistema
 	err := s.DB.Raw("CALL BuscarUsuario(?)", username).Scan(&user).Error
 	if err != nil {
+		s.logOperation("BuscarUsuario", fmt.Sprintf("Error searching user %s: %v", username, err))
 		return nil, err
 	}
+	s.logOperation("BuscarUsuario", fmt.Sprintf("Successfully found user: %s (role: %s)", username, user.UsuRol))
 	return &user, nil
 }
 
@@ -339,7 +386,6 @@ func (s *DatabaseService) CrearUsuarioConRolDirecto(username, password, role str
 
 	return nil
 }
-
 
 func (s *DatabaseService) ObtenerDatosUsuario(username, role string) (map[string]interface{}, error) {
 	var result map[string]interface{}

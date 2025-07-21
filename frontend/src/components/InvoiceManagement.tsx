@@ -286,8 +286,6 @@ const InvoiceManagement = ({ currentUser }: InvoiceManagementProps) => {
   };
 
   const calculateSelectedServicesTotal = () => {
-    console.log("Calculating total for services:", newInvoice.servicios);
-    console.log("Available services:", services);
     return newInvoice.servicios.reduce((total, serviceId) => {
       const service = services.find(s => s.ser_id === serviceId);
       return total + (service?.ser_precio_unitario || 0);
